@@ -39,7 +39,7 @@ class RAWProcessor
 {
     public:
         RAWProcessor();
-        RAWProcessor( const TCHAR* raw_file, int height = 1024 );
+        RAWProcessor( const char* raw_file, int height = 1024 );
         virtual~RAWProcessor();
 
     public:
@@ -54,8 +54,8 @@ class RAWProcessor
         int             getWeightsCount()   { return pixel_weights.size(); }
 
     public:
-        bool Load( const TCHAR* raw_file, int height = 1024 );
-        bool Reload( const TCHAR* raw_file, int height = 1024 );
+        bool Load( const char* raw_file, int height = 1024 );
+        bool Reload( const char* raw_file, int height = 1024 );
         bool Reload();
         void Unload();
         void SetUserScale( RAWUserScaleIF* ptr );
@@ -66,6 +66,10 @@ class RAWProcessor
         bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> &word_arrays );
         bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> &byte_arrays );
         bool Get16bitPixel( int x, int y, unsigned short &px );
+
+    public:
+        const unsigned long         datasize();
+        const unsigned short*       data();
 
     protected:
         void analyse();

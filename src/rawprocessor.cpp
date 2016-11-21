@@ -6,12 +6,6 @@
 #include <iostream>
 #include <fstream>
 
-#ifdef _WIN32
-    #include <tchar.h>
-#else
-    #include "tchar.h"
-#endif
-
 #if defined(_DEBUG)&&defined(_USEFLTK)
     #include <FL/Fl_Ask.H>
 #endif
@@ -58,7 +52,7 @@ RAWProcessor::RAWProcessor()
     resetWeights();
 }
 
-RAWProcessor::RAWProcessor( const TCHAR* raw_file, int height )
+RAWProcessor::RAWProcessor( const char* raw_file, int height )
  : raw_loaded(false),
    pixel_min_level(0),
    pixel_max_level(0),
@@ -79,10 +73,11 @@ RAWProcessor::~RAWProcessor()
     }
 }
 
-bool RAWProcessor::Load( const TCHAR* raw_file, int height )
+bool RAWProcessor::Load( const char* raw_file, int height )
 {
     fstream rfstrm;
-    string  fname = _TCW2M( raw_file );
+    //string  fname = _TCW2M( raw_file );
+	string  fname = raw_file;
 
     rfstrm.open( fname.c_str(), fstream::app | fstream::binary | fstream::in );
 
@@ -102,7 +97,7 @@ bool RAWProcessor::Load( const TCHAR* raw_file, int height )
         resetWeights();
 
         // To save memory, it doesn't using direct load to memory.
-        for(int cnt=0; cnt<fsize / sizeof(unsigned short); cnt++)
+        for( unsigned cnt=0; cnt<fsize / sizeof(unsigned short); cnt++)
         {
             char           chardata[2] = {0};
             unsigned short worddata = 0;
@@ -145,7 +140,7 @@ bool RAWProcessor::Load( const TCHAR* raw_file, int height )
     return false;
 }
 
-bool RAWProcessor::Reload( const TCHAR* raw_file, int height )
+bool RAWProcessor::Reload( const char* raw_file, int height )
 {
     Unload();
     return Load( raw_file, height );
@@ -153,7 +148,8 @@ bool RAWProcessor::Reload( const TCHAR* raw_file, int height )
 
 bool RAWProcessor::Reload()
 {
-    return Reload( _TCM2W(raw_file_name.c_str()) );
+    //return Reload( _TCM2W(raw_file_name.c_str()) );
+    return Reload( raw_file_name.c_str() );
 }
 
 void RAWProcessor::Unload()
@@ -181,7 +177,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
     {
         float dscale_ratio = DEF_CALC_F_BMAX / float( pixel_max_level );
 
-        for( int cnt=0; cnt<pixel_arrays.size(); cnt++ )
+        for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
         {
             float fdspixel = float(pixel_arrays[cnt]) * dscale_ratio;
             unsigned char dspixel = (unsigned char)fdspixel;
@@ -195,7 +191,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
         float uscale_ratio = DEF_CALC_F_WMAX / float( pixel_max_level );
         float dscale_ratio = DEF_CALC_F_BMAX / DEF_CALC_F_WMAX;
 
-        for( int cnt=0; cnt<pixel_arrays.size(); cnt++ )
+        for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
         {
             float fuspixel = float(pixel_arrays[cnt]) * uscale_ratio;
             float fdspixel = fuspixel * dscale_ratio;
@@ -278,7 +274,8 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
 
             curweight = pixel_weights[ weight_idx ];
 
-            if ( ( curweight <= identify_min_level ) || ( weight_idx == identify_min_level ) )
+            if ( ( curweight <= (unsigned)identify_min_level ) ||
+                 ( weight_idx == identify_min_level ) )
             {
                 min_weight_wide = weight_idx;
                 break;
@@ -299,7 +296,8 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
             weight_idx++;
             curweight = pixel_weights[ weight_idx ];
 
-            if ( ( curweight <= identify_min_level ) || ( weight_idx == ( DEF_PIXEL_WEIGHTS - 1 ) ) )
+            if ( ( curweight <= (unsigned)identify_min_level ) ||
+                 ( weight_idx == ( DEF_PIXEL_WEIGHTS - 1 ) ) )
             {
                 max_weight_wide = weight_idx;
                 break;
@@ -348,7 +346,7 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
         if ( apixel > thld_max )
         {
             //apixel = thld_max;
-            apixel = DEF_CALC_F_WMAX;
+            apixel = DEF_CALC_I_WMAX - 1;
         }
         else
         if ( apixel < thld_min )
@@ -393,7 +391,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
         if ( apixel > thld_max )
         {
             //apixel = thld_max;
-            apixel = DEF_CALC_F_WMAX;
+            apixel = DEF_CALC_I_WMAX - 1;
         }
         else
         if ( apixel < thld_min )
@@ -434,6 +432,19 @@ bool RAWProcessor::Get16bitPixel( int x, int y, unsigned short &px )
     px = pixel_arrays[ pixpos ];
 
     return true;
+}
+
+const unsigned long RAWProcessor::datasize()
+{
+    return pixel_arrays.size();
+}
+
+const unsigned short* RAWProcessor::data()
+{
+    if ( pixel_arrays.size() == 0 )
+        return NULL;
+
+    return pixel_arrays.data();
 }
 
 void RAWProcessor::analyse()
