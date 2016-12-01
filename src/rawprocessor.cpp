@@ -6,12 +6,14 @@
 #include <iostream>
 #include <fstream>
 
-#if defined(_DEBUG)&&defined(_USEFLTK)
-    #include <FL/Fl_Ask.H>
+#ifdef _WIN32
+#include <tchar.h>
+#else
+#include "tchar.h"
 #endif
 
-#include "stdunicode.h"
 #include "rawprocessor.h"
+#include "stdunicode.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,13 +31,17 @@ using namespace std;
     #define _TCW2M( _x_ )  _x_
 #endif
 
+#define DEF_MEMORY_LOADED   "//MEMORY_LOAD//"
 #define DEF_RAW_I_HEIGHT    1024
 #define DEF_PIXEL_WEIGHTS   65535
 
-#define DEF_CALC_F_WMAX     65536.0f
-#define DEF_CALC_I_WMAX     65536
-#define DEF_CALC_F_BMAX     256.0f
-#define DEF_CALC_I_BMAX     256
+#define DEF_PIXEL16_MAX     65536
+#define DEF_PIXEL8_MAX      256
+
+#define DEF_CALC_F_WMAX     65535.0f
+#define DEF_CALC_I_WMAX     65535
+#define DEF_CALC_F_BMAX     255.0f
+#define DEF_CALC_I_BMAX     255
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +67,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, int height )
 {
     if ( raw_file != NULL )
     {
-        Load( raw_file );
+        Load( raw_file, LMATRIX_NONE, height );
     }
 }
 
@@ -73,11 +79,10 @@ RAWProcessor::~RAWProcessor()
     }
 }
 
-bool RAWProcessor::Load( const char* raw_file, int height )
+bool RAWProcessor::Load( const TCHAR* raw_file, LoadingMatrix lmatrix, int height )
 {
     fstream rfstrm;
-    //string  fname = _TCW2M( raw_file );
-	string  fname = raw_file;
+    string  fname = _TCW2M( raw_file );
 
     rfstrm.open( fname.c_str(), fstream::app | fstream::binary | fstream::in );
 
@@ -88,12 +93,34 @@ bool RAWProcessor::Load( const char* raw_file, int height )
         rfstrm.seekg( 0, ios::beg );
         rfstrm.clear();
 
+        if ( fsize == 0 )
+        {
+            rfstrm.close();
+            raw_loaded = false;
+
+            return false;
+        }
+
         pixel_min_level = 0;
         pixel_med_level = 0;
         pixel_max_level = 0;
         img_height = height;
 
+        int pxlsz   = fsize / sizeof( unsigned short );
+        int blancsz = 0;
+
+        if (  pxlsz > 0 )
+        {
+            // Check omit pixels ...
+            if ( pxlsz < ( img_width * img_height ) )
+            {
+                blancsz = ( img_width * img_height ) - pxlsz;
+            }
+        }
+
         pixel_arrays.clear();
+        pixel_arrays.reserve( pxlsz + blancsz );
+
         resetWeights();
 
         // To save memory, it doesn't using direct load to memory.
@@ -127,29 +154,111 @@ bool RAWProcessor::Load( const char* raw_file, int height )
 
         analyse();
 
-        if ( pixel_arrays.size() > 0 )
+        if (  blancsz > 0 )
         {
-            raw_loaded = true;
+            for( int cnt=0; cnt<blancsz; cnt++ )
+            {
+                pixel_arrays.push_back( 0 );    /// Fill with Zero.
+            }
         }
+
+        raw_loaded = true;
+
+        ApplyMatrix( lmatrix );
 
         return raw_loaded;
     }
-#if defined(_DEBUG)&&defined(_USEFLTK)
-    fl_alert("DEBUG.ERROR: can not open : %s !!", fname.c_str() );
-#endif
+
     return false;
 }
 
-bool RAWProcessor::Reload( const char* raw_file, int height )
+bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, LoadingMatrix lmatrix, int height )
+{
+    if ( ( buffer != NULL ) && ( bufferlen > 0 ) )
+    {
+        pixel_min_level = 0;
+        pixel_med_level = 0;
+        pixel_max_level = 0;
+        img_height = height;
+
+        int pxlsz   = bufferlen / sizeof( unsigned short );
+        int blancsz = 0;
+
+        if (  pxlsz > 0 )
+        {
+            // Check omit pixels ...
+            if ( pxlsz < ( img_width * img_height ) )
+            {
+                blancsz = ( img_width * img_height ) - pxlsz;
+            }
+        }
+
+        pixel_arrays.clear();
+        pixel_arrays.reserve( pxlsz + blancsz );
+
+        resetWeights();
+
+        // To save memory, it doesn't using direct load to memory.
+        for(int cnt=0; cnt<bufferlen / sizeof(unsigned short); cnt++)
+        {
+            char           chardata[2] = {0};
+            unsigned short worddata = 0;
+
+            chardata[0] = buffer[cnt*2];
+            chardata[1] = buffer[cnt*2+1];
+            worddata = ( chardata[1] << 8 ) + ( chardata[0] & 0x00FF );
+            pixel_arrays.push_back( worddata );
+            pixel_weights[ worddata ] ++;
+
+            if ( worddata < pixel_min_level )
+            {
+                pixel_min_level = worddata;
+            }
+            else
+            if ( worddata > pixel_max_level )
+            {
+                pixel_max_level = worddata;
+                index_max_pixel = cnt;
+            }
+
+        }
+
+        pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
+
+        analyse();
+
+        if (  blancsz > 0 )
+        {
+            for( int cnt=0; cnt<blancsz; cnt++ )
+            {
+                pixel_arrays.push_back( 0 );    /// Fill with Zero.
+            }
+        }
+
+        raw_loaded = true;
+
+        ApplyMatrix( lmatrix );
+
+        raw_file_name = _TEXT(DEF_MEMORY_LOADED);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool RAWProcessor::Reload( const TCHAR* raw_file, LoadingMatrix lmatrix, int height )
 {
     Unload();
-    return Load( raw_file, height );
+    return Load( raw_file, lmatrix, height );
 }
 
 bool RAWProcessor::Reload()
 {
-    //return Reload( _TCM2W(raw_file_name.c_str()) );
-    return Reload( raw_file_name.c_str() );
+    if ( raw_file_name == _TEXT(DEF_MEMORY_LOADED) )
+        return false;
+
+    return Reload( _TCM2W(raw_file_name.c_str()) );
 }
 
 void RAWProcessor::Unload()
@@ -161,26 +270,111 @@ void RAWProcessor::Unload()
     pixel_weights.clear();
 }
 
+bool RAWProcessor::ApplyMatrix( LoadingMatrix lmatrix )
+{
+    // -----------------------------------------------------------
+    // Matrix shifting.
+
+    unsigned int lmatrixnm = (unsigned int)lmatrix;
+
+    if ( ( raw_loaded == true ) && ( lmatrixnm > 0 ) )
+    {
+        if ( ( lmatrixnm & LMATRIX_SWAP ) > 0 )
+        {
+            if ( ( lmatrixnm & LMATRIX_PARAM_SWAP_H ) > 0 )
+            {
+
+            }
+
+            if ( ( lmatrixnm & LMATRIX_PARAM_SWAP_V ) > 0 )
+            {
+
+            }
+        }
+
+        if ( ( lmatrixnm & LMATRIX_ROTATE ) > 0 )
+        {
+            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_C90 ) > 0 )
+            {
+
+            }
+            else
+            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_C180 ) > 0 )
+            {
+
+            }
+            else
+            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_C240 ) > 0 )
+            {
+
+            }
+            else
+            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_RC90 ) > 0 )
+            {
+
+            }
+            else
+            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_RC180 ) > 0 )
+            {
+
+            }
+            else
+            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_RC240 ) > 0 )
+            {
+
+            }
+        }
+    }
+
+    return false;
+}
+
 void RAWProcessor::SetUserScale( RAWUserScaleIF* ptr )
 {
     userscaler = ptr;
 }
 
-bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, DownscaleType dntype )
+void RAWProcessor::ChangeHeight( int h )
+{
+    if ( raw_loaded == false )
+        return;
+
+    if ( ( h > 0 ) && ( img_height != h ) )
+    {
+        img_height = h;
+        analyse();
+    }
+}
+
+bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, DownscaleType dntype, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
 
+    unsigned arrsz = pixel_arrays.size();
+
+    if ( arrsz == 0 )
+        return false;
+
     byte_arrays.clear();
+    byte_arrays.reserve( arrsz );
+
+    unsigned short* ref_pixel_arrays = pixel_arrays.data();
 
     if ( dntype == DNSCALE_NORMAL )
     {
         float dscale_ratio = DEF_CALC_F_BMAX / float( pixel_max_level );
 
-        for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
+        for( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
-            float fdspixel = float(pixel_arrays[cnt]) * dscale_ratio;
+            float fdspixel = float(ref_pixel_arrays[cnt]) * dscale_ratio;
             unsigned char dspixel = (unsigned char)fdspixel;
+
+            if ( reversed == true )
+            {
+                dspixel = DEF_PIXEL8_MAX - dspixel - 1;
+            }
+
             byte_arrays.push_back( dspixel );
         }
 
@@ -191,11 +385,17 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
         float uscale_ratio = DEF_CALC_F_WMAX / float( pixel_max_level );
         float dscale_ratio = DEF_CALC_F_BMAX / DEF_CALC_F_WMAX;
 
-        for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
+        for( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
-            float fuspixel = float(pixel_arrays[cnt]) * uscale_ratio;
+            float fuspixel = float(ref_pixel_arrays[cnt]) * uscale_ratio;
             float fdspixel = fuspixel * dscale_ratio;
             unsigned char dspixel = (unsigned char)fdspixel;
+
+            if ( reversed == true )
+            {
+                dspixel = DEF_PIXEL8_MAX - dspixel - 1;
+            }
+
             byte_arrays.push_back( dspixel );
         }
     }
@@ -208,13 +408,32 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> &word_arrays )
+bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> &word_arrays, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
 
+    unsigned arrsz = pixel_arrays.size();
+
+    if ( arrsz == 0 )
+        return false;
+
     word_arrays.clear();
-    word_arrays.assign( pixel_arrays.begin(), pixel_arrays.end() );
+    word_arrays.reserve( arrsz );
+
+    unsigned short* ref_pixel_arrays = pixel_arrays.data();
+
+    if ( reversed == true )
+    {
+        for ( int cnt=0; cnt<arrsz; cnt++ )
+        {
+            word_arrays.push_back( DEF_PIXEL_WEIGHTS - ref_pixel_arrays[cnt] );
+        }
+    }
+    else
+    {
+        word_arrays.assign( pixel_arrays.begin(), pixel_arrays.end() );
+    }
 
     return true;
 }
@@ -224,13 +443,19 @@ bool RAWProcessor::GetWeights( std::vector<int> &weight_arrays )
     if ( raw_loaded == false )
         return false;
 
+    int arrsz = pixel_weights.size();
+
+    if ( arrsz == 0 )
+        return false;
+
     weight_arrays.clear();
+    weight_arrays.reserve( arrsz );
     weight_arrays.assign( pixel_weights.begin(), pixel_weights.end() );
 
     return true;
 }
 
-bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
+bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero )
 {
     if ( pixel_weights.size() == 0 )
         return false;
@@ -241,8 +466,12 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
     report.timestamp = (unsigned long)time(&curtime);
 
     // # phase 02
-    // find highest value in pixels ... ( 20% of maximum level )
-    int identify_min_level = int( float(pixel_max_level) * 0.1f );
+    // find highest value in pixels ... ( 50% of maximum level )
+    int identify_min_level = int( float(pixel_max_level) * 0.2f );
+    if ( start_minlevel_zero == true )
+    {
+        identify_min_level = 0;
+    }
     int index_center_thld  = 0;
 
     for( int cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
@@ -281,9 +510,9 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
                 break;
             }
 
-            if ( curweight > report.htreshold_max_amount )
+            if ( curweight > report.threshold_max_amount )
             {
-                report.htreshold_max_amount = curweight;
+                report.threshold_max_amount = curweight;
             }
         }
 
@@ -303,9 +532,9 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
                 break;
             }
 
-            if ( curweight > report.htreshold_max_amount )
+            if ( curweight > report.threshold_max_amount )
             {
-                report.htreshold_max_amount = curweight;
+                report.threshold_max_amount = curweight;
             }
         }
     }
@@ -322,7 +551,7 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report )
     return true;
 }
 
-bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vector<unsigned short> &word_arrays )
+bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vector<unsigned short> &word_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -331,11 +560,13 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
     int thld_max = report.threshold_wide_max;
     int thld_wid = report.threshold_wide_max - report.threshold_wide_min;
 
-    float normf = DEF_PIXEL_WEIGHTS / float( thld_wid );
+    float normf = float( DEF_PIXEL_WEIGHTS ) / float( thld_wid );
 
     word_arrays.clear();
 
     int array_max = pixel_arrays.size();
+
+    word_arrays.reserve( array_max );
 
     for( int cnt=0; cnt<array_max; cnt++ )
     {
@@ -346,7 +577,7 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
         if ( apixel > thld_max )
         {
             //apixel = thld_max;
-            apixel = DEF_CALC_I_WMAX - 1;
+            apixel = DEF_CALC_F_WMAX;
         }
         else
         if ( apixel < thld_min )
@@ -361,13 +592,18 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
 
         apixel = (unsigned short)( fpixel );
 
+        if ( reversed == true )
+        {
+            apixel = DEF_PIXEL_WEIGHTS - apixel;
+        }
+
         word_arrays.push_back( apixel );
     }
 
     return true;
 }
 
-bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> &byte_arrays )
+bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> &byte_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -375,11 +611,13 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     int thld_min = report.threshold_wide_min;
     int thld_max = report.threshold_wide_max;
 
-    float normf  = DEF_CALC_F_BMAX / float( report.threshold_wide_max );
+    float normf  = float( DEF_CALC_F_BMAX ) / float( thld_max - thld_min );
 
     byte_arrays.clear();
 
     int array_max = pixel_arrays.size();
+
+    byte_arrays.reserve( array_max );
 
     for( int cnt=0; cnt<array_max; cnt++ )
     {
@@ -391,7 +629,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
         if ( apixel > thld_max )
         {
             //apixel = thld_max;
-            apixel = DEF_CALC_I_WMAX - 1;
+            apixel = DEF_CALC_F_WMAX;
         }
         else
         if ( apixel < thld_min )
@@ -406,11 +644,16 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
         if ( fpixel >= DEF_CALC_F_BMAX )
         {
             // if it overflows , set to 255.0f
-            bpixel = 255;
+            bpixel = DEF_PIXEL8_MAX - 1;
         }
         else
         {
             bpixel = (unsigned char)( fpixel );
+        }
+
+        if ( reversed == true )
+        {
+            bpixel = DEF_PIXEL8_MAX - bpixel - 1;
         }
 
         byte_arrays.push_back( bpixel );
@@ -453,13 +696,16 @@ void RAWProcessor::analyse()
         return;
 
     int pixel_counts = pixel_arrays.size();
-    img_width = pixel_counts / img_height;
+    if ( pixel_counts > 0 )
+    {
+        img_width = pixel_counts / img_height;
+    }
 }
 
 void RAWProcessor::resetWeights()
 {
     pixel_weights.clear();
-    pixel_weights.reserve(DEF_PIXEL_WEIGHTS);
+    pixel_weights.reserve( DEF_PIXEL_WEIGHTS );
 
     for (int cnt=0; cnt<DEF_PIXEL_WEIGHTS; cnt++)
     {

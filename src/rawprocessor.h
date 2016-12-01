@@ -4,7 +4,15 @@
 //
 //  16bit gray scale RAW image processor for stdc++ w/ FLTK
 //  =========================================================================
-//  (C)Copyright 2013, Raphael Kim
+//  (C)Copyright 2013, Raphael Kim (rageworx@gmail.com)
+//
+//  * Processing read pixels to down-scaling, threshold cutting.
+//
+//  _ updates _
+//
+//  2016-11-25 :
+//       - set vecotr reserved for allocating more faster !
+//       - some optimized code for accelerated by AVX instruction.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,13 +27,30 @@ typedef enum
     DNSCALE_MAX
 }DownscaleType;
 
+typedef enum
+{
+    LMATRIX_NONE            = 0x00000000,
+
+    LMATRIX_SWAP            = 0x00000010,
+    LMATRIX_PARAM_SWAP_H    = 0x00000002,
+    LMATRIX_PARAM_SWAP_V    = 0x00000004,
+
+    LMATRIX_ROTATE          = 0x00010000,
+    LMATRIX_PARAM_ROT_C90   = 0x00000200,
+    LMATRIX_PARAM_ROT_C180  = 0x00000400,
+    LMATRIX_PARAM_ROT_C240  = 0x00000800,
+    LMATRIX_PARAM_ROT_RC90  = 0x00002000,
+    LMATRIX_PARAM_ROT_RC180 = 0x00004000,
+    LMATRIX_PARAM_ROT_RC240 = 0x00008000,
+}LoadingMatrix;
+
 struct WeightAnalysisReport
 {
     unsigned long       timestamp;
     unsigned short      base_threshold_index;
     unsigned short      threshold_wide_min;
     unsigned short      threshold_wide_max;
-    unsigned int        htreshold_max_amount;
+    unsigned int        threshold_max_amount;
 };
 
 class RAWUserScaleIF
@@ -43,28 +68,31 @@ class RAWProcessor
         virtual~RAWProcessor();
 
     public:
-        bool            isLoaded()          { return raw_loaded; }
-        int             getPixelCount()     { return pixel_arrays.size(); }
-        unsigned short  getMinimumLevel()   { return pixel_min_level; }
-        unsigned short  getMaximumLevel()   { return pixel_max_level; }
-        unsigned short  getMediumLevel()    { return pixel_med_level; }
-        unsigned short* refPixelPointer()   { return pixel_arrays.data(); }
-        int             getWidth()          { return img_width; }
-        int             getHeight()         { return img_height; }
-        int             getWeightsCount()   { return pixel_weights.size(); }
+        bool isLoaded() { return raw_loaded; }
+        int  getPixelCount() { return pixel_arrays.size(); }
+        unsigned short getMinimumLevel() { return pixel_min_level; }
+        unsigned short getMaximumLevel() { return pixel_max_level; }
+        unsigned short getMediumLevel()  { return pixel_med_level; }
+        unsigned short* refPixelPointer() { return pixel_arrays.data(); }
+        int  getWidth() { return img_width; }
+        int  getHeight() { return img_height; }
+        int  getWeightsCount() { return pixel_weights.size(); }
 
     public:
-        bool Load( const char* raw_file, int height = 1024 );
-        bool Reload( const char* raw_file, int height = 1024 );
+        bool Load( const TCHAR* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
+        bool LoadFromMemory( const char* buffer, unsigned long bufferlen, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
+        bool Reload( const TCHAR* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
         bool Reload();
         void Unload();
+        bool ApplyMatrix( LoadingMatrix lmatrix = LMATRIX_NONE );
+        void ChangeHeight( int h );
         void SetUserScale( RAWUserScaleIF* ptr );
-        bool Get8bitDownscaled( std::vector<unsigned char> &byte_arrays, DownscaleType dntype = DNSCALE_NORMAL );
-        bool Get16bitRawImage( std::vector<unsigned short> &word_arrays );
+        bool Get8bitDownscaled( std::vector<unsigned char> &byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
+        bool Get16bitRawImage( std::vector<unsigned short> &word_arrays, bool reversed = false );
         bool GetWeights( std::vector<int> &weight_arrays );
-        bool GetAnalysisReport( WeightAnalysisReport &report );
-        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> &word_arrays );
-        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> &byte_arrays );
+        bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
+        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> &word_arrays, bool reversed = false );
+        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> &byte_arrays, bool reversed = false );
         bool Get16bitPixel( int x, int y, unsigned short &px );
 
     public:
@@ -83,6 +111,7 @@ class RAWProcessor
         unsigned short              pixel_max_level;
         unsigned short              pixel_med_level;
         unsigned short              index_max_pixel;
+        LoadingMatrix               current_lmatrix;
 #ifdef UNICODE
         std::wstring                raw_file_name;
 #else
