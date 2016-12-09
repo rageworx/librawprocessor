@@ -76,7 +76,7 @@ class RAWProcessor
         unsigned short* refPixelPointer() { return pixel_arrays.data(); }
         int  getWidth() { return img_width; }
         int  getHeight() { return img_height; }
-        int  getWeightsCount() { return pixel_weights.size(); }
+        int  getWeightsCount() { return pixel_weights_max; }
 
     public:
         bool Load( const TCHAR* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
@@ -89,10 +89,10 @@ class RAWProcessor
         void SetUserScale( RAWUserScaleIF* ptr );
         bool Get8bitDownscaled( std::vector<unsigned char> &byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool Get16bitRawImage( std::vector<unsigned short> &word_arrays, bool reversed = false );
-        bool GetWeights( std::vector<int> &weight_arrays );
+        bool GetWeights( std::vector<unsigned int> &weight_arrays );
         bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
-        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> &word_arrays, bool reversed = false );
-        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> &byte_arrays, bool reversed = false );
+        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> *word_arrays, bool reversed = false );
+        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> *byte_arrays, bool reversed = false );
         bool Get16bitPixel( int x, int y, unsigned short &px );
 
     public:
@@ -106,7 +106,8 @@ class RAWProcessor
     protected:
         bool                        raw_loaded;
         std::vector<unsigned short> pixel_arrays;
-        std::vector<int>            pixel_weights;
+        unsigned int*               pixel_weights;
+        unsigned short              pixel_weights_max;
         unsigned short              pixel_min_level;
         unsigned short              pixel_max_level;
         unsigned short              pixel_med_level;
