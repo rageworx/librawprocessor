@@ -57,7 +57,7 @@ class RAWUserScaleIF
 {
     public:
         virtual bool processUserScale( std::vector<unsigned short> &src,
-                                       std::vector<unsigned char> &dst ) = 0;
+                                       std::vector<unsigned char> *dst ) = 0;
 };
 
 class RAWProcessor
@@ -87,9 +87,9 @@ class RAWProcessor
         bool ApplyMatrix( LoadingMatrix lmatrix = LMATRIX_NONE );
         void ChangeHeight( int h );
         void SetUserScale( RAWUserScaleIF* ptr );
-        bool Get8bitDownscaled( std::vector<unsigned char> &byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
-        bool Get16bitRawImage( std::vector<unsigned short> &word_arrays, bool reversed = false );
-        bool GetWeights( std::vector<unsigned int> &weight_arrays );
+        bool Get8bitDownscaled( std::vector<unsigned char> *byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
+        bool Get16bitRawImage( std::vector<unsigned short> *word_arrays, bool reversed = false );
+        bool GetWeights( std::vector<unsigned int> *weight_arrays );
         bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
         bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> *word_arrays, bool reversed = false );
         bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> *byte_arrays, bool reversed = false );

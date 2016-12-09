@@ -172,14 +172,6 @@ bool RAWProcessor::Load( const TCHAR* raw_file, LoadingMatrix lmatrix, int heigh
 
         analyse();
 
-        if (  blancsz > 0 )
-        {
-            for( int cnt=0; cnt<blancsz; cnt++ )
-            {
-                //pixel_arrays.push_back( 0 );    /// Fill with Zero.
-            }
-        }
-
         raw_loaded = true;
 
         ApplyMatrix( lmatrix );
@@ -251,14 +243,6 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
         pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
 
         analyse();
-
-        if (  blancsz > 0 )
-        {
-            for( int cnt=0; cnt<blancsz; cnt++ )
-            {
-                //pixel_arrays.push_back( 0 );    /// Fill with Zero.
-            }
-        }
 
         raw_loaded = true;
 
@@ -372,7 +356,7 @@ void RAWProcessor::ChangeHeight( int h )
     }
 }
 
-bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, DownscaleType dntype, bool reversed )
+bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> *byte_arrays, DownscaleType dntype, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
@@ -382,9 +366,9 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
     if ( arrsz == 0 )
         return false;
 
-    byte_arrays.clear();
-    byte_arrays.reserve( arrsz );
-    byte_arrays.resize( arrsz );
+    byte_arrays->clear();
+    byte_arrays->reserve( arrsz );
+    byte_arrays->resize( arrsz );
 
     unsigned short* ref_pixel_arrays = pixel_arrays.data();
 
@@ -402,8 +386,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
                 dspixel = DEF_PIXEL8_MAX - dspixel - 1;
             }
 
-            //byte_arrays.push_back( dspixel );
-            byte_arrays[ cnt ] = dspixel;
+            byte_arrays->at( cnt ) = dspixel;
         }
 
     }
@@ -424,8 +407,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
                 dspixel = DEF_PIXEL8_MAX - dspixel - 1;
             }
 
-            //byte_arrays.push_back( dspixel );
-            byte_arrays[ cnt ] = dspixel;
+            byte_arrays->at( cnt ) = dspixel;
         }
     }
     else
@@ -437,7 +419,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> &byte_arrays, Downsc
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> &word_arrays, bool reversed )
+bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> *word_arrays, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
@@ -447,9 +429,9 @@ bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> &word_arrays, b
     if ( arrsz == 0 )
         return false;
 
-    word_arrays.clear();
-    word_arrays.reserve( arrsz );
-    word_arrays.resize( arrsz );
+    word_arrays->clear();
+    word_arrays->reserve( arrsz );
+    word_arrays->resize( arrsz );
 
     unsigned short* ref_pixel_arrays = pixel_arrays.data();
 
@@ -457,39 +439,36 @@ bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> &word_arrays, b
     {
         for ( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
-            //word_arrays.push_back( DEF_PIXEL_WEIGHTS - ref_pixel_arrays[cnt] );
-            word_arrays[ cnt ] = DEF_PIXEL_WEIGHTS - ref_pixel_arrays[cnt];
+            word_arrays->at( cnt ) = DEF_PIXEL_WEIGHTS - ref_pixel_arrays[cnt];
         }
     }
     else
     {
-        //word_arrays.assign( pixel_arrays.begin(), pixel_arrays.end() );
-        std::copy( pixel_arrays.begin(), pixel_arrays.end(), word_arrays.begin() );
+        std::copy( pixel_arrays.begin(), pixel_arrays.end(), word_arrays->begin() );
     }
 
     return true;
 }
 
-bool RAWProcessor::GetWeights( std::vector<unsigned int> &weight_arrays )
+bool RAWProcessor::GetWeights( std::vector<unsigned int> *weight_arrays )
 {
     if ( raw_loaded == false )
         return false;
 
-    //int arrsz = pixel_weights.size();
     int arrsz = pixel_weights_max;
 
     if ( arrsz == 0 )
         return false;
 
-    weight_arrays.clear();
-    weight_arrays.reserve( arrsz );
-    weight_arrays.resize( arrsz );
+    weight_arrays->clear();
+    weight_arrays->reserve( arrsz );
+    weight_arrays->resize( arrsz );
 
     //weight_arrays.assign( pixel_weights.begin(), pixel_weights.end() );
     //std::copy( pixel_weights.begin(), pixel_weights.end(), weight_arrays.begin() );
     for( int cnt=0; cnt<arrsz; cnt++ )
     {
-        weight_arrays[cnt] = pixel_weights[cnt];
+        weight_arrays->at( cnt ) = pixel_weights[cnt];
     }
 
     return true;
