@@ -2,9 +2,9 @@
 #define __RAWPROCESSOR_H__
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  16bit gray scale RAW image processor for stdc++ w/ FLTK
+//  16bit gray scale RAW image processor for stdc++ w/ FLTK or other Graphics.
 //  =========================================================================
-//  (C)Copyright 2013, Raphael Kim (rageworx@gmail.com)
+//  (C)Copyright 2013~, Raphael Kim (rageworx@gmail.com)
 //
 //  * Processing read pixels to down-scaling, threshold cutting.
 //

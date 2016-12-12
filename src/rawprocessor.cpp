@@ -2,14 +2,19 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
+#include <cstring>
 #include <list>
 #include <iostream>
 #include <fstream>
 
-#ifdef _WIN32
-#include <tchar.h>
+#ifdef RAWPROCESSOR_USE_LOCALTCHAR
+	#include "tchar.h"
 #else
-#include "tchar.h"
+	#ifdef _WIN32
+		#include <tchar.h>
+	#else
+		#include "tchar.h"
+	#endif
 #endif
 
 #include "rawprocessor.h"

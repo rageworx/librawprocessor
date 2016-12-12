@@ -1,4 +1,4 @@
-#ifndef _WIN32
+#ifdef RAWPROCESSOR_USE_LOCALTCHAR
 /*
  * tchar.h
  * This file has no copyright assigned and is placed in the Public Domain.
@@ -24,7 +24,9 @@
 #define _TCHAR_H_
 
 /* All the headers include this file. */
-#include <_mingw.h>
+#ifdef __MINGW__
+	#include <_mingw.h>
+#endif
 
 /*
  * NOTE: This tests _UNICODE, which is different from the UNICODE define
@@ -482,4 +484,4 @@ typedef char	_TCHAR;
 #define	_T(x)		__TEXT(x)
 
 #endif	/* Not _TCHAR_H_ */
-#endif /// of not _WIN32
+#endif  /* RAWPROCESSOR_USE_LOCALTCHAR */
