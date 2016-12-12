@@ -20,4 +20,4 @@ Reading 12 to 14bit RAW image and make its threshold cut-off image into 8bit ano
     This library designed for medical raws.
 
 ### Usage ###
- 1. [See wiki page](wiki)
+ 1. [See wiki page](https://github.com/rageworx/librawprocessor/wiki)
