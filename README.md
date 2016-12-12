@@ -67,14 +67,14 @@ Reading 12 to 14bit RAW image and make its threshold cut-off image into 8bit ano
 		}
 	}
 ~~~~
- 1. Extract raw image to thresholded 8 bit pixels with not reversed levels.
+ 1. Extract raw image to thresholded (as 0 to 1204) 8 bit pixels with not reversed levels.
 ~~~~
 	WeightAnalysisReport wreport;
     vector<unsigned char> downscaled;
 
     wreport.timestamp = GetTickCount(); /// it doesn't need but doing for debug.
-    wreport.threshold_wide_min = cfg->imgv_tomo_level_min();
-    wreport.threshold_wide_max = cfg->imgv_tomo_level_max();
+    wreport.threshold_wide_min = 0;
+    wreport.threshold_wide_max = 1204;
 
     rawproc->Get8bitThresholdedImage( wreport, &downscaled, false );
 ~~~~
