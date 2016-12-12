@@ -78,3 +78,32 @@ Reading 12 to 14bit RAW image and make its threshold cut-off image into 8bit ano
 
     rawproc->Get8bitThresholdedImage( wreport, &downscaled, false );
 ~~~~
+ 1. And you can make a Fl_RGB_Image from downscaled vector.
+~~~~
+	unsigned char* downscaled_raw_buffer = NULL;
+	Fl_RGB_Image* newImg = NULL;
+	int imgSize = downscaled.size();
+
+	if ( imgSize > 0 )
+	{
+		downscaled_raw_buffer = new unsigned char[ imgSize * 3 ];
+
+		if ( downscaled_raw_buffer != NULL )
+		{
+			for( int cnt=0; cnt<imgSize; cnt++ )
+			{
+				unsigned char* refPixel = &downscaled_raw_buffer[cnt * 3];
+
+				refPixel[0] = downscaled[cnt];
+				refPixel[1] = downscaled[cnt];
+				refPixel[2] = downscaled[cnt];
+			}
+
+			newImg = new Fl_RGB_Image( downscaled_raw_buffer,
+                                       rawproc->getWidth(),
+                                       rawproc->getHeight(),
+                                       3 );
+			downscaled.clear();
+		}
+	}
+~~~~
