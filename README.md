@@ -30,7 +30,7 @@
 
 ### Reserved to be included ###
 * Brightness control.
-* Filtered resize method, supports BiLinear/BiCubic/Lanczos3
+* Filtered resize method, supports BiLinear/BiCubic/BSpline/Lanczos3
 
 ### Usage & Help ###
  1. [See wiki page](https://github.com/rageworx/librawprocessor/wiki)
