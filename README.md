@@ -17,6 +17,7 @@
 
 ### Latest update ###
 * Included RAW image filtered scaling.
+* Rescale method supports these: BiLinear/BiCubic/BSpline/Lanczos3
 * Source refer to Free Image Project (http://freeimage.sourceforge.net/)
 
 ### Previous updates ###
@@ -30,7 +31,6 @@
 
 ### Reserved to be included ###
 * Brightness control.
-* Filtered resize method, supports BiLinear/BiCubic/BSpline/Lanczos3
 
 ### Usage & Help ###
  1. [See wiki page](https://github.com/rageworx/librawprocessor/wiki)
