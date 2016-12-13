@@ -79,9 +79,11 @@ class RAWProcessor
         int  getWeightsCount() { return pixel_weights_max; }
 
     public:
-        bool Load( const TCHAR* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
+        bool Load( const char* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
+        bool Load( const wchar_t* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
-        bool Reload( const TCHAR* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
+        bool Reload( const char* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
+        bool Reload( const wchar_t* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 1504 );
         bool Reload();
         void Unload();
         bool ApplyMatrix( LoadingMatrix lmatrix = LMATRIX_NONE );

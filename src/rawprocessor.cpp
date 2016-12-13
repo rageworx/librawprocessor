@@ -95,10 +95,17 @@ RAWProcessor::~RAWProcessor()
     }
 }
 
-bool RAWProcessor::Load( const TCHAR* raw_file, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::Load( const wchar_t* raw_file, LoadingMatrix lmatrix, int height )
+{
+    string fname = convertW2M( raw_file );
+
+    return Load( fname.c_str(), lmatrix, height );
+}
+
+bool RAWProcessor::Load( const char* raw_file, LoadingMatrix lmatrix, int height )
 {
     fstream rfstrm;
-    string  fname = _TCW2M( raw_file );
+    string  fname = raw_file;
 
     rfstrm.open( fname.c_str(), fstream::app | fstream::binary | fstream::in );
 
@@ -261,7 +268,12 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
     return false;
 }
 
-bool RAWProcessor::Reload( const TCHAR* raw_file, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::Reload( const wchar_t* raw_file, LoadingMatrix lmatrix, int height )
+{
+    return Load( raw_file, lmatrix, height );
+}
+
+bool RAWProcessor::Reload( const char* raw_file, LoadingMatrix lmatrix, int height )
 {
     return Load( raw_file, lmatrix, height );
 }
@@ -496,7 +508,8 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
     {
         identify_min_level = 0;
     }
-    int index_center_thld  = 0;
+
+    unsigned index_center_thld  = 0;
 
     for( int cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
     {
