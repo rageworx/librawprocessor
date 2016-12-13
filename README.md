@@ -1,7 +1,7 @@
 # librawprocessor #
-* A library for 16bit Gray scaled RAW image processor in GCC w/ FLTK 1.3.x, or any different system.
+* A library for 16bit Gray scaled RAW image processor in GCC for any different system.
 * This library is designed for GCC(MinGW) with FLTK 1.3.3 or 1.3.4.
-* Reading 12 to 14bit RAW image and make its threshold cut-off image into 8bit another RAW image.
+* Reading 12 to 16bit RAW image and make its threshold cut-off image into 8bit another RAW image.
 
 ### This library supports these functions. ###
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
@@ -30,7 +30,7 @@
 
 ### Reserved to be included ###
 * Brightness control.
-* Filtered resize method, supports BiLinear/BiCubic/Lanzcos3
+* Filtered resize method, supports BiLinear/BiCubic/Lanczos3
 
 ### Usage & Help ###
  1. [See wiki page](https://github.com/rageworx/librawprocessor/wiki)
