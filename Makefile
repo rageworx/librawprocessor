@@ -32,10 +32,13 @@ prepare:
 ${OBJDIR}/stdunicode.o:
 	$(GPP) -c ${SOURCEDIR}/stdunicode.cpp ${CFLAGS} -o $@
 
+${OBJDIR}/rawscale.o:
+	$(GPP) -c ${SOURCEDIR}/rawscale.cpp ${CFLAGS} -o $@
+
 ${OBJDIR}/rawprocessor.o:
 	$(GPP) -c ${SOURCEDIR}/rawprocessor.cpp ${CFLAGS} -o $@
 
-${OUTDIR}/${OUTBIN}: ${OBJDIR}/stdunicode.o ${OBJDIR}/rawprocessor.o
+${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o ${OBJDIR}/stdunicode.o ${OBJDIR}/rawprocessor.o
 	$(AR) -q $@ ${OBJDIR}/*.o
 
 clean:
