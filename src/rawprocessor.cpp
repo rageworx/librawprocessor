@@ -18,6 +18,7 @@
 #endif
 
 #include "rawprocessor.h"
+#include "rawscale.h"
 #include "stdunicode.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -97,6 +98,9 @@ RAWProcessor::~RAWProcessor()
 
 bool RAWProcessor::Load( const wchar_t* raw_file, LoadingMatrix lmatrix, int height )
 {
+    if ( height <= 0 )
+        return false;
+
     string fname = convertW2M( raw_file );
 
     return Load( fname.c_str(), lmatrix, height );
@@ -104,6 +108,9 @@ bool RAWProcessor::Load( const wchar_t* raw_file, LoadingMatrix lmatrix, int hei
 
 bool RAWProcessor::Load( const char* raw_file, LoadingMatrix lmatrix, int height )
 {
+    if ( height <= 0 )
+        return false;
+
     fstream rfstrm;
     string  fname = raw_file;
 
@@ -196,6 +203,9 @@ bool RAWProcessor::Load( const char* raw_file, LoadingMatrix lmatrix, int height
 
 bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, LoadingMatrix lmatrix, int height )
 {
+    if ( height <= 0 )
+        return false;
+
     if ( ( buffer != NULL ) && ( bufferlen > 0 ) )
     {
         pixel_min_level = 0;
@@ -716,6 +726,66 @@ bool RAWProcessor::Get16bitPixel( int x, int y, unsigned short &px )
     px = pixel_arrays[ pixpos ];
 
     return true;
+}
+
+RAWProcessor* RAWProcessor::rescale( int w, int h, ScaleType st )
+{
+    if ( ( pixel_arrays.size() > 0 ) && ( w > 0 ) && ( h > 0 ) )
+    {
+        RAWGenericFilter* afilter = NULL;
+
+        switch( st )
+        {
+            default:
+            case SCALE_NEAREST:
+                afilter = new RAWBoxFilter();
+                break;
+
+            case SCALE_BILINEAR:
+                afilter = new RAWBilinearFilter();
+                break;
+
+            case SCALE_BICUBIC:
+                afilter = new RAWBicubicFilter();
+                break;
+
+            case SCALE_BSPLINE:
+                afilter = new RAWBSplineFilter();
+                break;
+
+            case SCALE_LANZCOS3:
+                afilter = new RAWLanczos3Filter();
+                break;
+        }
+
+        if ( afilter != NULL )
+        {
+            RAWResizeEngine rawrse( afilter );
+
+            const unsigned short* refsrc = pixel_arrays.data();
+            unsigned short* dst = NULL;
+            unsigned long retsz = rawrse.scale( refsrc, img_width, img_height, w, h, &dst );
+            delete afilter;
+
+            if ( retsz > 0 )
+            {
+                RAWProcessor* newme = new RAWProcessor();
+                if ( newme != NULL )
+                {
+                    bool retb = newme->LoadFromMemory( (const char*)dst, retsz,
+                                                       current_lmatrix, h );
+                    if ( retb == true )
+                    {
+                        return newme;
+                    }
+
+                    delete newme;
+                }
+            }
+        }
+    }
+
+    return NULL;
 }
 
 const unsigned long RAWProcessor::datasize()

@@ -16,9 +16,11 @@
     Emboded to other component, Fl_ImageViewer (for other project)
 
 ### Latest update ###
-* Removed class methods not handles TCHAR casting.
+* Included RAW image filtered scaling.
+* Source refer to Free Image Project (http://freeimage.sourceforge.net/)
 
 ### Previous updates ###
+* Removed class methods not handles TCHAR casting.
 * Compatible with 64bit gcc compilers.
 * Some array struct enhanced for be optimized with AVX SIMD.</br>
   It may easily enhanced by compiler optimized option as like:
