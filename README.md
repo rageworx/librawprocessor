@@ -20,11 +20,10 @@
 
 ### Previous updates ###
 * Compatible with 64bit gcc compilers.
-* Some array struct enhanced for be optimized with AVX SIMD.
+* Some array struct enhanced for be optimized with AVX SIMD.</br>
   It may easily enhanced by compiler optimized option as like:
   ````
-  -mavx
-  -march=core-i7avx
+  -mavx (or) -march=core-i7avx
   ````
 
 ### Reserved to be included ###
