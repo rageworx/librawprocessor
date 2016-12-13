@@ -728,7 +728,7 @@ bool RAWProcessor::Get16bitPixel( int x, int y, unsigned short &px )
     return true;
 }
 
-RAWProcessor* RAWProcessor::rescale( int w, int h, ScaleType st )
+RAWProcessor* RAWProcessor::rescale( int w, int h, RescaleType st )
 {
     if ( ( pixel_arrays.size() > 0 ) && ( w > 0 ) && ( h > 0 ) )
     {
@@ -737,23 +737,23 @@ RAWProcessor* RAWProcessor::rescale( int w, int h, ScaleType st )
         switch( st )
         {
             default:
-            case SCALE_NEAREST:
+            case RESCALE_NEAREST:
                 afilter = new RAWBoxFilter();
                 break;
 
-            case SCALE_BILINEAR:
+            case RESCALE_BILINEAR:
                 afilter = new RAWBilinearFilter();
                 break;
 
-            case SCALE_BICUBIC:
+            case RESCALE_BICUBIC:
                 afilter = new RAWBicubicFilter();
                 break;
 
-            case SCALE_BSPLINE:
+            case RESCALE_BSPLINE:
                 afilter = new RAWBSplineFilter();
                 break;
 
-            case SCALE_LANZCOS3:
+            case RESCALE_LANZCOS3:
                 afilter = new RAWLanczos3Filter();
                 break;
         }

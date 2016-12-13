@@ -44,12 +44,12 @@ class RAWProcessor
 
         typedef enum
         {
-            SCALE_NEAREST = 0,      /// == BOX
-            SCALE_BILINEAR,
-            SCALE_BICUBIC,
-            SCALE_BSPLINE,
-            SCALE_LANZCOS3
-        }ScaleType;
+            RESCALE_NEAREST = 0,      /// == BOX
+            RESCALE_BILINEAR,
+            RESCALE_BICUBIC,
+            RESCALE_BSPLINE,
+            RESCALE_LANZCOS3
+        }RescaleType;
 
         typedef enum
         {
@@ -114,7 +114,7 @@ class RAWProcessor
         bool Get16bitPixel( int x, int y, unsigned short &px );
 
     public:
-        RAWProcessor* rescale( int w, int h, ScaleType st = SCALE_NEAREST );
+        RAWProcessor* rescale( int w, int h, RescaleType st = RESCALE_NEAREST );
 
     public:
         const unsigned long         datasize();
