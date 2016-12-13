@@ -222,6 +222,7 @@ bin/
 obj/
 out/
 lib/
+lib64/
 *.depend
 *.layout
 *.a
