@@ -51,22 +51,19 @@ class RAWProcessor
             RESCALE_LANZCOS3
         }RescaleType;
 
-        typedef enum
-        {
-            LMATRIX_NONE            = 0x00000000,
+        #define TRANSFORM_NONE              0x00000000
 
-            LMATRIX_SWAP            = 0x00000010,
-            LMATRIX_PARAM_SWAP_H    = 0x00000002,
-            LMATRIX_PARAM_SWAP_V    = 0x00000004,
+        #define TRANSFORM_SWAP              0x00000010
+        #define TRANSFORM_PARAM_SWAP_H      0x00000002
+        #define TRANSFORM_PARAM_SWAP_V      0x00000004
 
-            LMATRIX_ROTATE          = 0x00010000,
-            LMATRIX_PARAM_ROT_C90   = 0x00000200,
-            LMATRIX_PARAM_ROT_C180  = 0x00000400,
-            LMATRIX_PARAM_ROT_C240  = 0x00000800,
-            LMATRIX_PARAM_ROT_RC90  = 0x00002000,
-            LMATRIX_PARAM_ROT_RC180 = 0x00004000,
-            LMATRIX_PARAM_ROT_RC240 = 0x00008000,
-        }LoadingMatrix;
+        #define TRANSFORM_ROTATE            0x00010000
+        #define TRANSFORM_PARAM_ROT_C90     0x00000200
+        #define TRANSFORM_PARAM_ROT_C180    0x00000400
+        #define TRANSFORM_PARAM_ROT_C270    0x00000800
+        #define TRANSFORM_PARAM_ROT_RC90    0x00002000
+        #define TRANSFORM_PARAM_ROT_RC180   0x00004000
+        #define TRANSFORM_PARAM_ROT_RC270   0x00008000
 
     public:
         struct WeightAnalysisReport
@@ -95,16 +92,17 @@ class RAWProcessor
         int  getWeightsCount() { return pixel_weights_max; }
 
     public:
-        bool Load( const char* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 0 );
-        bool Load( const wchar_t* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 0 );
-        bool LoadFromMemory( const char* buffer, unsigned long bufferlen, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 0 );
-        bool Reload( const char* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 0 );
-        bool Reload( const wchar_t* raw_file, LoadingMatrix lmatrix = LMATRIX_NONE, int height = 0 );
+        bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
+        bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
+        bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
+        bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
+        bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
         bool Reload();
         void Unload();
-        bool ApplyMatrix( LoadingMatrix lmatrix = LMATRIX_NONE );
+        bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
         void ChangeHeight( int h );
         void SetUserScale( RAWUserScaleIF* ptr );
+        bool Reverse( unsigned char maxbits = 16 );
         bool Get8bitDownscaled( std::vector<unsigned char> *byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool Get16bitRawImage( std::vector<unsigned short> *word_arrays, bool reversed = false );
         bool GetWeights( std::vector<unsigned int> *weight_arrays );
@@ -133,7 +131,7 @@ class RAWProcessor
         unsigned short              pixel_max_level;
         unsigned short              pixel_med_level;
         unsigned short              index_max_pixel;
-        LoadingMatrix               current_lmatrix;
+        unsigned int                current_transform;
 #ifdef UNICODE
         std::wstring                raw_file_name;
 #else

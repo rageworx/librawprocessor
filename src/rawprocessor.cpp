@@ -19,6 +19,7 @@
 
 #include "rawprocessor.h"
 #include "rawscale.h"
+#include "rawimgtk.h"
 #include "stdunicode.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +82,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, int height )
 
     if ( raw_file != NULL )
     {
-        Load( raw_file, LMATRIX_NONE, height );
+        Load( raw_file, TRANSFORM_NONE, height );
     }
 }
 
@@ -96,17 +97,17 @@ RAWProcessor::~RAWProcessor()
     }
 }
 
-bool RAWProcessor::Load( const wchar_t* raw_file, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, int height )
 {
     if ( height <= 0 )
         return false;
 
     string fname = convertW2M( raw_file );
 
-    return Load( fname.c_str(), lmatrix, height );
+    return Load( fname.c_str(), trnsfm, height );
 }
 
-bool RAWProcessor::Load( const char* raw_file, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, int height )
 {
     if ( height <= 0 )
         return false;
@@ -193,7 +194,7 @@ bool RAWProcessor::Load( const char* raw_file, LoadingMatrix lmatrix, int height
 
         raw_loaded = true;
 
-        ApplyMatrix( lmatrix );
+        ApplyTransform( trnsfm );
 
         return raw_loaded;
     }
@@ -201,7 +202,7 @@ bool RAWProcessor::Load( const char* raw_file, LoadingMatrix lmatrix, int height
     return false;
 }
 
-bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm, int height )
 {
     if ( height <= 0 )
         return false;
@@ -268,7 +269,7 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
 
         raw_loaded = true;
 
-        ApplyMatrix( lmatrix );
+        ApplyTransform( trnsfm );
 
         raw_file_name = _TEXT(DEF_MEMORY_LOADED);
 
@@ -278,14 +279,14 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
     return false;
 }
 
-bool RAWProcessor::Reload( const wchar_t* raw_file, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, int height )
 {
-    return Load( raw_file, lmatrix, height );
+    return Load( raw_file, trnsfm, height );
 }
 
-bool RAWProcessor::Reload( const char* raw_file, LoadingMatrix lmatrix, int height )
+bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, int height )
 {
-    return Load( raw_file, lmatrix, height );
+    return Load( raw_file, trnsfm, height );
 }
 
 bool RAWProcessor::Reload()
@@ -307,60 +308,65 @@ void RAWProcessor::Unload()
     resetWeights();
 }
 
-bool RAWProcessor::ApplyMatrix( LoadingMatrix lmatrix )
+bool RAWProcessor::ApplyTransform( unsigned int trnsfm )
 {
-    // -----------------------------------------------------------
-    // Matrix shifting.
-
-    unsigned int lmatrixnm = (unsigned int)lmatrix;
-
-    if ( ( raw_loaded == true ) && ( lmatrixnm > 0 ) )
+    if ( ( raw_loaded == true ) && ( trnsfm > 0 ) )
     {
-        if ( ( lmatrixnm & LMATRIX_SWAP ) > 0 )
-        {
-            if ( ( lmatrixnm & LMATRIX_PARAM_SWAP_H ) > 0 )
-            {
+        bool retb = false;
+        unsigned short* ptrd = pixel_arrays.data();
 
+        if ( ( trnsfm & TRANSFORM_SWAP ) > 0 )
+        {
+            if ( ( trnsfm & TRANSFORM_PARAM_SWAP_H ) > 0 )
+            {
+                retb = RAWImageToolKit::FlipHorizontal( ptrd, img_width, img_height );
             }
 
-            if ( ( lmatrixnm & LMATRIX_PARAM_SWAP_V ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_SWAP_V ) > 0 )
             {
-
+                retb = RAWImageToolKit::FlipVertical( ptrd, img_width, img_height );
             }
         }
 
-        if ( ( lmatrixnm & LMATRIX_ROTATE ) > 0 )
+        if ( ( trnsfm & TRANSFORM_ROTATE ) > 0 )
         {
-            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_C90 ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_ROT_C90 ) > 0 )
             {
-
+                retb = RAWImageToolKit::Rotate90( ptrd, &img_width, &img_height );
             }
             else
-            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_C180 ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_ROT_C180 ) > 0 )
             {
-
+                retb = RAWImageToolKit::Rotate180( ptrd, &img_width, &img_height );
             }
             else
-            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_C240 ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_ROT_C270 ) > 0 )
             {
-
+                retb = RAWImageToolKit::Rotate270( ptrd, &img_width, &img_height );
             }
             else
-            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_RC90 ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_ROT_RC90 ) > 0 )
             {
-
+                retb = RAWImageToolKit::Rotate270( ptrd, &img_width, &img_height );
             }
             else
-            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_RC180 ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_ROT_RC180 ) > 0 )
             {
-
+                retb = RAWImageToolKit::Rotate180( ptrd, &img_width, &img_height );
             }
             else
-            if ( ( lmatrixnm & LMATRIX_PARAM_ROT_RC240 ) > 0 )
+            if ( ( trnsfm & TRANSFORM_PARAM_ROT_RC270 ) > 0 )
             {
-
+                retb = RAWImageToolKit::Rotate90( ptrd, &img_width, &img_height );
             }
         }
+
+        if ( retb == true )
+        {
+            current_transform = trnsfm;
+        }
+
+        return retb;
     }
 
     return false;
@@ -369,6 +375,23 @@ bool RAWProcessor::ApplyMatrix( LoadingMatrix lmatrix )
 void RAWProcessor::SetUserScale( RAWUserScaleIF* ptr )
 {
     userscaler = ptr;
+}
+
+bool RAWProcessor::Reverse( unsigned char maxbits )
+{
+    if ( maxbits < 8 )
+        return false;
+
+    unsigned short maxval = pow( 2, maxbits );
+
+    unsigned dlen = pixel_arrays.size();
+
+    for( unsigned cnt=0; cnt<dlen; cnt++ )
+    {
+        pixel_arrays[ cnt ] = maxval - pixel_arrays[ cnt ];
+    }
+
+    return true;
 }
 
 void RAWProcessor::ChangeHeight( int h )
@@ -773,7 +796,7 @@ RAWProcessor* RAWProcessor::rescale( int w, int h, RescaleType st )
                 if ( newme != NULL )
                 {
                     bool retb = newme->LoadFromMemory( (const char*)dst, retsz,
-                                                       current_lmatrix, h );
+                                                       current_transform, h );
                     if ( retb == true )
                     {
                         return newme;

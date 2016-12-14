@@ -70,8 +70,12 @@
 				</Linker>
 			</Target>
 		</Build>
+		<Unit filename="src/rawimgtk.cpp" />
+		<Unit filename="src/rawimgtk.h" />
 		<Unit filename="src/rawprocessor.cpp" />
 		<Unit filename="src/rawprocessor.h" />
+		<Unit filename="src/rawscale.cpp" />
+		<Unit filename="src/rawscale.h" />
 		<Unit filename="src/stdunicode.cpp" />
 		<Unit filename="src/stdunicode.h" />
 		<Extensions>
