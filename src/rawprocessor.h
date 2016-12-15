@@ -125,6 +125,7 @@ class RAWProcessor
     protected:
         bool                        raw_loaded;
         std::vector<unsigned short> pixel_arrays;
+        unsigned long               pixel_arrays_realsz;
         unsigned int*               pixel_weights;
         unsigned short              pixel_weights_max;
         unsigned short              pixel_min_level;

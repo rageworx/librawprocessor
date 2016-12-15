@@ -58,9 +58,10 @@ RAWProcessor::RAWProcessor()
  : raw_loaded(false),
    pixel_min_level(0),
    pixel_max_level(0),
+   pixel_arrays_realsz( 0 ),
    pixel_weights( NULL ),
    pixel_weights_max( 0 ),
-   img_height(DEF_RAW_I_HEIGHT),
+   img_height(0),
    img_width(0),
    userscaler(NULL)
 {
@@ -142,6 +143,9 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, int height )
 
         if (  pxlsz > 0 )
         {
+            // set temporary width ...
+            img_width = pixel_arrays_realsz / img_height;
+
             // Check omit pixels ...
             if ( pxlsz < ( img_width * img_height ) )
             {
@@ -149,9 +153,10 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, int height )
             }
         }
 
+        pixel_arrays_realsz = pxlsz + blancsz;
         pixel_arrays.clear();
-        pixel_arrays.reserve( pxlsz + blancsz );
-        pixel_arrays.resize( pxlsz + blancsz );
+        pixel_arrays.reserve( pixel_arrays_realsz );
+        pixel_arrays.resize( pixel_arrays_realsz );
 
         resetWeights();
 
@@ -219,6 +224,9 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
 
         if (  pxlsz > 0 )
         {
+            // set temporary width ...
+            img_width = pixel_arrays_realsz / img_height;
+
             // Check omit pixels ...
             if ( pxlsz < ( img_width * img_height ) )
             {
@@ -226,9 +234,11 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
             }
         }
 
+        pixel_arrays_realsz = pxlsz + blancsz;
+
         pixel_arrays.clear();
-        pixel_arrays.reserve( pxlsz + blancsz );
-        pixel_arrays.resize( pxlsz + blancsz );
+        pixel_arrays.reserve( pixel_arrays_realsz );
+        pixel_arrays.resize( pixel_arrays_realsz );
 
         resetWeights();
 
@@ -305,6 +315,11 @@ void RAWProcessor::Unload()
     }
 
     pixel_arrays.clear();
+    pixel_arrays.reserve( 0 );
+    pixel_arrays.resize( 0 );
+
+    pixel_arrays_realsz = 0;
+
     resetWeights();
 }
 
@@ -813,7 +828,8 @@ RAWProcessor* RAWProcessor::rescale( int w, int h, RescaleType st )
 
 const unsigned long RAWProcessor::datasize()
 {
-    return pixel_arrays.size();
+    //return pixel_arrays.size();
+    return pixel_arrays_realsz;
 }
 
 const unsigned short* RAWProcessor::data()
@@ -826,13 +842,16 @@ const unsigned short* RAWProcessor::data()
 
 void RAWProcessor::analyse()
 {
-    if ( pixel_arrays.size() == 0 )
+    //if ( pixel_arrays.size() == 0 )
+    if ( pixel_arrays_realsz == 0 )
         return;
 
-    int pixel_counts = pixel_arrays.size();
-    if ( pixel_counts > 0 )
+    //int pixel_counts = pixel_arrays.size();
+    //if ( pixel_counts > 0 )
+    if ( pixel_arrays_realsz > 0 )
     {
-        img_width = pixel_counts / img_height;
+        //img_width = pixel_counts / img_height;
+        img_width = pixel_arrays_realsz / img_height;
     }
 }
 
