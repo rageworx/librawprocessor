@@ -3,9 +3,22 @@
 #include <cstdlib>
 #endif // DEBUG
 #include <cstring>
+#include <math.h>
 #include "rawimgtk.h"
 
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef MIN
+    #define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
+#ifndef MAX
+    #define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
+
 #define RAWImageToolKitSwapUS( _a_, _b_ )   unsigned short t=_a_; _a_=_b_; _b_=t;
+
+////////////////////////////////////////////////////////////////////////////////
 
 bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, int w, int h )
 {
@@ -177,4 +190,78 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, int* w, int* h )
     }
 
     return false;
+}
+
+bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT, unsigned LUTsz )
+{
+    if ( ( ptr == NULL ) || ( arraysz == 0 ) || ( LUT == NULL ) || ( LUTsz < 65535 ) )
+        return false;
+
+    for( unsigned cnt=0; cnt<arraysz; cnt++ )
+    {
+        ptr[ cnt ] = LUT[ ptr[cnt] ];
+    }
+
+    return true;
+}
+
+bool RAWImageToolKit::ApplyGamma( unsigned short* ptr, unsigned arraysz, double gamma )
+{
+    if ( ( ptr == NULL ) || ( arraysz == 0 ) )
+        return false;
+
+    unsigned short LUT[65536] = {0};
+
+    double expn = 1.0 / gamma;
+    double newv = 65535.0 * (double)pow((double)65535, -expn );
+
+    for( unsigned cnt=0; cnt<arraysz; cnt++ )
+    {
+        double newlvl = (double)pow((double)cnt, expn) * newv;
+        if( newlvl > 65535.0 )
+        {
+            newlvl = 65535;
+        }
+        LUT[ cnt ] = (unsigned short)floor( newlvl + 0.5 );
+    }
+
+    return AdjustCurve( ptr, arraysz, LUT, 65535 );
+}
+
+bool RAWImageToolKit::AdjustBrightness( unsigned short* ptr, unsigned arraysz, double perc )
+{
+    if ( ( ptr == NULL ) || ( arraysz == 0 ) )
+        return false;
+
+    unsigned short LUT[65536] = {0};
+    const double bscaled = ( 100.0 + perc ) / 100.0;
+    double bval = 0.0;
+
+    for( unsigned cnt=0; cnt<65536; cnt++ )
+    {
+        bval = (double)cnt * bscaled;
+        bval = MAX( 0.0, MIN( bval, 65535.0 ) );
+        LUT[ cnt ] = (unsigned short)floor( bval + 0.5 );
+    }
+
+    return AdjustCurve( ptr, arraysz, LUT, 65535 );
+}
+
+bool RAWImageToolKit::AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc )
+{
+    if ( ( ptr == NULL ) || ( arraysz == 0 ) )
+        return false;
+
+    unsigned short LUT[65536] = {0};
+    const double bscaled = ( 100.0 + perc ) / 100.0;
+    double bval = 0.0;
+
+    for( unsigned cnt=0; cnt<65536; cnt++ )
+    {
+        bval = (double)32768.0 + ( (double)cnt - 32768 ) * bscaled;
+        bval = MAX( 0.0, MIN( bval, 65535.0 ) );
+        LUT[ cnt ] = (unsigned short)floor( bval + 0.5 );
+    }
+
+    return AdjustCurve( ptr, arraysz, LUT, 65535 );
 }

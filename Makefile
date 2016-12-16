@@ -20,7 +20,7 @@ OBJDIR    = ./obj/Release
 OUTBIN    = librawprocessor.a
 OUTDIR    = ./lib
 DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR
-OPTIMIZEOPT = -O3 -s
+OPTIMIZEOPT = -ffast-math -O3 -s
 CFLAGS    = -I$(SOURCEDIR) $(DEFINEOPT) $(OPTIMIZEOPT)
 
 all: prepare clean ${OUTDIR}/${OUTBIN}
