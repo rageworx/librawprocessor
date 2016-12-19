@@ -50,6 +50,8 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,10,54
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -96,6 +98,35 @@ RAWProcessor::~RAWProcessor()
         delete[] pixel_weights;
         pixel_weights = NULL;
     }
+}
+
+void RAWProcessor::Version( char** retverstr )
+{
+    if ( retverstr == NULL )
+        return;
+
+    int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
+
+    char retvstr[32] = {0};
+    sprintf( retvstr, "%d.%d.%d.%d", retia[0], retia[1], retia[2], retia[3] );
+
+    int retvstrsz = strlen( retvstr );
+
+    *retverstr = (char*)malloc( retvstrsz + 1 );
+    if ( *retverstr != NULL )
+    {
+        memset( *retverstr, 0, retvstrsz + 1 );
+        strcpy( *retverstr, retvstr );
+    }
+}
+
+void RAWProcessor::Version( int** retverints )
+{
+    if ( retverints == NULL )
+        return;
+
+    int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
+    memcpy( *retverints, retia, sizeof(int)*4 );
 }
 
 bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, int height )

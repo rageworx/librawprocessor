@@ -182,7 +182,7 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, int* w, int* h )
     return false;
 }
 
-bool RAWImageToolKit::ApplyGamma( unsigned short* ptr, unsigned arraysz, double gamma )
+bool RAWImageToolKit::AdjustGamma( unsigned short* ptr, unsigned arraysz, double gamma )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;

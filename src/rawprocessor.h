@@ -10,6 +10,12 @@
 //
 //  _ updates _
 //
+//  2016-12-19 :
+//       - Added some graphical help methods : AdjustGamma, AdjustBrightness,
+//                                             AdjustContrast, AdjustContrast,
+//                                             AdjustCurve
+//       - Added Version check method.
+//
 //  2016-11-25 :
 //       - set vector reserve() and resize() for allocating more faster !
 //       - some optimized code for accelerated by AVX instruction.
@@ -92,6 +98,8 @@ class RAWProcessor
         int  getWeightsCount() { return pixel_weights_max; }
 
     public:
+        void Version( char** retverstr ); /// put NULL initialized char* array.
+        void Version( int** retverints ); /// put int[4] array.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
         bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );

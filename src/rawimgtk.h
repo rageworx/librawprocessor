@@ -11,7 +11,7 @@ namespace RAWImageToolKit
 
     /***
     *
-    * these following methods: ApplyGamma, AdjustBrightness, AdjustContrast,
+    * these following methods: AdjustGamma, AdjustBrightness, AdjustContrast,
     *                          AdjustContrast, AdjustCurve
     *
     * are motivated from FreeImageToolkit open source.
@@ -21,7 +21,7 @@ namespace RAWImageToolKit
     * reprogrammed by Raph.K. (rageworx@gmail.com) for librawprocessor.
     *
     ***/
-    bool ApplyGamma( unsigned short* ptr, unsigned arraysz, double gamma );
+    bool AdjustGamma( unsigned short* ptr, unsigned arraysz, double gamma );
     bool AdjustBrightness( unsigned short* ptr, unsigned arraysz, double perc );
     bool AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc );
 
