@@ -8,6 +8,10 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define RAWIMGTK_MAX_D_ARRAY_SZ     65536
+#define RAWIMGTK_MAX_F_VAL          65535.0
+#define RAWIMGTK_HALF_F_VAL         32768.0
+
 #ifndef MIN
     #define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
@@ -22,10 +26,6 @@
 
 bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, int w, int h )
 {
-#ifdef DEBUG
-    printf("RAWImageToolKit::FlipHorizontal()\n");
-#endif // DEBUG
-
     if ( ( w > 0 ) && ( h > 0 ) )
     {
         int hcenter = h/2;
@@ -47,9 +47,6 @@ bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, int w, int h )
 
 bool RAWImageToolKit::FlipVertical( unsigned short* ptr, int w, int h )
 {
-#ifdef DEBUG
-    printf("RAWImageToolKit::FlipVertical()\n");
-#endif // DEBUG
     if ( ( w > 0 ) && ( h > 0 ) )
     {
         int wcenter = w/2;
@@ -71,9 +68,6 @@ bool RAWImageToolKit::FlipVertical( unsigned short* ptr, int w, int h )
 
 bool RAWImageToolKit::Rotate90( unsigned short* ptr, int* w, int* h )
 {
-#ifdef DEBUG
-    printf("RAWImageToolKit::Rotate90()\n");
-#endif // DEBUG
     int cur_w = *w;
     int cur_h = *h;
 
@@ -85,6 +79,7 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, int* w, int* h )
         int new_h = cur_w;
 
         unsigned short* tempbuff = new unsigned short[ new_w * new_h ];
+
         if ( tempbuff == NULL )
             return false;
 
@@ -120,9 +115,6 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, int* w, int* h )
 
 bool RAWImageToolKit::Rotate180( unsigned short* ptr, int* w, int* h )
 {
-#ifdef DEBUG
-    printf("RAWImageToolKit::Rotate180()\n");
-#endif // DEBUG
     int cur_w = *w;
     int cur_h = *h;
 
@@ -145,9 +137,6 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, int* w, int* h )
 
 bool RAWImageToolKit::Rotate270( unsigned short* ptr, int* w, int* h )
 {
-#ifdef DEBUG
-    printf("RAWImageToolKit::Rotate270()\n");
-#endif // DEBUG
     int cur_w = *w;
     int cur_h = *h;
 
@@ -159,6 +148,7 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, int* w, int* h )
         int new_h = cur_w;
 
         unsigned short* tempbuff = new unsigned short[ new_w * new_h ];
+
         if ( tempbuff == NULL )
             return false;
 
@@ -192,40 +182,27 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, int* w, int* h )
     return false;
 }
 
-bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT, unsigned LUTsz )
-{
-    if ( ( ptr == NULL ) || ( arraysz == 0 ) || ( LUT == NULL ) || ( LUTsz < 65535 ) )
-        return false;
-
-    for( unsigned cnt=0; cnt<arraysz; cnt++ )
-    {
-        ptr[ cnt ] = LUT[ ptr[cnt] ];
-    }
-
-    return true;
-}
-
 bool RAWImageToolKit::ApplyGamma( unsigned short* ptr, unsigned arraysz, double gamma )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    unsigned short LUT[65536] = {0};
-
-    double expn = 1.0 / gamma;
-    double newv = 65535.0 * (double)pow((double)65535, -expn );
+    unsigned short LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    double expn     = 1.0 / gamma;
+    double newv     = RAWIMGTK_MAX_F_VAL * (double)pow( (double)RAWIMGTK_MAX_F_VAL, -expn );
+    double newlvl   = 0.0;
 
     for( unsigned cnt=0; cnt<arraysz; cnt++ )
     {
-        double newlvl = (double)pow((double)cnt, expn) * newv;
-        if( newlvl > 65535.0 )
+        newlvl = (double)pow((double)cnt, expn) * newv;
+        if( newlvl > RAWIMGTK_MAX_F_VAL )
         {
-            newlvl = 65535;
+            newlvl = RAWIMGTK_MAX_F_VAL;
         }
         LUT[ cnt ] = (unsigned short)floor( newlvl + 0.5 );
     }
 
-    return AdjustCurve( ptr, arraysz, LUT, 65535 );
+    return AdjustCurve( ptr, arraysz, LUT );
 }
 
 bool RAWImageToolKit::AdjustBrightness( unsigned short* ptr, unsigned arraysz, double perc )
@@ -233,18 +210,19 @@ bool RAWImageToolKit::AdjustBrightness( unsigned short* ptr, unsigned arraysz, d
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    unsigned short LUT[65536] = {0};
-    const double bscaled = ( 100.0 + perc ) / 100.0;
-    double bval = 0.0;
+    unsigned short LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    const \
+    double bscaled  = ( 100.0 + perc ) / 100.0;
+    double bval     = 0.0;
 
-    for( unsigned cnt=0; cnt<65536; cnt++ )
+    for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
     {
         bval = (double)cnt * bscaled;
-        bval = MAX( 0.0, MIN( bval, 65535.0 ) );
+        bval = MAX( 0.0, MIN( bval, RAWIMGTK_MAX_F_VAL ) );
         LUT[ cnt ] = (unsigned short)floor( bval + 0.5 );
     }
 
-    return AdjustCurve( ptr, arraysz, LUT, 65535 );
+    return AdjustCurve( ptr, arraysz, LUT );
 }
 
 bool RAWImageToolKit::AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc )
@@ -252,16 +230,30 @@ bool RAWImageToolKit::AdjustContrast( unsigned short* ptr, unsigned arraysz, dou
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    unsigned short LUT[65536] = {0};
-    const double bscaled = ( 100.0 + perc ) / 100.0;
-    double bval = 0.0;
+    unsigned short LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    const \
+    double bscaled  = ( 100.0 + perc ) / 100.0;
+    double bval     = 0.0;
 
-    for( unsigned cnt=0; cnt<65536; cnt++ )
+    for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
     {
-        bval = (double)32768.0 + ( (double)cnt - 32768 ) * bscaled;
-        bval = MAX( 0.0, MIN( bval, 65535.0 ) );
+        bval = (double)RAWIMGTK_HALF_F_VAL + ( (double)cnt - RAWIMGTK_HALF_F_VAL ) * bscaled;
+        bval = MAX( 0.0, MIN( bval, RAWIMGTK_MAX_F_VAL ) );
         LUT[ cnt ] = (unsigned short)floor( bval + 0.5 );
     }
 
-    return AdjustCurve( ptr, arraysz, LUT, 65535 );
+    return AdjustCurve( ptr, arraysz, LUT );
+}
+
+bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT )
+{
+    if ( ( ptr == NULL ) || ( arraysz == 0 ) || ( LUT == NULL ) )
+        return false;
+
+    for( unsigned cnt=0; cnt<arraysz; cnt++ )
+    {
+        ptr[ cnt ] = LUT[ ptr[ cnt ] ];
+    }
+
+    return true;
 }
