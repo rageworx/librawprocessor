@@ -51,16 +51,17 @@ prepare:
 	@mkdir -p ${OUTDIR}
 
 ${OBJDIR}/stdunicode.o:
-	$(GPP) -c ${SOURCEDIR}/stdunicode.cpp ${CFLAGS} -o $@
+	@$(GPP) -c ${SOURCEDIR}/stdunicode.cpp ${CFLAGS} -o $@
 
 ${OBJDIR}/rawscale.o:
-	$(GPP) -c ${SOURCEDIR}/rawscale.cpp ${CFLAGS} -o $@
+	@$(GPP) -c ${SOURCEDIR}/rawscale.cpp ${CFLAGS} -o $@
 
 ${OBJDIR}/rawprocessor.o:
-	$(GPP) -c ${SOURCEDIR}/rawprocessor.cpp ${CFLAGS} -o $@
+	@$(GPP) -c ${SOURCEDIR}/rawprocessor.cpp ${CFLAGS} -o $@
 
 ${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o ${OBJDIR}/stdunicode.o ${OBJDIR}/rawprocessor.o
-	$(AR) -q $@ ${OBJDIR}/*.o
+	@$(AR) -q $@ ${OBJDIR}/*.o
+	@cp -f ${SOURCEDIR}/rawprocessor.h ${OUTDIR}
 
 clean:
 	@rm -rf ${OBJDIR}/*
