@@ -20,10 +20,15 @@
 //       - set vector reserve() and resize() for allocating more faster !
 //       - some optimized code for accelerated by AVX instruction.
 //
-//  2016-12-0
+//  2016-12-09
 //       - Moved some enum and struct to inside of class.
 //       - RAW resize included, source code refer to FreeImage open source.
 //         FreeImage project is place at http://freeimage.sourceforge.net/
+//
+// 2016-12-23
+//       - Changed some method name in public, removed "get*()" scheme to "*()".
+//       - Renamed rescale() to Rescale()
+//       - Added SaveToFile() methods.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -83,19 +88,18 @@ class RAWProcessor
 
     public:
         RAWProcessor();
-        RAWProcessor( const char* raw_file, int height = 1024 );
+        RAWProcessor( const char* raw_file, int height = 0 );
         virtual~RAWProcessor();
 
     public:
-        bool isLoaded() { return raw_loaded; }
-        int  getPixelCount() { return pixel_arrays.size(); }
-        unsigned short getMinimumLevel() { return pixel_min_level; }
-        unsigned short getMaximumLevel() { return pixel_max_level; }
-        unsigned short getMediumLevel()  { return pixel_med_level; }
-        unsigned short* refPixelPointer() { return pixel_arrays.data(); }
-        int  getWidth() { return img_width; }
-        int  getHeight() { return img_height; }
-        int  getWeightsCount() { return pixel_weights_max; }
+        bool Loaded()                   { return raw_loaded; }
+        int  PixelCount()               { return datasize(); }
+        unsigned short MinimumLevel()   { return pixel_min_level; }
+        unsigned short MaximumLevel()   { return pixel_max_level; }
+        unsigned short MediumLevel()    { return pixel_med_level; }
+        int  Width()                    { return img_width; }
+        int  Height()                   { return img_height; }
+        int  WeightsCount()             { return pixel_weights_max; }
 
     public:
         void Version( char** retverstr ); /// put NULL initialized char* array.
@@ -109,18 +113,23 @@ class RAWProcessor
         void Unload();
         bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
         void ChangeHeight( int h );
-        void SetUserScale( RAWUserScaleIF* ptr );
+        void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Reverse( unsigned char maxbits = 16 );
-        bool Get8bitDownscaled( std::vector<unsigned char> *byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
-        bool Get16bitRawImage( std::vector<unsigned short> *word_arrays, bool reversed = false );
-        bool GetWeights( std::vector<unsigned int> *weight_arrays );
+        bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
+        bool Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed = false );
+        bool GetWeights( std::vector<unsigned int>* weight_arrays );
         bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
-        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short> *word_arrays, bool reversed = false );
-        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> *byte_arrays, bool reversed = false );
+        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short>* word_arrays, bool reversed = false );
+        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
         bool Get16bitPixel( int x, int y, unsigned short &px );
 
     public:
-        RAWProcessor* rescale( int w, int h, RescaleType st = RESCALE_NEAREST );
+        bool SaveToFile( const char* path );
+        bool SaveToFile( const wchar_t* path );
+
+    public:
+        RAWProcessor* Rescale( int w, int h, RescaleType st = RESCALE_NEAREST );
+        RAWProcessor* Clone();
 
     public:
         const unsigned long         datasize();

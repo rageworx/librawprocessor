@@ -1,3 +1,4 @@
+#include <io.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -50,7 +51,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,10,54
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,12,60
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -452,7 +453,7 @@ void RAWProcessor::ChangeHeight( int h )
     }
 }
 
-bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> *byte_arrays, DownscaleType dntype, bool reversed )
+bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, DownscaleType dntype, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
@@ -515,7 +516,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char> *byte_arrays, Downsc
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> *word_arrays, bool reversed )
+bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
@@ -546,7 +547,7 @@ bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short> *word_arrays, b
     return true;
 }
 
-bool RAWProcessor::GetWeights( std::vector<unsigned int> *weight_arrays )
+bool RAWProcessor::GetWeights( std::vector<unsigned int>* weight_arrays )
 {
     if ( raw_loaded == false )
         return false;
@@ -667,7 +668,7 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
     return true;
 }
 
-bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vector<unsigned short> *word_arrays, bool reversed )
+bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vector<unsigned short>* word_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -721,7 +722,7 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
     return true;
 }
 
-bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char> *byte_arrays, bool reversed )
+bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -797,7 +798,40 @@ bool RAWProcessor::Get16bitPixel( int x, int y, unsigned short &px )
     return true;
 }
 
-RAWProcessor* RAWProcessor::rescale( int w, int h, RescaleType st )
+bool RAWProcessor::SaveToFile( const char* path )
+{
+    if ( pixel_arrays.size() == 0 )
+        return false;
+
+    if ( path != NULL )
+    {
+        if ( access( path, F_OK ) == 0 )
+        {
+            if ( unlink( path ) != 0 )
+                return false;
+        }
+
+        FILE* fp = fopen( path, "wb" );
+        if ( fp != NULL )
+        {
+            fwrite( pixel_arrays.data(), 2, pixel_arrays.size(), fp );
+            fclose( fp );
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool RAWProcessor::SaveToFile( const wchar_t* path )
+{
+    string apath = convertW2M( path );
+
+    return SaveToFile( apath.c_str() );
+}
+
+RAWProcessor* RAWProcessor::Rescale( int w, int h, RescaleType st )
 {
     if ( ( pixel_arrays.size() > 0 ) && ( w > 0 ) && ( h > 0 ) )
     {
@@ -842,7 +876,7 @@ RAWProcessor* RAWProcessor::rescale( int w, int h, RescaleType st )
                 if ( newme != NULL )
                 {
                     bool retb = newme->LoadFromMemory( (const char*)dst, retsz,
-                                                       current_transform, h );
+                                                       TRANSFORM_NONE, h );
                     if ( retb == true )
                     {
                         return newme;
@@ -851,6 +885,29 @@ RAWProcessor* RAWProcessor::rescale( int w, int h, RescaleType st )
                     delete newme;
                 }
             }
+        }
+    }
+
+    return NULL;
+}
+
+RAWProcessor* RAWProcessor::Clone()
+{
+    if ( ( pixel_arrays.size() > 0 ) && ( img_width > 0 ) && ( img_height > 0 ) )
+    {
+        RAWProcessor* newone = new RAWProcessor();
+        if ( newone != NULL )
+        {
+            bool retb = newone->LoadFromMemory( (const char*)data(),
+                                                datasize() * sizeof( unsigned short ),
+                                                TRANSFORM_NONE,
+                                                img_height );
+            if( retb == true )
+            {
+                return newone;
+            }
+
+            delete newone;
         }
     }
 
