@@ -17,16 +17,23 @@
     Emboded to other component, Fl_ImageViewer (for other project)
 
 ### Latest update ###
-* Reserve all pixels with bit-range ( 9 to 16 )
+* Version marked as 0.9.12.60.
+* Fixed a bug Rescaled result applied again transform.
+* Changed some method names:
+  1. getWidth() -> Width()
+  1. getHeight() -> Height()
+  1. rescale() -> Rescale()
+* Added method:
+  1. SaveToFile()
+
+### Previous updates ###
+* Reverse(Invert) all pixels with bit-range ( 9 to 16 )
 * LoadingMatrix changed to Transform (unsigned int) definitions.
 * Supporting these transforms :
   1. Flip horizontal.
   1. Flip vertical.
   1. Rotate clock wide 90,180,270
   1. Rotate reverse clock wide 90,180,270
-
-
-### Previous updates ###
 * Included RAW image filtered scaling.
 * Rescale method supports these: BiLinear/BiCubic/BSpline/Lanczos3
 * Source refer to Free Image Project (http://freeimage.sourceforge.net/)
