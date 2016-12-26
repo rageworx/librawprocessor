@@ -86,9 +86,18 @@ class RAWProcessor
             unsigned int        threshold_max_amount;
         };
 
+        struct SimpleAnalysisInfo
+        {
+            unsigned short      minLevel;
+            unsigned short      maxLevel;
+            double              average;
+            double              variance;
+            double              deviation;
+        };
+
     public:
         RAWProcessor();
-        RAWProcessor( const char* raw_file, int height = 0 );
+        RAWProcessor( const char* raw_file, unsigned int height = 0 );
         virtual~RAWProcessor();
 
     public:
@@ -104,11 +113,11 @@ class RAWProcessor
     public:
         void Version( char** retverstr ); /// put NULL initialized char* array.
         void Version( int** retverints ); /// put int[4] array.
-        bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
-        bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
-        bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
-        bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
-        bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, int height = 0 );
+        bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
         bool Reload();
         void Unload();
         bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
@@ -121,15 +130,24 @@ class RAWProcessor
         bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
         bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short>* word_arrays, bool reversed = false );
         bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
-        bool Get16bitPixel( int x, int y, unsigned short &px );
+        bool Get16bitPixel( unsigned x, unsigned y, unsigned short &px );
 
+    // Some additional tools here ...
     public:
         bool SaveToFile( const char* path );
         bool SaveToFile( const wchar_t* path );
 
     public:
-        RAWProcessor* Rescale( int w, int h, RescaleType st = RESCALE_NEAREST );
+        RAWProcessor* Rescale( unsigned w, unsigned h, RescaleType st = RESCALE_NEAREST );
         RAWProcessor* Clone();
+
+    public:
+        typedef struct { unsigned x; unsigned y; } polygoncoord;
+        // Weights == Histogram.
+        void GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, std::vector<unsigned short>* pixels );
+        void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<unsigned short>* pixels);
+        void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<unsigned short>* pixels);
+        void GetAnalysisFromPixels( std::vector<unsigned short>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info );
 
     public:
         const unsigned long         datasize();
@@ -138,6 +156,10 @@ class RAWProcessor
     protected:
         void analyse();
         void resetWeights();
+
+    protected:
+        void addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y );
+        void reordercoords( std::vector<polygoncoord>* coords );
 
     protected:
         bool                        raw_loaded;
@@ -155,8 +177,8 @@ class RAWProcessor
 #else
         std::string                 raw_file_name;
 #endif
-        int                         img_height;
-        int                         img_width;
+        unsigned                    img_height;
+        unsigned                    img_width;
         RAWUserScaleIF*             userscaler;
 
 };

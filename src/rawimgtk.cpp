@@ -24,7 +24,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, int w, int h )
+bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, unsigned w, unsigned h )
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
@@ -45,7 +45,7 @@ bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, int w, int h )
     return false;
 }
 
-bool RAWImageToolKit::FlipVertical( unsigned short* ptr, int w, int h )
+bool RAWImageToolKit::FlipVertical( unsigned short* ptr, unsigned w, unsigned h )
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
@@ -66,7 +66,7 @@ bool RAWImageToolKit::FlipVertical( unsigned short* ptr, int w, int h )
     return false;
 }
 
-bool RAWImageToolKit::Rotate90( unsigned short* ptr, int* w, int* h )
+bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
 {
     int cur_w = *w;
     int cur_h = *h;
@@ -113,7 +113,7 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, int* w, int* h )
     return false;
 }
 
-bool RAWImageToolKit::Rotate180( unsigned short* ptr, int* w, int* h )
+bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
 {
     int cur_w = *w;
     int cur_h = *h;
@@ -135,7 +135,7 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, int* w, int* h )
     return false;
 }
 
-bool RAWImageToolKit::Rotate270( unsigned short* ptr, int* w, int* h )
+bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
 {
     int cur_w = *w;
     int cur_h = *h;

@@ -17,7 +17,16 @@
     Emboded to other component, Fl_ImageViewer (for other project)
 
 ### Latest update ###
-* Version marked as 0.9.12.60.
+* Version marked as 0.9.20.70.
+* Changed some integer type to unsigned.
+* Added function for Linear, Rectangle, Polygon regional histogram data.
+  1. GetLinearPixels();
+  1. GetRectPixels();
+  1. GetPolygonPixels();
+* Can getting information about average, variance, deviation from this method:
+  1. GetAnalysisFromPixels();
+
+### Previous updates ###
 * Fixed a bug Rescaled result applied again transform.
 * Changed some method names:
   1. getWidth() -> Width()
@@ -25,8 +34,6 @@
   1. rescale() -> Rescale()
 * Added method:
   1. SaveToFile()
-
-### Previous updates ###
 * Reverse(Invert) all pixels with bit-range ( 9 to 16 )
 * LoadingMatrix changed to Transform (unsigned int) definitions.
 * Supporting these transforms :

@@ -7,6 +7,8 @@
 #include <list>
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <algorithm>
 
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
 	#include "tchar.h"
@@ -51,7 +53,14 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,12,60
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,20,70
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool RAWProcessor_sortcondition( int i,int j )
+{
+    return ( i < j );
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +81,7 @@ RAWProcessor::RAWProcessor()
     resetWeights();
 }
 
-RAWProcessor::RAWProcessor( const char* raw_file, int height )
+RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
  : raw_loaded(false),
    pixel_min_level(0),
    pixel_max_level(0),
@@ -130,7 +139,7 @@ void RAWProcessor::Version( int** retverints )
     memcpy( *retverints, retia, sizeof(int)*4 );
 }
 
-bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, int height )
+bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     if ( height <= 0 )
         return false;
@@ -140,7 +149,7 @@ bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, int heigh
     return Load( fname.c_str(), trnsfm, height );
 }
 
-bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, int height )
+bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
     if ( height <= 0 )
         return false;
@@ -239,7 +248,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, int height )
     return false;
 }
 
-bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm, int height )
+bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm, unsigned height )
 {
     if ( height <= 0 )
         return false;
@@ -251,8 +260,8 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
         pixel_max_level = 0;
         img_height = height;
 
-        int pxlsz   = bufferlen / sizeof( unsigned short );
-        int blancsz = 0;
+        unsigned pxlsz   = bufferlen / sizeof( unsigned short );
+        unsigned blancsz = 0;
 
         if (  pxlsz > 0 )
         {
@@ -321,12 +330,12 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
     return false;
 }
 
-bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, int height )
+bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     return Load( raw_file, trnsfm, height );
 }
 
-bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, int height )
+bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
     return Load( raw_file, trnsfm, height );
 }
@@ -783,7 +792,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     return true;
 }
 
-bool RAWProcessor::Get16bitPixel( int x, int y, unsigned short &px )
+bool RAWProcessor::Get16bitPixel( unsigned x, unsigned y, unsigned short &px )
 {
     if ( pixel_arrays.size() == 0 )
         return false;
@@ -831,7 +840,7 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
     return SaveToFile( apath.c_str() );
 }
 
-RAWProcessor* RAWProcessor::Rescale( int w, int h, RescaleType st )
+RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
 {
     if ( ( pixel_arrays.size() > 0 ) && ( w > 0 ) && ( h > 0 ) )
     {
@@ -914,6 +923,318 @@ RAWProcessor* RAWProcessor::Clone()
     return NULL;
 }
 
+void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, vector<unsigned short>* pixels )
+{
+    if ( pixels == NULL )
+        return;
+
+    int _x0   = x1;
+    int _x1   = x2;
+    int _y0   = y1;
+    int _y1   = y2;
+
+    int inc1  = 0;
+    int inc2  = 0;
+    int cnt   = 0;
+    int y_adj = 0;
+    int dy    = 0;
+    int dx    = 0;
+    int x_adj = 0;
+
+    if ( _x0 == _x1 )
+    {
+        if ( _y0 > _y1 )
+        {
+            swap( _y0, _y1 );
+        }
+
+        int cnt = _y1 - _y0 + 1;
+
+        while( cnt-- )
+        {
+            addpixelarray( pixels, _x0, _y0 + cnt );
+        }
+    }
+    else
+    {
+        if ( _y0 == _y1 )
+        {
+            if ( _x0 > _x1 )
+            {
+                swap( _x0, _x1 );
+            }
+
+            dx = _x1 - _x0 + 1;
+
+            for( int cnt=0; cnt<dx; cnt++ )
+            {
+                addpixelarray( pixels, _x0 + cnt, _y0 );
+            }
+        }
+        else
+        {
+            dy = _y1 - _y0;
+            dx = _x1 - _x0;
+
+            if ( abs( dy ) < abs( dx ) )
+            {
+                if ( _x0 > _x1 )
+                {
+                    swap( _x0, _x1 );
+                    swap( _y0, _y1 );
+                }
+
+                dy = _y1 - _y0;
+                dx = _x1 - _x0;
+
+                if ( dy < 0 )
+                {
+                    dy    = -dy;
+                    y_adj = -1;
+                }
+                else
+                    y_adj = 1;
+
+                inc1 = dy << 1;
+                inc2 = ( dy - dx ) << 1;
+                cnt  = ( dy << 1 ) - dx;
+
+                dx++;
+                int py = y_adj;
+
+                while ( dx-- )
+                {
+                    addpixelarray( pixels, _x0 + dx, _y1 - py );
+
+                    if ( cnt >= 0 )
+                    {
+                        cnt += inc2;
+                        py  += y_adj;
+                    }
+                    else
+                    {
+                        cnt += inc1;
+                    }
+                }
+            }
+            else
+            {
+                if ( _y0 > _y1 )
+                {
+                    swap( _x0, _x1 );
+                    swap( _y0, _y1 );
+                }
+
+                dy = _y1 - _y0;
+                dx = _x1 - _x0;
+
+                if ( dx < 0)
+                {
+                    dx    = -dx;
+                    x_adj = -1;
+                }
+                else
+                {
+                    x_adj = 1;
+                }
+
+                inc1 = dx << 1;
+                inc2 = ( dx - dy ) << 1;
+                cnt  = ( dx << 1 ) - dy;
+
+                dy++;
+                int px = x_adj;
+
+                while ( dy-- )
+                {
+                     addpixelarray( pixels, _x0 + px, _y1 - dy );
+
+                    if ( cnt >= 0 )
+                    {
+                        cnt += inc2;
+                        px  += x_adj;
+                    }
+                    else
+                    {
+                        cnt += inc1;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, vector<unsigned short>* pixels)
+{
+    if ( pixels == NULL )
+        return;
+
+    unsigned rw = w;
+    unsigned rh = h;
+
+    if ( ( rw + x ) > img_width )
+    {
+        rw = img_width - x;
+    }
+
+    if ( ( rh + y ) > img_height )
+    {
+        rh = img_height - y;
+    }
+
+    for( unsigned cnty=y; cnty<rh; cnty++ )
+    {
+        for( unsigned cntx=x;cntx<rw; cntx++ )
+        {
+            unsigned mpos = img_width * cnty + cntx;
+
+            if ( pixel_arrays_realsz > mpos )
+            {
+                pixels->push_back( pixel_arrays[ mpos ] );
+            }
+        }
+    }
+}
+
+void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<unsigned short>* pixels)
+{
+    if ( ( coords == NULL ) || ( pixels == NULL ) )
+        return;
+
+    reordercoords( coords );
+
+    unsigned ptsz = coords->size();
+
+    if ( ptsz < 2 )
+    {
+        // need it starts triangle or more.
+        return;
+    }
+
+    const unsigned max_y = img_height;
+    const unsigned max_x = img_width;
+
+    vector< double > node_x;
+
+    for( unsigned cur_y=0; cur_y<max_y; cur_y++ )
+    {
+        unsigned    rcnt        = ptsz - 1;
+
+        for( unsigned cnt=0; cnt<ptsz; cnt++ )
+        {
+            if ( ( (double)coords->at(cnt).y   < (double)cur_y ) &&
+                 ( (double)coords->at(rcnt).y >= (double)cur_y ) ||
+                 ( (double)coords->at(rcnt).y  < (double)cur_y ) &&
+                 ( (double)coords->at(cnt).y  >= (double)cur_y ) )
+            {
+                double newv = (double)coords->at(cnt).x +
+                              ( (double)cur_y              - (double)coords->at(cnt).y ) /
+                              ( (double)coords->at(rcnt).y - (double)coords->at(cnt).y ) *
+                              ( (double)coords->at(rcnt).x - (double)coords->at(cnt).x );
+
+                node_x.push_back( newv );
+            }
+
+            rcnt = cnt;
+        }
+
+        unsigned node_x_sz = node_x.size();
+
+        // sort nodes ..
+        if ( node_x_sz > 1 )
+        {
+            sort( node_x.begin(),
+                  node_x.begin() + node_x_sz,
+                  RAWProcessor_sortcondition );
+        }
+
+        for( unsigned dcnt=0; dcnt<node_x_sz; dcnt+=2 )
+        {
+            if ( node_x[dcnt] >= max_x )
+                break;
+
+            if ( node_x[dcnt+1] > 0 )
+            {
+                if ( node_x[dcnt] < 0 )
+                {
+                    node_x[dcnt] = 0;
+                }
+
+                if ( node_x[dcnt+1] > max_x )
+                {
+                    node_x[dcnt+1] = max_x;
+                }
+
+                for( int cur_x=node_x[dcnt]; cur_x<=node_x[dcnt+1]; cur_x++ )
+                {
+                    addpixelarray( pixels, cur_x, cur_y );
+                }
+            }
+        }
+
+        node_x.clear();
+    }
+}
+
+void RAWProcessor::GetAnalysisFromPixels( std::vector<unsigned short>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info )
+{
+    if ( ( pixels == NULL ) || ( weights == NULL ) || ( info == NULL ) )
+        return;
+
+    // Make weights ...
+    weights->resize( DEF_PIXEL_WEIGHTS + 1 );
+
+    for( unsigned cnt=0; cnt<(DEF_PIXEL_WEIGHTS + 1); cnt++ )
+    {
+        weights->at( cnt ) = 0;
+    }
+
+    unsigned       pxsz      = pixels->size();
+    unsigned short max_level = 0;
+    unsigned short min_level = DEF_PIXEL_WEIGHTS;
+    double         summ      = 0.0;
+
+    for( unsigned cnt=0; cnt<pxsz; cnt++ )
+    {
+        unsigned short apixel = pixels->at( cnt );
+
+        weights->at( apixel ) ++;
+
+        if ( apixel > max_level )
+        {
+            max_level = apixel;
+        }
+        else
+        if ( apixel < min_level )
+        {
+            min_level = apixel;
+        }
+
+        summ += (double)apixel;
+    }
+
+    // Make information report.
+    info->minLevel = min_level;
+    info->maxLevel = max_level;
+    info->average  = summ / pxsz;
+
+
+    info->variance = 0.0;
+    info->deviation = 0.0;
+
+    double sd = 0.0;
+    // getting variance & deviation ...
+    for( unsigned cnt=0; cnt<pxsz; cnt++ )
+    {
+        //info->deviation
+        double dpixel = (double)pixels->at( cnt );
+        sd += pow( dpixel - info->average , 2 );
+    }
+
+    info->variance  = sd / (double)pxsz;
+    info->deviation = sqrt( sd );
+}
+
 const unsigned long RAWProcessor::datasize()
 {
     //return pixel_arrays.size();
@@ -957,4 +1278,94 @@ void RAWProcessor::resetWeights()
         memset( pixel_weights, 0 , ( DEF_PIXEL_WEIGHTS  + 1 ) * sizeof( unsigned int ) );
     }
     pixel_weights_max = 0;
+}
+
+void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y )
+{
+    if ( outpixels == NULL )
+        return;
+
+    if ( ( x >= 0 ) && ( x < img_width ) &&
+         ( y >= 0 ) && ( y < img_height ) )
+    {
+        unsigned mpos = img_width * y + x;
+        if ( pixel_arrays_realsz > mpos )
+        {
+            outpixels->push_back( pixel_arrays[ mpos ] );
+        }
+    }
+}
+
+void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
+{
+    if ( coords == NULL )
+        return;
+
+    unsigned ptsz = coords->size();
+
+    if ( ptsz > 2 )
+    {
+        unsigned idxFirst = -1;
+        unsigned minX = img_width;
+        unsigned minY = img_height;
+
+        for( unsigned cnt=0; cnt<(ptsz - 1); cnt++ )
+        {
+            if ( coords->at(cnt).y < minY )
+            {
+                minX = coords->at(cnt).x;
+                minY = coords->at(cnt).y;
+                idxFirst = cnt;
+            }
+        }
+
+        // X is next.
+        for( unsigned cnt=0; cnt<(ptsz - 1); cnt++ )
+        {
+            if ( ( coords->at(cnt).x < minX ) && ( coords->at(cnt).y < minY ) )
+            {
+                minX = coords->at(cnt).x;
+                minY = coords->at(cnt).y;
+                idxFirst = cnt;
+            }
+        }
+
+        if ( idxFirst > 0 )
+        {
+            vector< polygoncoord > copydummy;
+            copydummy.resize( ptsz );
+
+            for( unsigned cpcnt=0; cpcnt<ptsz-1; cpcnt++ )
+            {
+                copydummy[cpcnt].x = coords->at(cpcnt).x;
+                copydummy[cpcnt].y = coords->at(cpcnt).y;
+            }
+
+            unsigned lastQ = 0;
+
+            // copy all except last coordination
+            for( unsigned cnt=idxFirst; cnt<(ptsz - 1); cnt++ )
+            {
+                coords->at(cnt-idxFirst).x = copydummy[cnt].x;
+                coords->at(cnt-idxFirst).y = copydummy[cnt].y;
+
+                lastQ = cnt - idxFirst;
+            }
+
+            // Last end point will be re-assign for new vector's first.
+
+            for( unsigned cnt=0; cnt<idxFirst; cnt++ )
+            {
+                coords->at( cnt + lastQ + 1 ).x = copydummy[ cnt ].x;
+                coords->at( cnt + lastQ + 1 ).y = copydummy[ cnt ].y;
+            }
+
+            // make perfect ring vector. start pos = end pos.
+            coords->at( ptsz - 1 ).x = coords->at( 0 ).x;
+            coords->at( ptsz - 1 ).y = coords->at( 0 ).y;
+
+            copydummy.clear();
+        }
+    }
+
 }

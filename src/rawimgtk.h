@@ -3,11 +3,11 @@
 
 namespace RAWImageToolKit
 {
-    bool FlipHorizontal( unsigned short* ptr, int w, int h );
-    bool FlipVertical( unsigned short* ptr, int w, int h );
-    bool Rotate90( unsigned short* ptr, int* w, int* h );
-    bool Rotate180( unsigned short* ptr, int* w, int* h );
-    bool Rotate270( unsigned short* ptr, int* w, int* h );
+    bool FlipHorizontal( unsigned short* ptr, unsigned w, unsigned h );
+    bool FlipVertical( unsigned short* ptr, unsigned w, unsigned h );
+    bool Rotate90( unsigned short* ptr, unsigned* w, unsigned* h );
+    bool Rotate180( unsigned short* ptr, unsigned* w, unsigned* h );
+    bool Rotate270( unsigned short* ptr, unsigned* w, unsigned* h );
 
     /***
     *
