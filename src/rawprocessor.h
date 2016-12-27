@@ -109,6 +109,7 @@ class RAWProcessor
         int  Width()                    { return img_width; }
         int  Height()                   { return img_height; }
         int  WeightsCount()             { return pixel_weights_max; }
+        unsigned char BPP()             { return pixel_bpp; }
 
     public:
         void Version( char** retverstr ); /// put NULL initialized char* array.
@@ -167,6 +168,7 @@ class RAWProcessor
         unsigned long               pixel_arrays_realsz;
         unsigned int*               pixel_weights;
         unsigned short              pixel_weights_max;
+        unsigned char               pixel_bpp;
         unsigned short              pixel_min_level;
         unsigned short              pixel_max_level;
         unsigned short              pixel_med_level;

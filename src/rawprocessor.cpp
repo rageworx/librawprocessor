@@ -73,6 +73,7 @@ RAWProcessor::RAWProcessor()
    pixel_arrays_realsz( 0 ),
    pixel_weights( NULL ),
    pixel_weights_max( 0 ),
+   pixel_bpp(10),
    img_height(0),
    img_width(0),
    userscaler(NULL)
@@ -739,7 +740,10 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     int thld_min = report.threshold_wide_min;
     int thld_max = report.threshold_wide_max;
 
-    float normf  = float( DEF_CALC_F_BMAX ) / float( thld_max - thld_min );
+    float normfbpp = pow(2,pixel_bpp);
+
+    //float normf  = float( DEF_CALC_F_BMAX ) / float( thld_max - thld_min );
+    float normf  = normfbpp / float( thld_max - thld_min );
 
     byte_arrays->clear();
 
@@ -758,7 +762,8 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
         if ( apixel > thld_max )
         {
             //apixel = thld_max;
-            apixel = DEF_CALC_F_WMAX;
+            //apixel = DEF_CALC_F_WMAX;
+            apixel = normfbpp;
         }
         else
         if ( apixel < thld_min )
@@ -1232,7 +1237,7 @@ void RAWProcessor::GetAnalysisFromPixels( std::vector<unsigned short>* pixels, s
     }
 
     info->variance  = sd / (double)pxsz;
-    info->deviation = sqrt( sd );
+    info->deviation = sqrt( info->variance );
 }
 
 const unsigned long RAWProcessor::datasize()
@@ -1261,6 +1266,24 @@ void RAWProcessor::analyse()
     {
         //img_width = pixel_counts / img_height;
         img_width = pixel_arrays_realsz / img_height;
+    }
+
+    // measure Bits Per Pixel.
+    // it starts from 10 bits.
+    pixel_bpp = 10;
+    if ( pixel_max_level > 0x07FF )
+    {
+        pixel_bpp = 12;
+
+        if ( pixel_max_level > 0x1FFF )
+        {
+            pixel_bpp = 14;
+
+            if ( pixel_max_level > 0x4FFF )
+            {
+                pixel_bpp = 16;
+            }
+        }
     }
 }
 
@@ -1335,6 +1358,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
             vector< polygoncoord > copydummy;
             copydummy.resize( ptsz );
 
+            // copy all to dummy.
             for( unsigned cpcnt=0; cpcnt<ptsz-1; cpcnt++ )
             {
                 copydummy[cpcnt].x = coords->at(cpcnt).x;
@@ -1343,7 +1367,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 
             unsigned lastQ = 0;
 
-            // copy all except last coordination
+            // copy back all except last coordination
             for( unsigned cnt=idxFirst; cnt<(ptsz - 1); cnt++ )
             {
                 coords->at(cnt-idxFirst).x = copydummy[cnt].x;
