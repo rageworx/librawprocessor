@@ -13,8 +13,7 @@
  1. Flip H/V and Rotate in 90,180,270 degrees.
 
 ### And still these functions are not embodied. ###
- 1. ~~Export to a file.~~ 
-    Emboded to other component, Fl_ImageViewer (for other project)
+ 1. Nothing in now.
 
 ### Latest update ###
 * Version marked as 0.9.22.75.
