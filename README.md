@@ -17,7 +17,12 @@
     Emboded to other component, Fl_ImageViewer (for other project)
 
 ### Latest update ###
-* Version marked as 0.9.20.70.
+* Version marked as 0.9.22.75.
+* Enhanced for these methods:
+  1. Get16bitThresholdedImage();
+  1. Get8bitThresholdedImage();
+
+### Previous updates ###
 * Changed some integer type to unsigned.
 * Added function for Linear, Rectangle, Polygon regional histogram data.
   1. GetLinearPixels();
@@ -25,8 +30,6 @@
   1. GetPolygonPixels();
 * Can getting information about average, variance, deviation from this method:
   1. GetAnalysisFromPixels();
-
-### Previous updates ###
 * Fixed a bug Rescaled result applied again transform.
 * Changed some method names:
   1. getWidth() -> Width()

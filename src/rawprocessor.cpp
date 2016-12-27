@@ -53,7 +53,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,20,70
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,22,75
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -683,11 +683,16 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
     if ( report.timestamp == 0 )
         return false;
 
-    int thld_min = report.threshold_wide_min;
-    int thld_max = report.threshold_wide_max;
-    int thld_wid = report.threshold_wide_max - report.threshold_wide_min;
+    //int thld_min = report.threshold_wide_min;
+    //int thld_max = report.threshold_wide_max;
+    //int thld_wid = report.threshold_wide_max - report.threshold_wide_min;
 
-    float normf = float( DEF_PIXEL_WEIGHTS ) / float( thld_wid );
+    float thld_min = (float)report.threshold_wide_min;
+    float thld_max = (float)report.threshold_wide_max;
+
+    //float normf = float( DEF_PIXEL_WEIGHTS ) / float( thld_wid );
+    float maxbf = pixel_max_level;
+    float normf = maxbf / (float) thld_max;
 
     word_arrays->clear();
 
@@ -698,14 +703,16 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
 
     for( int cnt=0; cnt<array_max; cnt++ )
     {
-        unsigned short apixel = pixel_arrays[cnt] - thld_min - 1;
+        //unsigned short apixel = pixel_arrays[cnt] - thld_min - 1;
+        unsigned short apixel = pixel_arrays[cnt];
         float          fpixel = 0.0f;
 
         // cut off threhold pixel value.
         if ( apixel > thld_max )
         {
             //apixel = thld_max;
-            apixel = DEF_CALC_F_WMAX;
+            //apixel = DEF_CALC_F_WMAX;
+            apixel = maxbf;
         }
         else
         if ( apixel < thld_min )
@@ -716,13 +723,13 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
         apixel -= thld_min;
 
         // Rescaling pixel  !
-        fpixel = float( apixel ) * normf;
-
+        fpixel = (float)(apixel) * normf;
         apixel = (unsigned short)( fpixel );
 
         if ( reversed == true )
         {
-            apixel = DEF_PIXEL_WEIGHTS - apixel;
+            //apixel = DEF_PIXEL_WEIGHTS - apixel;
+            apixel = maxbf - apixel;
         }
 
         //word_arrays.push_back( apixel );
@@ -737,13 +744,14 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     if ( report.timestamp == 0 )
         return false;
 
-    int thld_min = report.threshold_wide_min;
-    int thld_max = report.threshold_wide_max;
+    float thld_min = report.threshold_wide_min;
+    float thld_max = (float)report.threshold_wide_max;
 
-    float normfbpp = pow(2,pixel_bpp);
+    //float normfbpp = pow( 2, pixel_bpp );
+    float normfbpp = pixel_max_level;
 
     //float normf  = float( DEF_CALC_F_BMAX ) / float( thld_max - thld_min );
-    float normf  = normfbpp / float( thld_max - thld_min );
+    float normf  = (float)DEF_CALC_F_BMAX / thld_max;
 
     byte_arrays->clear();
 
@@ -761,7 +769,6 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
         // cut off threhold pixel value.
         if ( apixel > thld_max )
         {
-            //apixel = thld_max;
             //apixel = DEF_CALC_F_WMAX;
             apixel = normfbpp;
         }
@@ -772,7 +779,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
         }
 
         // Rescaling pixel  !
-        fpixel = float( apixel ) * normf;
+        fpixel = (float)(apixel) * normf;
 
         // over flow check.
         if ( fpixel >= DEF_CALC_F_BMAX )
