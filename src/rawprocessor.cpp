@@ -68,12 +68,12 @@ bool RAWProcessor_sortcondition( int i,int j )
 
 RAWProcessor::RAWProcessor()
  : raw_loaded(false),
+   pixel_arrays_realsz(0),
+   pixel_weights(NULL),
+   pixel_weights_max(0),
+   pixel_bpp(10),
    pixel_min_level(0),
    pixel_max_level(0),
-   pixel_arrays_realsz( 0 ),
-   pixel_weights( NULL ),
-   pixel_weights_max( 0 ),
-   pixel_bpp(10),
    img_height(0),
    img_width(0),
    userscaler(NULL)
@@ -84,10 +84,12 @@ RAWProcessor::RAWProcessor()
 
 RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
  : raw_loaded(false),
-   pixel_min_level(0),
-   pixel_max_level(0),
+   pixel_arrays_realsz(0),
    pixel_weights( NULL ),
    pixel_weights_max( 0 ),
+   pixel_bpp(10),
+   pixel_min_level(0),
+   pixel_max_level(0),
    img_height(height),
    img_width(0)
 {
@@ -180,8 +182,8 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
         pixel_max_level = 0;
         img_height = height;
 
-        int pxlsz   = fsize / sizeof( unsigned short );
-        int blancsz = 0;
+        unsigned pxlsz   = fsize / sizeof( unsigned short );
+        unsigned blancsz = 0;
 
         if (  pxlsz > 0 )
         {
@@ -451,7 +453,7 @@ bool RAWProcessor::Reverse( unsigned char maxbits )
     return true;
 }
 
-void RAWProcessor::ChangeHeight( int h )
+void RAWProcessor::ChangeHeight( unsigned h )
 {
     if ( raw_loaded == false )
         return;
@@ -1134,10 +1136,10 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<unsign
 
         for( unsigned cnt=0; cnt<ptsz; cnt++ )
         {
-            if ( ( (double)coords->at(cnt).y   < (double)cur_y ) &&
-                 ( (double)coords->at(rcnt).y >= (double)cur_y ) ||
-                 ( (double)coords->at(rcnt).y  < (double)cur_y ) &&
-                 ( (double)coords->at(cnt).y  >= (double)cur_y ) )
+            if ( ( ( (double)coords->at(cnt).y   < (double)cur_y ) &&
+                   ( (double)coords->at(rcnt).y >= (double)cur_y ) ) ||
+                 ( ( (double)coords->at(rcnt).y  < (double)cur_y ) &&
+                   ( (double)coords->at(cnt).y  >= (double)cur_y ) ) )
             {
                 double newv = (double)coords->at(cnt).x +
                               ( (double)cur_y              - (double)coords->at(cnt).y ) /

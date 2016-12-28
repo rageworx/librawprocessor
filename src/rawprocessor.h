@@ -122,7 +122,7 @@ class RAWProcessor
         bool Reload();
         void Unload();
         bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
-        void ChangeHeight( int h );
+        void ChangeHeight( unsigned h );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Reverse( unsigned char maxbits = 16 );
         bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
