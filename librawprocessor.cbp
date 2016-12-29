@@ -89,6 +89,9 @@
 		<Compiler>
 			<Add option="-ffast-math" />
 		</Compiler>
+		<Unit filename="src/minmax.h" />
+		<Unit filename="src/rawfilters.cpp" />
+		<Unit filename="src/rawfilters.h" />
 		<Unit filename="src/rawimgtk.cpp" />
 		<Unit filename="src/rawimgtk.h" />
 		<Unit filename="src/rawprocessor.cpp" />

@@ -15,13 +15,31 @@
 ### And still these functions are not embodied. ###
  1. Nothing in now.
 
+### Reserved to be included ###
+* OpenMP
+
 ### Latest update ###
-* Version marked as 0.9.22.75.
+* Version marked as 0.9.26.90
+* Now supporting Pixel filterings with :
+  1. ApplyFilter();
+  2. CloneWithFilter();
+* Basically provides these filters:
+  1. blur
+  2. blur more
+  3. edge
+  4. edge more
+  5. sharpen
+  6. sharpen more
+  7. sharpen subtle
+  8. unsharpen mask (in development)
+* User customizable filter availed, see WIKI.
+* Median filter included:
+  1. ApplyMedianFilter();
+
+### Previous updates ###
 * Enhanced for these methods:
   1. Get16bitThresholdedImage();
   1. Get8bitThresholdedImage();
-
-### Previous updates ###
 * Changed some integer type to unsigned.
 * Added function for Linear, Rectangle, Polygon regional histogram data.
   1. GetLinearPixels();
@@ -53,9 +71,6 @@
   ````
   -mavx (or) -march=core-i7avx
   ````
-
-### Reserved to be included ###
-* Nothing in now.
 
 ### Usage & Help ###
  1. [See wiki page](https://github.com/rageworx/librawprocessor/wiki)

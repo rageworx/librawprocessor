@@ -30,6 +30,11 @@
 //       - Renamed rescale() to Rescale()
 //       - Added SaveToFile() methods.
 //
+// 2016-12-29
+//       - Added Filter processing.
+//         referenced to http://lodev.org/cgtutor/filtering.html
+//         basic filter algorithm by Lode Vandevenne
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <vector>
@@ -102,13 +107,13 @@ class RAWProcessor
 
     public:
         bool Loaded()                   { return raw_loaded; }
-        int  PixelCount()               { return datasize(); }
+        unsigned PixelCount()           { return datasize(); }
         unsigned short MinimumLevel()   { return pixel_min_level; }
         unsigned short MaximumLevel()   { return pixel_max_level; }
         unsigned short MediumLevel()    { return pixel_med_level; }
-        int  Width()                    { return img_width; }
-        int  Height()                   { return img_height; }
-        int  WeightsCount()             { return pixel_weights_max; }
+        unsigned Width()                { return img_width; }
+        unsigned Height()               { return img_height; }
+        unsigned WeightsCount()         { return pixel_weights_max; }
         unsigned char BPP()             { return pixel_bpp; }
 
     public:
@@ -149,6 +154,29 @@ class RAWProcessor
         void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<unsigned short>* pixels);
         void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<unsigned short>* pixels);
         void GetAnalysisFromPixels( std::vector<unsigned short>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info );
+
+    public:
+        typedef struct
+        {
+            unsigned char   width;
+            unsigned char   height;
+            float           factor;
+            float           bias;
+            std::vector< float > matrix;
+        }FilterConfig;
+
+        #define PRESET_FILTER_NONE      0
+        #define PRESET_FILTER_BLUR      1
+        #define PRESET_FILTER_BLURMORE  2
+        #define PRESET_FILTER_SHARPEN   3
+        #define PRESET_FILTER_UNSHARPEN 4
+
+        bool          ApplyFilter( FilterConfig* fconfig );
+        RAWProcessor* CloneWithFilter( FilterConfig* fconfig );
+        bool          ApplyMedianFilter();
+
+        FilterConfig* GetPresetFilter( unsigned fnum );
+        void          DiscardFilter( FilterConfig* fp );
 
     public:
         const unsigned long         datasize();

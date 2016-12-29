@@ -5,20 +5,13 @@
 #include <cstring>
 #include <math.h>
 #include "rawimgtk.h"
+#include "minmax.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
 #define RAWIMGTK_MAX_D_ARRAY_SZ     65536
 #define RAWIMGTK_MAX_F_VAL          65535.0
 #define RAWIMGTK_HALF_F_VAL         32768.0
-
-#ifndef MIN
-    #define MIN(a,b) (((a)<(b))?(a):(b))
-#endif
-
-#ifndef MAX
-    #define MAX(a,b) (((a)>(b))?(a):(b))
-#endif
 
 #define RAWImageToolKitSwapUS( _a_, _b_ )   unsigned short t=_a_; _a_=_b_; _b_=t;
 

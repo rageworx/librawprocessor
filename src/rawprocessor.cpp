@@ -23,6 +23,8 @@
 #include "rawprocessor.h"
 #include "rawscale.h"
 #include "rawimgtk.h"
+#include "rawfilters.h"
+#include "minmax.h"
 #include "stdunicode.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +55,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,22,75
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,26,90
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1247,6 +1249,165 @@ void RAWProcessor::GetAnalysisFromPixels( std::vector<unsigned short>* pixels, s
 
     info->variance  = sd / (double)pxsz;
     info->deviation = sqrt( info->variance );
+}
+
+bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
+{
+    if ( fconfig != NULL )
+    {
+        if ( ( fconfig->width > 0 ) && ( fconfig->height > 0 ) &&
+             ( pixel_arrays_realsz > 0 ) )
+        {
+            std::vector<unsigned short> copy_arrays;
+            copy_arrays.resize( pixel_arrays_realsz );
+
+            for( unsigned cntx=0; cntx<img_width; cntx++ )
+            {
+                for( unsigned cnty=0; cnty<img_height; cnty++ )
+                {
+                    double adjustedp = 0.0;
+
+                    // -- applying matrix ---
+                    for( unsigned fcntx=0; fcntx<fconfig->width; fcntx++ )
+                    {
+                        for( unsigned fcnty=0; fcnty<fconfig->height; fcnty++ )
+                        {
+                            unsigned posX = ( cntx - fconfig->width / 2 + fcntx + img_width )
+                                            % img_width;
+                            unsigned posY = ( cnty - fconfig->height / 2 + fcnty + img_height )
+                                            % img_height;
+
+                            unsigned posM = posY * img_width + posX;
+
+                            if ( posM < pixel_arrays_realsz )
+                            {
+                                adjustedp += (double)pixel_arrays[ posM ] *
+                                             (double)fconfig->matrix[ fcnty * fconfig->width + fcntx ];
+                            }
+                        }
+                    }
+                    // -- applying matrix ---
+
+                    unsigned short rpixel = MIN( \
+                                                MAX( fconfig->factor * adjustedp + fconfig->bias \
+                                                    , 0) \
+                                            , 65535 );
+
+                    copy_arrays[ cnty * img_width + cntx ] = rpixel;
+                }
+            }
+
+            memcpy( pixel_arrays.data(), copy_arrays.data(), pixel_arrays_realsz * sizeof( unsigned short ) );
+
+            copy_arrays.clear();
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool RAWProcessor::ApplyMedianFilter()
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        std::vector<unsigned short> medimatrix;
+
+        std::vector<unsigned short> copy_arrays;
+        copy_arrays.resize( pixel_arrays_realsz );
+
+        for( unsigned cntx=0; cntx<img_width; cntx++ )
+        {
+            for( unsigned cnty=0; cnty<img_height; cnty++ )
+            {
+                medimatrix.clear();
+
+                // -- applying matrix ---
+                for( unsigned fcntx=0; fcntx<3; fcntx++ )
+                {
+                    for( unsigned fcnty=0; fcnty<3; fcnty++ )
+                    {
+                        unsigned posX = ( cntx - 3 / 2 + fcntx + img_width )
+                                        % img_width;
+                        unsigned posY = ( cnty - 3 / 2 + fcnty + img_height )
+                                        % img_height;
+
+                        unsigned posM = posY * img_width + posX;
+
+                        if ( posM < pixel_arrays_realsz )
+                        {
+                             medimatrix.push_back ( pixel_arrays[ posM ] );
+                        }
+                    }
+                }
+                // -- applying matrix ---
+
+                // sort it !
+                sort( medimatrix.begin(), medimatrix.end() );
+
+                copy_arrays[ cnty * img_width + cntx ] = medimatrix[ medimatrix.size() / 2 ];
+            }
+        }
+
+        memcpy( pixel_arrays.data(), copy_arrays.data(), pixel_arrays_realsz * sizeof( unsigned short ) );
+
+        copy_arrays.clear();
+
+        return true;
+    }
+
+    return false;
+}
+
+RAWProcessor* RAWProcessor::CloneWithFilter( FilterConfig* fconfig )
+{
+    if ( fconfig != NULL )
+    {
+        RAWProcessor* newRP = Clone();
+        if ( newRP != NULL )
+        {
+            if ( newRP->ApplyFilter( fconfig ) == true )
+            {
+                return newRP;
+            }
+
+            delete newRP;
+        }
+    }
+
+    return NULL;
+}
+
+RAWProcessor::FilterConfig* RAWProcessor::GetPresetFilter( unsigned fnum )
+{
+    FilterConfig* retfp = NULL;
+
+    switch( fnum )
+    {
+        case PRESET_FILTER_BLUR:
+            retfp = RAWImageFilterKit::GetPresetFilter( RAWFILTER_PRESET_BLUR );
+            break;
+
+        case PRESET_FILTER_BLURMORE:
+            retfp = RAWImageFilterKit::GetPresetFilter( RAWFILTER_PRESET_BLURMORE );
+            break;
+
+        case PRESET_FILTER_SHARPEN:
+            retfp = RAWImageFilterKit::GetPresetFilter( RAWFILTER_PRESET_SHARPEN );
+            break;
+
+        case PRESET_FILTER_UNSHARPEN:
+            retfp = RAWImageFilterKit::GetPresetFilter( RAWFILTER_PRESET_UNSHARPENM );
+            break;
+    }
+
+    return retfp;
+}
+
+void RAWProcessor::DiscardFilter( FilterConfig* fp )
+{
+    RAWImageFilterKit::RemoveFilter( fp );
 }
 
 const unsigned long RAWProcessor::datasize()

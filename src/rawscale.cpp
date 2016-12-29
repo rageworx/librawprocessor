@@ -1,12 +1,5 @@
 #include "rawscale.h"
-
-#ifndef MIN
-    #define MIN(a,b) (((a)<(b))?(a):(b))
-#endif
-
-#ifndef MAX
-    #define MAX(a,b) (((a)>(b))?(a):(b))
-#endif
+#include "minmax.h"
 
 /// Clamp function
 template <class T> T CLAMP(const T &value, const T &min_value, const T &max_value)
