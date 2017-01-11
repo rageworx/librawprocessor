@@ -1258,8 +1258,12 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
         if ( ( fconfig->width > 0 ) && ( fconfig->height > 0 ) &&
              ( pixel_arrays_realsz > 0 ) )
         {
-            std::vector<unsigned short> copy_arrays;
-            copy_arrays.resize( pixel_arrays_realsz );
+            unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
+
+            if ( copy_arrays == NULL )
+                return false;
+
+            memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
 
             for( unsigned cntx=0; cntx<img_width; cntx++ )
             {
@@ -1297,9 +1301,9 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
                 }
             }
 
-            memcpy( pixel_arrays.data(), copy_arrays.data(), pixel_arrays_realsz * sizeof( unsigned short ) );
+            memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( unsigned short ) );
 
-            copy_arrays.clear();
+            delete[] copy_arrays;
 
             return true;
         }
@@ -1314,8 +1318,12 @@ bool RAWProcessor::ApplyMedianFilter()
     {
         std::vector<unsigned short> medimatrix;
 
-        std::vector<unsigned short> copy_arrays;
-        copy_arrays.resize( pixel_arrays_realsz );
+        unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
+
+        if ( copy_arrays == NULL )
+            return false;
+
+        memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
 
         for( unsigned cntx=0; cntx<img_width; cntx++ )
         {
@@ -1350,9 +1358,9 @@ bool RAWProcessor::ApplyMedianFilter()
             }
         }
 
-        memcpy( pixel_arrays.data(), copy_arrays.data(), pixel_arrays_realsz * sizeof( unsigned short ) );
+        memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( unsigned short ) );
 
-        copy_arrays.clear();
+        delete[] copy_arrays;
 
         return true;
     }
