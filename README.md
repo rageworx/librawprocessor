@@ -16,10 +16,16 @@
  1. Nothing in now.
 
 ### Reserved to be included ###
-* OpenMP
+* OpenMP supporting.
 
 ### Latest update ###
-* Version marked as 0.9.26.90
+* Version marked as 0.9.30.100
+* Supports Gamma, Brightness, Contrast with these methods:
+  1. bool AdjustGamma( float gamma );
+  2. bool AdjustBrightness( float percent );
+  3. bool AdjustContrast( float percent ); 
+
+### Previous updates ###
 * Now supporting Pixel filterings with :
   1. ApplyFilter();
   2. CloneWithFilter();
@@ -35,8 +41,6 @@
 * User customizable filter availed, see WIKI.
 * Median filter included:
   1. ApplyMedianFilter();
-
-### Previous updates ###
 * Enhanced for these methods:
   1. Get16bitThresholdedImage();
   1. Get8bitThresholdedImage();
