@@ -179,6 +179,11 @@ class RAWProcessor
         void          DiscardFilter( FilterConfig* fp );
 
     public:
+        bool AdjustGamma( float gamma );
+        bool AdjustBrightness( float percent );
+        bool AdjustContrast( float percent );
+
+    public:
         const unsigned long         datasize();
         const unsigned short*       data();
 

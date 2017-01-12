@@ -57,7 +57,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,26,90
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,30,100
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1418,6 +1418,42 @@ RAWProcessor::FilterConfig* RAWProcessor::GetPresetFilter( unsigned fnum )
 void RAWProcessor::DiscardFilter( FilterConfig* fp )
 {
     RAWImageFilterKit::RemoveFilter( fp );
+}
+
+bool RAWProcessor::AdjustGamma( float gamma )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        return RAWImageToolKit::AdjustGamma( pixel_arrays.data(),
+                                             pixel_arrays.size(),
+                                             gamma );
+    }
+
+    return false;
+}
+
+bool RAWProcessor::AdjustBrightness( float percent )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        return RAWImageToolKit::AdjustBrightness( pixel_arrays.data(),
+                                                  pixel_arrays.size(),
+                                                  percent );
+    }
+
+    return false;
+}
+
+bool RAWProcessor::AdjustContrast( float percent )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        return RAWImageToolKit::AdjustContrast( pixel_arrays.data(),
+                                                pixel_arrays.size(),
+                                                percent );
+    }
+
+    return false;
 }
 
 const unsigned long RAWProcessor::datasize()
