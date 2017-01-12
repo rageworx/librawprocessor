@@ -185,7 +185,7 @@ bool RAWImageToolKit::AdjustGamma( unsigned short* ptr, unsigned arraysz, double
     double newv     = RAWIMGTK_MAX_F_VAL * (double)pow( (double)RAWIMGTK_MAX_F_VAL, -expn );
     double newlvl   = 0.0;
 
-    for( unsigned cnt=0; cnt<arraysz; cnt++ )
+    for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
     {
         newlvl = (double)pow((double)cnt, expn) * newv;
         if( newlvl > RAWIMGTK_MAX_F_VAL )

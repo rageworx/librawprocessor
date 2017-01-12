@@ -19,13 +19,14 @@
 * OpenMP supporting.
 
 ### Latest update ###
-* Version marked as 0.9.30.100
+* Version marked as 0.9.30.102
+* Fixed a bug of AdjustGamma();
+
+### Previous updates ###
 * Supports Gamma, Brightness, Contrast with these methods:
   1. bool AdjustGamma( float gamma );
   2. bool AdjustBrightness( float percent );
   3. bool AdjustContrast( float percent ); 
-
-### Previous updates ###
 * Now supporting Pixel filterings with :
   1. ApplyFilter();
   2. CloneWithFilter();
