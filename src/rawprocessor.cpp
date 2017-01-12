@@ -1,9 +1,11 @@
 #include <io.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <string>
 #include <cstring>
+
 #include <list>
 #include <iostream>
 #include <fstream>
@@ -184,22 +186,22 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
         pixel_max_level = 0;
         img_height = height;
 
-        unsigned pxlsz   = fsize / sizeof( unsigned short );
+        pixel_arrays_srcsz   = fsize / sizeof( unsigned short );
         unsigned blancsz = 0;
 
-        if (  pxlsz > 0 )
+        if (  pixel_arrays_srcsz > 0 )
         {
             // set temporary width ...
             img_width = pixel_arrays_realsz / img_height;
 
             // Check omit pixels ...
-            if ( pxlsz < ( img_width * img_height ) )
+            if ( pixel_arrays_srcsz < ( img_width * img_height ) )
             {
-                blancsz = ( img_width * img_height ) - pxlsz;
+                blancsz = ( img_width * img_height ) - pixel_arrays_srcsz;
             }
         }
 
-        pixel_arrays_realsz = pxlsz + blancsz;
+        pixel_arrays_realsz = pixel_arrays_srcsz + blancsz;
         pixel_arrays.clear();
         pixel_arrays.reserve( pixel_arrays_realsz );
         pixel_arrays.resize( pixel_arrays_realsz );
@@ -265,22 +267,22 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
         pixel_max_level = 0;
         img_height = height;
 
-        unsigned pxlsz   = bufferlen / sizeof( unsigned short );
-        unsigned blancsz = 0;
+        pixel_arrays_srcsz = bufferlen / sizeof( unsigned short );
+        unsigned blancsz   = 0;
 
-        if (  pxlsz > 0 )
+        if (  pixel_arrays_srcsz > 0 )
         {
             // set temporary width ...
-            img_width = pixel_arrays_realsz / img_height;
+            img_width = pixel_arrays_srcsz / img_height;
 
             // Check omit pixels ...
-            if ( pxlsz < ( img_width * img_height ) )
+            if ( pixel_arrays_srcsz < ( img_width * img_height ) )
             {
-                blancsz = ( img_width * img_height ) - pxlsz;
+                blancsz = ( img_width * img_height ) - pixel_arrays_srcsz;
             }
         }
 
-        pixel_arrays_realsz = pxlsz + blancsz;
+        pixel_arrays_realsz = pixel_arrays_srcsz + blancsz;
 
         pixel_arrays.clear();
         pixel_arrays.reserve( pixel_arrays_realsz );
@@ -1435,15 +1437,15 @@ const unsigned short* RAWProcessor::data()
 void RAWProcessor::analyse()
 {
     //if ( pixel_arrays.size() == 0 )
-    if ( pixel_arrays_realsz == 0 )
+    if ( pixel_arrays_srcsz == 0 )
         return;
 
     //int pixel_counts = pixel_arrays.size();
     //if ( pixel_counts > 0 )
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_srcsz > 0 )
     {
         //img_width = pixel_counts / img_height;
-        img_width = pixel_arrays_realsz / img_height;
+        img_width = pixel_arrays_srcsz / img_height;
     }
 
     // measure Bits Per Pixel.
