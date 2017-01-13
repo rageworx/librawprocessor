@@ -298,15 +298,19 @@ void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigne
 	// allocate and calculate the contributions
 	RawScaleWeightsTable weightsTable( _pFilter, dst_width, src_width );
 
-	#pragma omp parallel for
-    for (unsigned y = 0; y < height; y++)
+	unsigned y = 0;
+	unsigned x = 0;
+	unsigned i = 0;
+
+	#pragma omp parallel for private(x,i)
+    for ( y = 0; y < height; y++)
     {
         const
         unsigned short* src_bits = &src[ ( ( y + src_offset_y ) * src_width ) + src_offset_x  ];
         unsigned short* dst_bits = &dst[ y * dst_width ];
 
         // scale each row
-        for (unsigned x = 0; x < dst_width; x++)
+        for ( x = 0; x < dst_width; x++)
         {
             // loop through row
             const unsigned          iLeft  = weightsTable.getLeftBoundary(x);			/// retrieve left boundary
@@ -315,7 +319,7 @@ void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigne
             double                  gray   = 0.0;
 
             // for(i = iLeft to iRight)
-            for (unsigned i = 0; i <= iLimit; i++)
+            for ( i = 0; i <= iLimit; i++)
             {
                 // scan between boundaries
                 // accumulate weighted effect of each neighboring pixel
