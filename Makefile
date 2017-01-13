@@ -39,12 +39,18 @@ ifeq (64bit,$(firstword $(MAKECMDGOALS)))
 	CPUARCHOPT += -m64
 endif
 
+ifeq (openmp,$(firstword $(MAKECMDGOALS)))
+	OPTIMIZEOPT += -fopenmp
+endif
 
 CFLAGS    = -I$(SOURCEDIR) $(DEFINEOPT) $(OPTIMIZEOPT) $(CPUARCHOPT) $(BITSOPT)
+
+.PHONY: 64bit openmp
 
 all: prepare clean ${OUTDIR}/${OUTBIN}
 
 64bit: all
+openmp: all
 
 prepare:
 	@mkdir -p ${OBJDIR}
