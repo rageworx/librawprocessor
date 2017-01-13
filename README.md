@@ -16,12 +16,13 @@
  1. Nothing in now.
 
 ### Reserved to be included ###
-* OpenMP supporting.
+* OpenMP support more.
 
 ### Latest update ###
 * Version marked as 0.9.32.106
 * Now supporting openmp, compiler may need support this.
 * Added ReverseAuto();
+* Fixed a bug in resize to same image.
 
 ### Previous updates ###
 * Fixed a bug of AdjustGamma();
