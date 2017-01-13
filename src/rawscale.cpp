@@ -348,15 +348,19 @@ void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width,
     unsigned short* dst_base  = dst;
     unsigned        src_pitch = width;
 
-    #pragma omp parallel for
-    for (unsigned x = 0; x < width; x++)
+	unsigned y = 0;
+	unsigned x = 0;
+	unsigned i = 0;
+
+    #pragma omp parallel for private(x,i)
+    for ( x = 0; x < width; x++)
     {
         // work on column x in dst
         const unsigned  index = x;
         unsigned short* dst_bits = dst_base + index;
 
         // scale each column
-        for (unsigned y = 0; y < dst_height; y++)
+        for ( y = 0; y < dst_height; y++)
         {
             const
             unsigned short* src_base  = &src[ ( src_offset_y * width ) +
@@ -367,7 +371,7 @@ void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width,
             const unsigned short*   src_bits    = src_base + ( iLeft * src_pitch + index );
             double                  gray        = 0.0;
 
-            for (unsigned i = 0; i <= iLimit; i++)
+            for ( i = 0; i <= iLimit; i++)
             {
                 // scan between boundaries
                 // accumulate weighted effect of each neighboring pixel
