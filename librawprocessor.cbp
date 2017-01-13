@@ -32,8 +32,28 @@
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-O3" />
 					<Add option="-Wall" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="cp -f src/rawprocessor.h lib" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+			<Target title="ReleaseOpenMP">
+				<Option output="libopenmp/rawprocessor" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Releaseopenmp/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-Wall" />
+					<Add option="-fopenmp" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
