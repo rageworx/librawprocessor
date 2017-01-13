@@ -4,6 +4,11 @@
 #endif // DEBUG
 #include <cstring>
 #include <math.h>
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif // USE_OMP
+
 #include "rawimgtk.h"
 #include "minmax.h"
 
@@ -23,6 +28,7 @@ bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, unsigned w, unsigned 
     {
         int hcenter = h/2;
 
+        #pragma omp parallel for
         for( int cnth=0; cnth<hcenter; cnth++ )
         {
             for( int cntw=0; cntw<w; cntw++ )
@@ -44,6 +50,7 @@ bool RAWImageToolKit::FlipVertical( unsigned short* ptr, unsigned w, unsigned h 
     {
         int wcenter = w/2;
 
+        #pragma omp parallel for
         for( int cntw=0; cntw<wcenter; cntw++ )
         {
             for( int cnth=0; cnth<h; cnth++ )
@@ -78,6 +85,7 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
 
         memset( tempbuff, 0, new_w * new_h * sizeof( unsigned short ) );
 
+        #pragma omp parallel for
         for( int cntw=new_w-1; cntw>=0; cntw-- )
         {
             for( int cnth=0; cnth<new_h; cnth++ )
@@ -113,6 +121,7 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
 
     if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
     {
+        #pragma omp parallel for
         for( int cntw=0; cntw<cur_w; cntw++ )
         {
             for( int cnth=0; cnth<cur_h; cnth++ )
@@ -147,6 +156,7 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
 
         memset( tempbuff, 0,  new_w * new_h * sizeof( unsigned short ) );
 
+        #pragma omp parallel for
         for( int cntw=0; cntw<new_w; cntw++ )
         {
             for( int cnth=new_h-1; cnth>=0; cnth-- )
@@ -185,6 +195,7 @@ bool RAWImageToolKit::AdjustGamma( unsigned short* ptr, unsigned arraysz, double
     double newv     = RAWIMGTK_MAX_F_VAL * (double)pow( (double)RAWIMGTK_MAX_F_VAL, -expn );
     double newlvl   = 0.0;
 
+    #pragma omp parallel for
     for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
     {
         newlvl = (double)pow((double)cnt, expn) * newv;
@@ -208,6 +219,7 @@ bool RAWImageToolKit::AdjustBrightness( unsigned short* ptr, unsigned arraysz, d
     double bscaled  = ( 100.0 + perc ) / 100.0;
     double bval     = 0.0;
 
+    #pragma omp parallel for
     for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
     {
         bval = (double)cnt * bscaled;
@@ -228,6 +240,7 @@ bool RAWImageToolKit::AdjustContrast( unsigned short* ptr, unsigned arraysz, dou
     double bscaled  = ( 100.0 + perc ) / 100.0;
     double bval     = 0.0;
 
+    #pragma omp parallel for
     for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
     {
         bval = (double)RAWIMGTK_HALF_F_VAL + ( (double)cnt - RAWIMGTK_HALF_F_VAL ) * bscaled;
@@ -243,6 +256,7 @@ bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsign
     if ( ( ptr == NULL ) || ( arraysz == 0 ) || ( LUT == NULL ) )
         return false;
 
+    #pragma omp parallel for
     for( unsigned cnt=0; cnt<arraysz; cnt++ )
     {
         ptr[ cnt ] = LUT[ ptr[ cnt ] ];

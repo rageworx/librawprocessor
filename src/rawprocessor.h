@@ -130,6 +130,7 @@ class RAWProcessor
         void ChangeHeight( unsigned h );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Reverse( unsigned char maxbits = 16 );
+        bool ReverseAuto();
         bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed = false );
         bool GetWeights( std::vector<unsigned int>* weight_arrays );

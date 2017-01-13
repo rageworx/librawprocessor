@@ -19,10 +19,12 @@
 * OpenMP supporting.
 
 ### Latest update ###
-* Version marked as 0.9.30.102
-* Fixed a bug of AdjustGamma();
+* Version marked as 0.9.32.106
+* Now supporting openmp, compiler may need support this.
+* Added ReverseAuto();
 
 ### Previous updates ###
+* Fixed a bug of AdjustGamma();
 * Supports Gamma, Brightness, Contrast with these methods:
   1. bool AdjustGamma( float gamma );
   2. bool AdjustBrightness( float percent );

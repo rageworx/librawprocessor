@@ -12,6 +12,10 @@
 #include <cmath>
 #include <algorithm>
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif // USE_OMP
+
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
 	#include "tchar.h"
 #else
@@ -57,13 +61,21 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,30,102
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,32,106
 
 ////////////////////////////////////////////////////////////////////////////////
 
 bool RAWProcessor_sortcondition( int i,int j )
 {
     return ( i < j );
+}
+
+int RAWProcessor_uscompare (const void * a, const void * b)
+{
+    if( *(const unsigned short*)a < *(const unsigned short*)b )
+        return -1;
+
+    return *(const unsigned short*)a > *(const unsigned short*)b;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -449,9 +461,27 @@ bool RAWProcessor::Reverse( unsigned char maxbits )
 
     unsigned dlen = pixel_arrays.size();
 
+    if ( dlen == 0 )
+        return false;
+
     for( unsigned cnt=0; cnt<dlen; cnt++ )
     {
         pixel_arrays[ cnt ] = maxval - pixel_arrays[ cnt ];
+    }
+
+    return true;
+}
+
+bool RAWProcessor::ReverseAuto()
+{
+    unsigned dlen = pixel_arrays.size();
+
+    if ( dlen == 0 )
+        return false;
+
+    for( unsigned cnt=0; cnt<dlen; cnt++ )
+    {
+        pixel_arrays[ cnt ] = pixel_max_level - pixel_arrays[ cnt ];
     }
 
     return true;
@@ -489,6 +519,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
     {
         float dscale_ratio = DEF_CALC_F_BMAX / float( pixel_max_level );
 
+        #pragma omp parallel for
         for( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
             float fdspixel = float(ref_pixel_arrays[cnt]) * dscale_ratio;
@@ -509,6 +540,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
         float uscale_ratio = DEF_CALC_F_WMAX / float( pixel_max_level );
         float dscale_ratio = DEF_CALC_F_BMAX / DEF_CALC_F_WMAX;
 
+        #pragma omp parallel for
         for( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
             float fuspixel = float(ref_pixel_arrays[cnt]) * uscale_ratio;
@@ -707,6 +739,7 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
     word_arrays->reserve( array_max );
     word_arrays->resize( array_max );
 
+    #pragma omp parallel for
     for( int cnt=0; cnt<array_max; cnt++ )
     {
         //unsigned short apixel = pixel_arrays[cnt] - thld_min - 1;
@@ -766,6 +799,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     byte_arrays->reserve( array_max );
     byte_arrays->resize( array_max );
 
+    #pragma omp parallel for
     for( int cnt=0; cnt<array_max; cnt++ )
     {
         unsigned short apixel = pixel_arrays[cnt];
@@ -1267,6 +1301,7 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
 
             memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
 
+            #pragma omp parallel for
             for( unsigned cntx=0; cntx<img_width; cntx++ )
             {
                 for( unsigned cnty=0; cnty<img_height; cnty++ )
@@ -1318,8 +1353,6 @@ bool RAWProcessor::ApplyMedianFilter()
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        std::vector<unsigned short> medimatrix;
-
         unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
 
         if ( copy_arrays == NULL )
@@ -1327,11 +1360,13 @@ bool RAWProcessor::ApplyMedianFilter()
 
         memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
 
+        #pragma omp parallel for
         for( unsigned cntx=0; cntx<img_width; cntx++ )
         {
             for( unsigned cnty=0; cnty<img_height; cnty++ )
             {
-                medimatrix.clear();
+                unsigned short medimatrix[9] = {0};
+                unsigned char  medimatrixsz  = 0;
 
                 // -- applying matrix ---
                 for( unsigned fcntx=0; fcntx<3; fcntx++ )
@@ -1347,23 +1382,24 @@ bool RAWProcessor::ApplyMedianFilter()
 
                         if ( posM < pixel_arrays_realsz )
                         {
-                             medimatrix.push_back ( pixel_arrays[ posM ] );
+                             //medimatrix.push_back ( pixel_arrays[ posM ] );
+                             medimatrix[ medimatrixsz ] = pixel_arrays[ posM ];
+                             medimatrixsz++;
                         }
                     }
                 }
                 // -- applying matrix ---
 
                 // sort it !
-                sort( medimatrix.begin(), medimatrix.end() );
+                qsort( medimatrix, medimatrixsz, sizeof(unsigned short), RAWProcessor_uscompare );
 
-                copy_arrays[ cnty * img_width + cntx ] = medimatrix[ medimatrix.size() / 2 ];
+                copy_arrays[ cnty * img_width + cntx ] = medimatrix[ medimatrixsz / 2 ];
             }
         }
 
         memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( unsigned short ) );
 
         delete[] copy_arrays;
-
         return true;
     }
 

@@ -1,3 +1,7 @@
+#ifdef USE_OMP
+#include <omp.h>
+#endif // USE_OMP
+
 #include "rawscale.h"
 #include "minmax.h"
 
@@ -189,8 +193,9 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
 	{
         if ( *dst != NULL )
         {
-            memcpy( &src, *dst, imgsz * sizeof( unsigned short ) );
-            return imgsz * sizeof( unsigned short );
+            unsigned cpsz = src_width * src_height * sizeof( unsigned short );
+            memcpy( *dst, src, cpsz );
+            return cpsz;
         }
 	}
 
@@ -293,6 +298,7 @@ void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigne
 	// allocate and calculate the contributions
 	RawScaleWeightsTable weightsTable( _pFilter, dst_width, src_width );
 
+	#pragma omp parallel for
     for (unsigned y = 0; y < height; y++)
     {
         const
@@ -338,7 +344,7 @@ void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width,
     unsigned short* dst_base  = dst;
     unsigned        src_pitch = width;
 
-
+    #pragma omp parallel for
     for (unsigned x = 0; x < width; x++)
     {
         // work on column x in dst
