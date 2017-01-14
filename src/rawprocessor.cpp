@@ -1,4 +1,9 @@
-#include <io.h>
+#ifdef __APPLE__
+    #include <sys/uio.h>
+    #include <unistd.h>
+#else
+    #include <io.h>
+#endif // __APPLE__
 
 #include <cstdio>
 #include <cstdlib>
@@ -15,6 +20,10 @@
 #ifdef USE_OMP
 #include <omp.h>
 #endif // USE_OMP
+
+#ifdef __APPLE__
+    #define RAWPROCESSOR_USE_LOCALTCHAR
+#endif // __APPLE__
 
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
 	#include "tchar.h"
@@ -341,7 +350,7 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
 
         ApplyTransform( trnsfm );
 
-        raw_file_name = _TEXT(DEF_MEMORY_LOADED);
+        raw_file_name = __TEXT(DEF_MEMORY_LOADED);
 
         return true;
     }
@@ -361,7 +370,7 @@ bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned h
 
 bool RAWProcessor::Reload()
 {
-    if ( raw_file_name == _TEXT(DEF_MEMORY_LOADED) )
+    if ( raw_file_name == __TEXT(DEF_MEMORY_LOADED) )
         return false;
 
     return Reload( _TCM2W(raw_file_name.c_str()) );
