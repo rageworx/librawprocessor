@@ -22,7 +22,9 @@
 #endif // USE_OMP
 
 #ifdef __APPLE__
-    #define RAWPROCESSOR_USE_LOCALTCHAR
+    #ifndef RAWPROCESSOR_USE_LOCALTCHAR
+        #define RAWPROCESSOR_USE_LOCALTCHAR
+    #endif
 #endif // __APPLE__
 
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
@@ -858,7 +860,7 @@ bool RAWProcessor::Get16bitPixel( unsigned x, unsigned y, unsigned short &px )
     if ( pixel_arrays.size() == 0 )
         return false;
 
-    if ( ( x < 0 ) || ( y < 0 ) || ( x > img_width ) || ( y > img_height ) )
+    if ( ( x > img_width ) || ( y > img_height ) )
         return false;
 
     int pixpos = ( y * img_height ) + x;
@@ -1569,8 +1571,7 @@ void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsign
     if ( outpixels == NULL )
         return;
 
-    if ( ( x >= 0 ) && ( x < img_width ) &&
-         ( y >= 0 ) && ( y < img_height ) )
+    if ( ( x < img_width ) && ( y < img_height ) )
     {
         unsigned mpos = img_width * y + x;
         if ( pixel_arrays_realsz > mpos )
