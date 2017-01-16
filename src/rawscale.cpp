@@ -137,7 +137,7 @@ double RawScaleWeightsTable::getWeight( unsigned dst_pos, unsigned src_pos )
 {
     if ( dst_pos < _LineLength )
     {
-        int sz = _WeightTable[dst_pos].Right - _WeightTable[dst_pos].Left;
+        //int sz = _WeightTable[dst_pos].Right - _WeightTable[dst_pos].Left;
         if ( src_pos < _WindowSize )
         {
             return _WeightTable[dst_pos].Weights[src_pos];
@@ -352,7 +352,7 @@ void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width,
 	unsigned x = 0;
 	unsigned i = 0;
 
-    #pragma omp parallel for private(x,i)
+    #pragma omp parallel for private(y,i)
     for ( x = 0; x < width; x++)
     {
         // work on column x in dst

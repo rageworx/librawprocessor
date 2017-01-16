@@ -26,12 +26,14 @@ bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, unsigned w, unsigned 
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
-        int hcenter = h/2;
+        unsigned hcenter = h/2;
+        unsigned cnth = 0;
+        unsigned cntw = 0;
 
-        #pragma omp parallel for
-        for( int cnth=0; cnth<hcenter; cnth++ )
+        #pragma omp parallel for private(cntw)
+        for( cnth=0; cnth<hcenter; cnth++ )
         {
-            for( int cntw=0; cntw<w; cntw++ )
+            for( cntw=0; cntw<w; cntw++ )
             {
                 RAWImageToolKitSwapUS( ptr[ w * ( h - cnth ) + cntw ],
                                        ptr[ w * cnth + cntw ] );
@@ -48,12 +50,14 @@ bool RAWImageToolKit::FlipVertical( unsigned short* ptr, unsigned w, unsigned h 
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
-        int wcenter = w/2;
+        unsigned wcenter = w/2;
+        unsigned cntw = 0;
+        unsigned cnth = 0;
 
-        #pragma omp parallel for
-        for( int cntw=0; cntw<wcenter; cntw++ )
+        #pragma omp parallel for private(cnth)
+        for( cntw=0; cntw<wcenter; cntw++ )
         {
-            for( int cnth=0; cnth<h; cnth++ )
+            for( cnth=0; cnth<h; cnth++ )
             {
                 RAWImageToolKitSwapUS( ptr[ w * cnth + ( w - cntw ) ],
                                        ptr[ w * cnth + cntw ] );
@@ -68,15 +72,15 @@ bool RAWImageToolKit::FlipVertical( unsigned short* ptr, unsigned w, unsigned h 
 
 bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
 {
-    int cur_w = *w;
-    int cur_h = *h;
+    unsigned cur_w = *w;
+    unsigned cur_h = *h;
 
     if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
     {
-        int src_x = 0;
-        int src_y = 0;
-        int new_w = cur_h;
-        int new_h = cur_w;
+        unsigned src_x = 0;
+        unsigned src_y = 0;
+        unsigned new_w = cur_h;
+        unsigned new_h = cur_w;
 
         unsigned short* tempbuff = new unsigned short[ new_w * new_h ];
 
@@ -85,10 +89,13 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
 
         memset( tempbuff, 0, new_w * new_h * sizeof( unsigned short ) );
 
-        #pragma omp parallel for
-        for( int cntw=new_w-1; cntw>=0; cntw-- )
+        unsigned cntw = 0;
+        unsigned cnth = 0;
+
+        #pragma omp parallel for private(cnth)
+        for( cntw=new_w-1; cntw>=0; cntw-- )
         {
-            for( int cnth=0; cnth<new_h; cnth++ )
+            for( cnth=0; cnth<new_h; cnth++ )
             {
                 tempbuff[ new_w * cnth + cntw ] = ptr[ cur_w * src_y + src_x ];
 
@@ -116,15 +123,18 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
 
 bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
 {
-    int cur_w = *w;
-    int cur_h = *h;
+    unsigned cur_w = *w;
+    unsigned cur_h = *h;
 
     if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
     {
-        #pragma omp parallel for
-        for( int cntw=0; cntw<cur_w; cntw++ )
+        unsigned cntw = 0;
+        unsigned cnth = 0;
+
+        #pragma omp parallel for private(cnth)
+        for( cntw=0; cntw<cur_w; cntw++ )
         {
-            for( int cnth=0; cnth<cur_h; cnth++ )
+            for( cnth=0; cnth<cur_h; cnth++ )
             {
                 RAWImageToolKitSwapUS( ptr[ cur_w * cnth + cntw ],
                                        ptr[ cur_w * ( cur_h - cnth ) + ( cur_w - cntw ) ] );
@@ -139,15 +149,15 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
 
 bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
 {
-    int cur_w = *w;
-    int cur_h = *h;
+    unsigned cur_w = *w;
+    unsigned cur_h = *h;
 
     if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
     {
-        int src_x = 0;
-        int src_y = 0;
-        int new_w = cur_h;
-        int new_h = cur_w;
+        unsigned src_x = 0;
+        unsigned src_y = 0;
+        unsigned new_w = cur_h;
+        unsigned new_h = cur_w;
 
         unsigned short* tempbuff = new unsigned short[ new_w * new_h ];
 
@@ -156,10 +166,13 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
 
         memset( tempbuff, 0,  new_w * new_h * sizeof( unsigned short ) );
 
-        #pragma omp parallel for
-        for( int cntw=0; cntw<new_w; cntw++ )
+        unsigned cntw = 0;
+        unsigned cnth = 0;
+
+        #pragma omp parallel for private(cnth)
+        for( cntw=0; cntw<new_w; cntw++ )
         {
-            for( int cnth=new_h-1; cnth>=0; cnth-- )
+            for( cnth=new_h-1; cnth>=0; cnth-- )
             {
                 tempbuff[ new_w * cnth + cntw ] = ptr[ cur_w * src_y + src_x ];
 
