@@ -25,6 +25,8 @@
     #ifndef RAWPROCESSOR_USE_LOCALTCHAR
         #define RAWPROCESSOR_USE_LOCALTCHAR
     #endif
+#else
+    #define __TEXT  _TEXT
 #endif // __APPLE__
 
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
