@@ -1,4 +1,9 @@
-#include <io.h>
+#ifdef __APPLE__
+    #include <sys/uio.h>
+    #include <unistd.h>
+#else
+    #include <io.h>
+#endif // __APPLE__
 
 #include <cstdio>
 #include <cstdlib>
@@ -15,6 +20,12 @@
 #ifdef USE_OMP
 #include <omp.h>
 #endif // USE_OMP
+
+#ifdef __APPLE__
+    #ifndef RAWPROCESSOR_USE_LOCALTCHAR
+        #define RAWPROCESSOR_USE_LOCALTCHAR
+    #endif
+#endif // __APPLE__
 
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
 	#include "tchar.h"
@@ -341,7 +352,7 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
 
         ApplyTransform( trnsfm );
 
-        raw_file_name = _TEXT(DEF_MEMORY_LOADED);
+        raw_file_name = __TEXT(DEF_MEMORY_LOADED);
 
         return true;
     }
@@ -361,7 +372,7 @@ bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned h
 
 bool RAWProcessor::Reload()
 {
-    if ( raw_file_name == _TEXT(DEF_MEMORY_LOADED) )
+    if ( raw_file_name == __TEXT(DEF_MEMORY_LOADED) )
         return false;
 
     return Reload( _TCM2W(raw_file_name.c_str()) );
@@ -849,7 +860,7 @@ bool RAWProcessor::Get16bitPixel( unsigned x, unsigned y, unsigned short &px )
     if ( pixel_arrays.size() == 0 )
         return false;
 
-    if ( ( x < 0 ) || ( y < 0 ) || ( x > img_width ) || ( y > img_height ) )
+    if ( ( x > img_width ) || ( y > img_height ) )
         return false;
 
     int pixpos = ( y * img_height ) + x;
@@ -1560,8 +1571,7 @@ void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsign
     if ( outpixels == NULL )
         return;
 
-    if ( ( x >= 0 ) && ( x < img_width ) &&
-         ( y >= 0 ) && ( y < img_height ) )
+    if ( ( x < img_width ) && ( y < img_height ) )
     {
         unsigned mpos = img_width * y + x;
         if ( pixel_arrays_realsz > mpos )
