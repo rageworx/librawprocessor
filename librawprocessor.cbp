@@ -32,6 +32,27 @@
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
+					<Add option="-march=core2" />
+					<Add option="-O3" />
+					<Add option="-Wall" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="cp -f src/rawprocessor.h lib" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+			<Target title="ReleaseAVX">
+				<Option output="lib/rawprocessor_avx" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/ReleaseAVX/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-march=corei7-avx" />
 					<Add option="-O3" />
 					<Add option="-Wall" />
 				</Compiler>
@@ -44,13 +65,14 @@
 				</ExtraCommands>
 			</Target>
 			<Target title="ReleaseOpenMP">
-				<Option output="libopenmp/rawprocessor" prefix_auto="1" extension_auto="1" />
+				<Option output="lib/rawprocessor_avxomp" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Releaseopenmp/" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
+					<Add option="-march=corei7-avx" />
 					<Add option="-O3" />
 					<Add option="-Wall" />
 					<Add option="-fopenmp" />
@@ -92,6 +114,27 @@
 				<Option compiler="gnu_gcc_compiler_64bit" />
 				<Option createDefFile="1" />
 				<Compiler>
+					<Add option="-march=core2" />
+					<Add option="-O3" />
+					<Add option="-m64" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="cp -f src/rawprocessor.h lib64" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+			<Target title="Release64AVX">
+				<Option output="lib64/rawprocessor_avx" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release64AVX/" />
+				<Option type="2" />
+				<Option compiler="gnu_gcc_compiler_64bit" />
+				<Option createDefFile="1" />
+				<Compiler>
 					<Add option="-march=corei7-avx" />
 					<Add option="-O3" />
 					<Add option="-m64" />
@@ -106,7 +149,7 @@
 				</ExtraCommands>
 			</Target>
 			<Target title="Release64OpenMP">
-				<Option output="lib64openmp/rawprocessor" prefix_auto="1" extension_auto="1" />
+				<Option output="lib64/rawprocessor_avxomp" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Release64openmp/" />
 				<Option type="2" />

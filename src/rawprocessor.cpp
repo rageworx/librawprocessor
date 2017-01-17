@@ -900,9 +900,28 @@ bool RAWProcessor::SaveToFile( const char* path )
 
 bool RAWProcessor::SaveToFile( const wchar_t* path )
 {
-    string apath = convertW2M( path );
+    if ( pixel_arrays.size() == 0 )
+        return false;
 
-    return SaveToFile( apath.c_str() );
+    if ( path != NULL )
+    {
+        if ( _waccess( path, F_OK ) == 0 )
+        {
+            if ( _wunlink( path ) != 0 )
+                return false;
+        }
+
+        FILE* fp = _wfopen( path, L"wb" );
+        if ( fp != NULL )
+        {
+            fwrite( pixel_arrays.data(), 2, pixel_arrays.size(), fp );
+            fclose( fp );
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
