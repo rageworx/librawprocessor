@@ -16,7 +16,7 @@
  1. Nothing in now.
 
 ### Reserved to be included ###
-* OpenMP support more.
+* Exposure Controls with High Dynamic Range.
 
 ### Latest update ###
 * Version marked as 0.9.32.106
