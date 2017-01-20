@@ -9,9 +9,10 @@
  1. Threshold cut-off (for lose useless image datas, or make it easy to processing)
  1. Export to 8bit pixel array(vector array)
  1. Export to 16bit pixel array(vector array)
- 1. Reverse all pixels
+ 1. Reverse all pixels in manual or auto.
  1. Flip H/V and Rotate in 90,180,270 degrees.
- 1. 2 different way for tone mapping (known as H.D.R image)
+ 1. 2 different ways for tone mapping (known as H.D.R image): Drago(2003) and Reinhard(2005), refer to Free Image 3.
+ 1. OpenMP acceleration.
 
 ### And still these functions are not embodied. ###
  1. Nothing in now.
