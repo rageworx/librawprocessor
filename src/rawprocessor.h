@@ -180,9 +180,13 @@ class RAWProcessor
         void          DiscardFilter( FilterConfig* fp );
 
     public:
+        #define TONEMAP_TYPE_DRAGO      0   /// Adaptive Logarithmic Mapping for Displaying High Contrast Scenes
+        #define TONEMAP_TYPE_REINHARD   1   /// Erik Reinhard and Kate Devlin, 'Dynamic Range Reduction Inspired by Photographer Physiology'
+
         bool AdjustGamma( float gamma );
         bool AdjustBrightness( float percent );
         bool AdjustContrast( float percent );
+        bool AdjustToneMapping( unsigned ttype, float p1, float p2, float p3, float p4 );
 
     public:
         const unsigned long         datasize();

@@ -3,7 +3,7 @@
 #include <cstdlib>
 #endif // DEBUG
 #include <cstring>
-#include <math.h>
+#include <cmath>
 
 #ifdef USE_OMP
 #include <omp.h>
@@ -11,6 +11,8 @@
 
 #include "rawimgtk.h"
 #include "minmax.h"
+
+#include "rawimgtk_tmodrago03.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -276,4 +278,24 @@ bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsign
     }
 
     return true;
+}
+
+bool RAWImageToolKit::ToneMapping( unsigned short* ptr, unsigned sz, unsigned maxlvl, unsigned tmtype, float p1, float p2, float p3, float p4 )
+{
+    if ( ( ptr == NULL ) || ( sz == 0 ) )
+        return false;
+
+    switch( tmtype )
+    {
+        case 0 :
+            // recommended params : param1(gamma) = 2.2 , param2(exposure) = 0.0
+            return tmoDrago03( ptr, sz, (float)maxlvl ,p1, p2 );
+            break;
+
+        case 1 :
+            break;
+
+    }
+
+    return false;
 }

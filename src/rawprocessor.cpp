@@ -43,6 +43,8 @@
 #include "rawscale.h"
 #include "rawimgtk.h"
 #include "rawfilters.h"
+#include "rawimgtk_tmodrago03.h"
+#include "rawimgtk_tmoreinhard05.h"
 #include "minmax.h"
 #include "stdunicode.h"
 
@@ -74,7 +76,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,32,106
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,35,110
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1519,6 +1521,48 @@ bool RAWProcessor::AdjustContrast( float percent )
         return RAWImageToolKit::AdjustContrast( pixel_arrays.data(),
                                                 pixel_arrays.size(),
                                                 percent );
+    }
+
+    return false;
+}
+
+bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float p3, float p4 )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        switch ( ttype )
+        {
+            case TONEMAP_TYPE_DRAGO:
+                {
+                    float gamma = p1;
+                    float exposure = p2;
+
+                    return RAWImageToolKit::tmoDrago03( pixel_arrays.data(),
+                                                        pixel_arrays.size(),
+                                                        pixel_max_level,
+                                                        gamma,
+                                                        exposure );
+                }
+                break;
+
+            case TONEMAP_TYPE_REINHARD:
+                {
+                    float intensity = p1;
+                    float contrast = p2;
+                    float adaptation = p3;
+                    float colorcorrection = p4;
+
+                    return RAWImageToolKit::tmoReinhard2005( pixel_arrays.data(),
+                                                             pixel_arrays.size(),
+                                                             pixel_max_level,
+                                                             intensity,
+                                                             contrast,
+                                                             adaptation,
+                                                             colorcorrection );
+                }
+                break;
+
+        }
     }
 
     return false;

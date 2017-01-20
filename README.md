@@ -1,7 +1,7 @@
 # librawprocessor #
-* A library for 16bit Gray scaled RAW image processor in GCC for any different system.
-* This library is designed for GCC(MinGW) with FLTK 1.3.3 or 1.3.4.
-* Reading 12 to 16bit RAW image and make its threshold cut-off image into 8bit another RAW image.
+* A library for 16bit gray scaled medical RAW image processor in GCC for any different system.
+* This library is designed for GCC(MinGW) with FLTK 1.3.3 or 1.3.4. but any other platform should have no problem to use it.
+* Reading 12 to 16bit gray scaled RAW image and make its threshold cut-off image into 8bit another RAW image.
 
 ### This library supports these functions. ###
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
@@ -11,20 +11,23 @@
  1. Export to 16bit pixel array(vector array)
  1. Reverse all pixels
  1. Flip H/V and Rotate in 90,180,270 degrees.
+ 1. 2 different way for tone mapping (known as H.D.R image)
 
 ### And still these functions are not embodied. ###
  1. Nothing in now.
 
 ### Reserved to be included ###
-* Exposure Controls with High Dynamic Range.
+* Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.32.106
+* Version marked as 0.9.35.110
+* Supporting 2 different methods of Hight Dynamic Range tone mapping with this methods:
+  1. bool AdjustToneMapping();
+
+### Previous updates ###
 * Now supporting openmp, compiler may need support this.
 * Added ReverseAuto();
 * Fixed a bug in resize to same image.
-
-### Previous updates ###
 * Fixed a bug of AdjustGamma();
 * Supports Gamma, Brightness, Contrast with these methods:
   1. bool AdjustGamma( float gamma );

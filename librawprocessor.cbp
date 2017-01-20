@@ -16,6 +16,7 @@
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />
+					<Add option="-Wno-unknown-pragmas" />
 					<Add option="-D_DEBUG" />
 					<Add option="-DDEBUG" />
 				</Compiler>
@@ -35,6 +36,7 @@
 					<Add option="-march=core2" />
 					<Add option="-O3" />
 					<Add option="-Wall" />
+					<Add option="-Wno-unknown-pragmas" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -55,6 +57,7 @@
 					<Add option="-march=corei7-avx" />
 					<Add option="-O3" />
 					<Add option="-Wall" />
+					<Add option="-Wno-unknown-pragmas" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -95,6 +98,7 @@
 				<Compiler>
 					<Add option="-m64" />
 					<Add option="-g" />
+					<Add option="-Wno-unknown-pragmas" />
 					<Add option="-D_DEBUG" />
 					<Add option="-DDEBUG" />
 				</Compiler>
@@ -117,6 +121,7 @@
 					<Add option="-march=core2" />
 					<Add option="-O3" />
 					<Add option="-m64" />
+					<Add option="-Wno-unknown-pragmas" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -138,6 +143,7 @@
 					<Add option="-march=corei7-avx" />
 					<Add option="-O3" />
 					<Add option="-m64" />
+					<Add option="-Wno-unknown-pragmas" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -180,6 +186,10 @@
 		<Unit filename="src/rawfilters.h" />
 		<Unit filename="src/rawimgtk.cpp" />
 		<Unit filename="src/rawimgtk.h" />
+		<Unit filename="src/rawimgtk_tmodrago03.cpp" />
+		<Unit filename="src/rawimgtk_tmodrago03.h" />
+		<Unit filename="src/rawimgtk_tmoreinhard05.cpp" />
+		<Unit filename="src/rawimgtk_tmoreinhard05.h" />
 		<Unit filename="src/rawprocessor.cpp" />
 		<Unit filename="src/rawprocessor.h" />
 		<Unit filename="src/rawscale.cpp" />
