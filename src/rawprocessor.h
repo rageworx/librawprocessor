@@ -35,6 +35,15 @@
 //         referenced to http://lodev.org/cgtutor/filtering.html
 //         basic filter algorithm by Lode Vandevenne
 //
+// 2017-01-20
+//       - Added tone mapping - a.k.a HDR imaging - methods :
+//         1) DRAGO 2003
+//         2) REINHARD 2005
+//       - Referenced each for Free Image Library 3 and its own theory.
+//
+// 2017-01-23
+//       - Apple MAC OS X does not accept access files in _w*** methods.
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <vector>
@@ -103,6 +112,9 @@ class RAWProcessor
     public:
         RAWProcessor();
         RAWProcessor( const char* raw_file, unsigned int height = 0 );
+#ifndef __APPLE__
+        RAWProcessor( const wchar_t* raw_file, unsigned int height = 0 );
+#endif // __APPLE__
         virtual~RAWProcessor();
 
     public:
@@ -120,7 +132,9 @@ class RAWProcessor
         void Version( char** retverstr ); /// put NULL initialized char* array.
         void Version( int** retverints ); /// put int[4] array.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+#ifndef __APPLE__
         bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+#endif // __APPLE__
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
         bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
@@ -142,7 +156,9 @@ class RAWProcessor
     // Some additional tools here ...
     public:
         bool SaveToFile( const char* path );
+#ifndef __APPLE__
         bool SaveToFile( const wchar_t* path );
+#endif // __APPLE__
 
     public:
         RAWProcessor* Rescale( unsigned w, unsigned h, RescaleType st = RESCALE_NEAREST );

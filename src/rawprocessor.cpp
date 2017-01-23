@@ -76,7 +76,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,35,110
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,35,112
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -133,6 +133,28 @@ RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
     }
 }
 
+#ifndef __APPLE__
+RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
+ : raw_loaded(false),
+   pixel_arrays_realsz(0),
+   pixel_weights( NULL ),
+   pixel_weights_max( 0 ),
+   pixel_bpp(10),
+   pixel_min_level(0),
+   pixel_max_level(0),
+   img_height(height),
+   img_width(0)
+{
+    pixel_weights = new unsigned int[ DEF_PIXEL_WEIGHTS + 1];
+    resetWeights();
+
+    if ( raw_file != NULL )
+    {
+        Load( raw_file, TRANSFORM_NONE, height );
+    }
+}
+#endif // __APPLE__
+
 RAWProcessor::~RAWProcessor()
 {
     Unload();
@@ -173,6 +195,7 @@ void RAWProcessor::Version( int** retverints )
     memcpy( *retverints, retia, sizeof(int)*4 );
 }
 
+#ifndef __APPLE__
 bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     if ( height <= 0 )
@@ -182,6 +205,7 @@ bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned 
 
     return Load( fname.c_str(), trnsfm, height );
 }
+#endif // __APPLE__
 
 bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
@@ -900,6 +924,7 @@ bool RAWProcessor::SaveToFile( const char* path )
     return false;
 }
 
+#ifndef __APPLE__
 bool RAWProcessor::SaveToFile( const wchar_t* path )
 {
     if ( pixel_arrays.size() == 0 )
@@ -925,6 +950,7 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
 
     return false;
 }
+#endif // __APPLE__
 
 RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
 {
