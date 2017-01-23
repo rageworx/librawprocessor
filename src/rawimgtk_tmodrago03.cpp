@@ -38,7 +38,9 @@ static inline double pade_log( const double x )
 static bool toneMappingDrago03( float* src, unsigned srcsz, const float maxLum, const float avgLum, float biasParam, const float exposure)
 {
     if ( src == NULL )
+    {
         return false;
+    }
 
 	const float LOG05 = -0.693147F;	/// == log(0.5)
 
@@ -76,7 +78,9 @@ static bool toneMappingDrago03( float* src, unsigned srcsz, const float maxLum, 
 static bool getLuminance( float* src, unsigned srcsz, float* maxLum, float* minLum, float* worldLum )
 {
     if ( src == NULL )
+    {
         return false;
+    }
 
 	float max_lum = 0;
 	float min_lum = 0;
@@ -108,7 +112,9 @@ static bool getLuminance( float* src, unsigned srcsz, float* maxLum, float* minL
 static bool rec709GammaCorrection( unsigned short* src, unsigned srcsz, const float gammaval )
 {
     if ( ( src == NULL ) || ( srcsz == 0 ) )
+    {
         return false;
+    }
 
 	float slope = 4.5f;
 	float start = 0.018f;

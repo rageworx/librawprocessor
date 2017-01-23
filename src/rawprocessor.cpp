@@ -54,15 +54,20 @@ using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef __APPLE__
+    #undef UNICODE
+#endif // __APPLE__
+
 #ifdef UNICODE
-    #define _TSTRING    wstring
-    #define _TCM2W( _x_ )  convertM2W( (const char*)_x_ )
-    #define _TCW2M( _x_ )  convertW2M( (const wchar_t*)_x_ )
+    #define _TSTRING        wstring
+    #define _TCM2W( _x_ )   convertM2W( (const char*)_x_ )
+    #define _TCW2M( _x_ )   convertW2M( (const wchar_t*)_x_ )
 #else
-    #define _TSTRING    string
-    #define _TCM2W( _x_ )  _x_
-    #define _TCW2M( _x_ )  _x_
-#endif
+    #define _TSTRING        string
+    #define _TCM2W( _x_ )   _x_
+    #define _TCW2M( _x_ )   _x_
+#endif //// of UNICODE
+
 
 #define DEF_MEMORY_LOADED   "//MEMORY_LOAD//"
 #define DEF_RAW_I_HEIGHT    1024

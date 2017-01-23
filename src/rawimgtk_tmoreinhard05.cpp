@@ -39,7 +39,9 @@ static bool luminanceFromY( float* src, unsigned srcsz,
                             float *maxLum, float *minLum, float *Lav, float *Llav)
 {
     if ( ( src == NULL ) || ( srcsz == 0 ) )
+    {
         return false;
+    }
 
 	float max_lum = -1e20f;
 	float min_lum = 1e20f;
@@ -116,7 +118,7 @@ static bool toneMappingReinhard05( float* src, float* lumiY, unsigned srcsz,
 
 	ins = exp(-ins);
 
-	if( ( cont == 0 ) || ( adapt != 1 ) && ( cc != 1 ) )
+	if( ( cont == 0 ) || ( ( adapt != 1 ) && ( cc != 1 ) ) )
     {
 		luminanceFromY( lumiY, srcsz, &maxLum, &minLum, &Lav, &Llav );
 		keyf = (log(maxLum) - Llav) / (log(maxLum) - log(minLum));
