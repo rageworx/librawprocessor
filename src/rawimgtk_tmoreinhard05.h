@@ -10,7 +10,7 @@
 **                           - Herv?Drolon (drolon@infonie.fr)
 **                           - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 **   Referenced:
-**      [1] Erik Reinhard and Kate Devlin,
+**       [1] Erik Reinhard and Kate Devlin,
 **                'Dynamic Range Reduction Inspired by Photographer Physiology',
 **          IEEE Transactions on Visualization and Computer Graphics, 11(1),
 **                                                                 Jan/Feb 2005.
