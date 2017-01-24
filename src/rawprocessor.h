@@ -44,6 +44,9 @@
 // 2017-01-23
 //       - Apple MAC OS X does not accept access files in _w*** methods.
 //
+// 2017-01-24
+//       - Fixed normalize float range fix in HDR/Tone mapping methods.
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <vector>

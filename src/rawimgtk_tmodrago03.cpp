@@ -146,7 +146,7 @@ static bool rec709GammaCorrection( unsigned short* src, unsigned srcsz, const fl
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool RAWImageToolKit::tmoDrago03( unsigned short *src, unsigned srcsz, float compressf, double gamma, double exposure)
+bool RAWImageToolKit::tmoDrago03( unsigned short *src, unsigned srcsz, float normalf, double gamma, double exposure)
 {
     if ( ( src == NULL ) || ( srcsz == 0 ) )
         return false;
@@ -159,7 +159,7 @@ bool RAWImageToolKit::tmoDrago03( unsigned short *src, unsigned srcsz, float com
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<srcsz; cnt++ )
     {
-        convf[ cnt ] = (float) src[ cnt ] / 65535.0f;
+        convf[ cnt ] = (float) src[ cnt ] / normalf;
     }
 
 	// default algorithm parameters
@@ -189,7 +189,7 @@ bool RAWImageToolKit::tmoDrago03( unsigned short *src, unsigned srcsz, float com
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<srcsz; cnt++ )
     {
-        src[cnt] = MIN( (unsigned short)( convf[ cnt ] * compressf ), compressf );
+        src[cnt] = MIN( (unsigned short)( convf[ cnt ] * normalf ), normalf );
     }
 
     delete[] convf;

@@ -1,6 +1,6 @@
 # librawprocessor #
-* A library for 16bit gray scaled medical RAW image processor in GCC for any different system.
-* This library is designed for GCC(MinGW) with FLTK 1.3.3 or 1.3.4. but any other platform should have no problem to use it.
+* A library for 16bit gray scaled medical RAW image processor in GCC-5 & 6 for any different systems.
+* This library is designed for GCC(MinGW) with FLTK 1.3.3 or 1.3.4. but any other platform should have no problem to use it for 32 and 64bit platforms include Windows, Linux and Mac OS X.
 * Reading 12 to 16bit gray scaled RAW image and make its threshold cut-off image into 8bit another RAW image.
 
 ### This library supports these functions. ###
@@ -9,10 +9,9 @@
  1. Threshold cut-off (for lose useless image datas, or make it easy to processing)
  1. Export to 8bit pixel array(vector array)
  1. Export to 16bit pixel array(vector array)
- 1. Reverse all pixels in manual or auto.
+ 1. Reverse all pixels
  1. Flip H/V and Rotate in 90,180,270 degrees.
- 1. 2 different ways for tone mapping (known as H.D.R image): Drago(2003) and Reinhard(2005), refer to Free Image 3.
- 1. OpenMP acceleration.
+ 1. 2 different ways for tone mapping (known as H.D.R image)
 
 ### And still these functions are not embodied. ###
  1. Nothing in now.
@@ -21,11 +20,13 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.35.110
-* Supporting 2 different methods of Hight Dynamic Range tone mapping with this methods:
-  1. bool AdjustToneMapping();
+* Version marked as 0.9.36.115
+* Fixed some issues
+  1. Tone mapping divide & multiply fixed different range.
 
 ### Previous updates ###
+* Supporting 2 different methods of Hight Dynamic Range tone mapping with this methods:
+  1. bool AdjustToneMapping();
 * Now supporting openmp, compiler may need support this.
 * Added ReverseAuto();
 * Fixed a bug in resize to same image.

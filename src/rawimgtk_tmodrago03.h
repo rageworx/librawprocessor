@@ -24,7 +24,7 @@ namespace RAWImageToolKit
     *               1 means no correction, 2.2 in the original paper.
     *  - exposure : Exposure parameter (0 means no correction, 0 in the original paper)
     ***/
-    bool tmoDrago03( unsigned short *src, unsigned srcsz, float compressf,
+    bool tmoDrago03( unsigned short *src, unsigned srcsz, float normalf,
                      double gamma, double exposure);
 };
 

@@ -81,7 +81,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,35,112
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,36,115
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -174,7 +174,9 @@ RAWProcessor::~RAWProcessor()
 void RAWProcessor::Version( char** retverstr )
 {
     if ( retverstr == NULL )
+    {
         return;
+    }
 
     int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
 
@@ -194,7 +196,9 @@ void RAWProcessor::Version( char** retverstr )
 void RAWProcessor::Version( int** retverints )
 {
     if ( retverints == NULL )
+    {
         return;
+    }
 
     int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
     memcpy( *retverints, retia, sizeof(int)*4 );
@@ -1043,7 +1047,9 @@ RAWProcessor* RAWProcessor::Clone()
 void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, vector<unsigned short>* pixels )
 {
     if ( pixels == NULL )
+    {
         return;
+    }
 
     int _x0   = x1;
     int _x1   = x2;
@@ -1184,7 +1190,9 @@ void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsig
 void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, vector<unsigned short>* pixels)
 {
     if ( pixels == NULL )
+    {
         return;
+    }
 
     unsigned rw = w;
     unsigned rh = h;
@@ -1216,7 +1224,9 @@ void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h
 void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<unsigned short>* pixels)
 {
     if ( ( coords == NULL ) || ( pixels == NULL ) )
+    {
         return;
+    }
 
     reordercoords( coords );
 
@@ -1296,7 +1306,9 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<unsign
 void RAWProcessor::GetAnalysisFromPixels( std::vector<unsigned short>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info )
 {
     if ( ( pixels == NULL ) || ( weights == NULL ) || ( info == NULL ) )
+    {
         return;
+    }
 
     // Make weights ...
     weights->resize( DEF_PIXEL_WEIGHTS + 1 );
@@ -1362,7 +1374,9 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
             unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
 
             if ( copy_arrays == NULL )
+            {
                 return false;
+            }
 
             memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
 
@@ -1421,7 +1435,9 @@ bool RAWProcessor::ApplyMedianFilter()
         unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
 
         if ( copy_arrays == NULL )
+        {
             return false;
+        }
 
         memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
 
@@ -1665,7 +1681,9 @@ void RAWProcessor::resetWeights()
 void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y )
 {
     if ( outpixels == NULL )
+    {
         return;
+    }
 
     if ( ( x < img_width ) && ( y < img_height ) )
     {
@@ -1680,7 +1698,9 @@ void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsign
 void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 {
     if ( coords == NULL )
+    {
         return;
+    }
 
     unsigned ptsz = coords->size();
 
