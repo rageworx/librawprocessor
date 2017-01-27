@@ -397,10 +397,12 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
     return false;
 }
 
+#ifndef __APPLE__
 bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     return Load( raw_file, trnsfm, height );
 }
+#endif /// of __APPLE__
 
 bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
@@ -412,7 +414,11 @@ bool RAWProcessor::Reload()
     if ( raw_file_name == __TEXT(DEF_MEMORY_LOADED) )
         return false;
 
+#ifndef __APPLE__
+	return Reload( raw_file_name.c_str() );
+#else
     return Reload( _TCM2W(raw_file_name.c_str()) );
+#endif /// of __APPLE__
 }
 
 void RAWProcessor::Unload()
