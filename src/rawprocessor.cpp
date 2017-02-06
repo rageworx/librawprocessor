@@ -81,7 +81,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,36,115
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,38,120
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1587,6 +1587,7 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
                     return RAWImageToolKit::tmoDrago03( pixel_arrays.data(),
                                                         pixel_arrays.size(),
                                                         pixel_max_level,
+                                                        pixel_max_level,
                                                         gamma,
                                                         exposure );
                 }
@@ -1601,6 +1602,7 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
 
                     return RAWImageToolKit::tmoReinhard2005( pixel_arrays.data(),
                                                              pixel_arrays.size(),
+                                                             pixel_max_level,
                                                              pixel_max_level,
                                                              intensity,
                                                              contrast,

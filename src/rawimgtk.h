@@ -26,16 +26,6 @@ namespace RAWImageToolKit
     bool AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc );
 
     bool AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT );
-
-    /***
-    * ToneMapping reprogrammed from FreeImage 3 library, ToneMapping.cpp
-    * for gray scaled image.
-    *
-    * tonemaptypes : 0 = Adaptive logarithmic mapping (F. Drago, 2003)
-    *                1 = Dynamic range reduction inspired by
-    *                    photoreceptor phhysiology (E. Reinhard, 2005)
-    ***/
-    bool ToneMapping( unsigned short* ptr, unsigned sz, unsigned maxlvl, unsigned tmtype, float p1, float p2, float p3, float p4 );
 }
 
 #endif /// of __RAWIMGTOOLKIT_H__

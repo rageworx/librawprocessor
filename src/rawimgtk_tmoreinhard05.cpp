@@ -204,7 +204,7 @@ static bool toneMappingReinhard05( float* src, float* lumiY, unsigned srcsz,
 ////////////////////////////////////////////////////////////////////////////////
 
 bool RAWImageToolKit::tmoReinhard2005( unsigned short* src, unsigned srcsz,
-                                       float normalf,
+                                       float maxf, float normalf,
                                        float intensity, float contrast, float adaptation,
                                        float colorcorrection )
 {
@@ -218,7 +218,7 @@ bool RAWImageToolKit::tmoReinhard2005( unsigned short* src, unsigned srcsz,
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<srcsz; cnt++ )
     {
-        convf[ cnt ] = (float) src[ cnt ] / normalf;
+        convf[ cnt ] = (float) src[ cnt ] / maxf;
     }
 
     float* convy = NULL;
