@@ -140,8 +140,10 @@ class RAWProcessor
 #endif // __APPLE__
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-        bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-        bool Reload();
+#ifndef __APPLE__
+		bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+#endif // __APPLE__
+		bool Reload();
         void Unload();
         bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
         void ChangeHeight( unsigned h );

@@ -13,6 +13,10 @@
  1. Flip H/V and Rotate in 90,180,270 degrees.
  1. 2 different ways for tone mapping (known as H.D.R image)
 
+### Makefile rule ###
+ 1. Please copy Makefile.{appendix} to your compiler.
+ 1. appendix follows gcc, MinGW, MinGW-W64 : gcc, Mac OS X : macosx.
+
 ### And still these functions are not embodied. ###
  1. Nothing in now.
 
