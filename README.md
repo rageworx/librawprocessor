@@ -24,11 +24,12 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.36.115
-* Fixed some issues
-  1. Tone mapping divide & multiply fixed different range.
+* Version marked as 0.9.39.122
+* Fixed wrong range threshold method.
 
 ### Previous updates ###
+* Fixed some issues
+  1. Tone mapping divide & multiply fixed different range.
 * Supporting 2 different methods of Hight Dynamic Range tone mapping with this methods:
   1. bool AdjustToneMapping();
 * Now supporting openmp, compiler may need support this.
