@@ -181,6 +181,10 @@
 		<Compiler>
 			<Add option="-ffast-math" />
 		</Compiler>
+		<Unit filename="src/clahe.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/clahe.h" />
 		<Unit filename="src/minmax.h" />
 		<Unit filename="src/rawfilters.cpp" />
 		<Unit filename="src/rawfilters.h" />

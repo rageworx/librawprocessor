@@ -7,6 +7,7 @@
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
  1. Get weight informations.
  1. Threshold cut-off (for lose useless image datas, or make it easy to processing)
+ 1. CLAHE( Contrast Limited Adaptive Histogram Equalization )
  1. Export to 8bit pixel array(vector array)
  1. Export to 16bit pixel array(vector array)
  1. Reverse all pixels
@@ -24,10 +25,11 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.39.122
-* Fixed wrong range threshold method.
+* Version marked as 0.9.42.126
+* Included prototype of CLAHE, not optimized.
 
 ### Previous updates ###
+* Fixed wrong range threshold method.
 * Fixed some issues
   1. Tone mapping divide & multiply fixed different range.
 * Supporting 2 different methods of Hight Dynamic Range tone mapping with this methods:

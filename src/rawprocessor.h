@@ -210,6 +210,10 @@ class RAWProcessor
         bool AdjustToneMapping( unsigned ttype, float p1, float p2, float p3, float p4 );
 
     public:
+        // CLAHE ( Contrast Limited Adaptive Histogram Equalization )
+        bool ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, unsigned bins, float slope );
+
+    public:
         const unsigned long         datasize();
         const unsigned short*       data();
 

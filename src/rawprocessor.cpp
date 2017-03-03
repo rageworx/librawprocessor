@@ -83,7 +83,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,39,122
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,42,126
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1611,6 +1611,16 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
     }
 
     return false;
+}
+
+bool RAWProcessor::ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, unsigned bins, float slope )
+{
+    unsigned minv = report.threshold_wide_min;
+    unsigned maxv = report.threshold_wide_max;
+    unsigned short* ptr = pixel_arrays.data();
+
+    return RAWImageToolKit::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
+                                        applysz, applysz, bins, slope );
 }
 
 const unsigned long RAWProcessor::datasize()

@@ -26,6 +26,20 @@ namespace RAWImageToolKit
     bool AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc );
 
     bool AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT );
+
+    /***
+    * CLAHE ( Contrast Limited Adaptive Histogram Equalization )
+    * ----------------------------------------------------------
+    * Motivated on
+    * https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#Contrast_Limited_AHE
+    *
+    * Source refered to
+    * Karel Zuiderveld, karel@cv.ruu.nl of "Contrast Limited Adaptive Histogram Equalization"
+    * http://www.realtimerendering.com/resources/GraphicsGems/gemsiv/clahe.c
+    ***/
+    bool ApplyCLAHE( unsigned short* ptr, unsigned w, unsigned h,
+                     unsigned short minlvl, unsigned short maxlvl,
+                     unsigned blkw, unsigned blkh, unsigned bins, float slope );
 }
 
 #endif /// of __RAWIMGTOOLKIT_H__
