@@ -43,7 +43,7 @@ ifeq (openmp,$(firstword $(MAKECMDGOALS)))
 	OPTIMIZEOPT += -fopenmp
 endif
 
-ifeq (openmp,$(firstword $(MAKECMDGOALS)))
+ifeq (debug,$(firstword $(MAKECMDGOALS)))
 	DEFINEOPT += -DDEBUG
 	OUTBIN = librawprocessor_d.a
 endif
