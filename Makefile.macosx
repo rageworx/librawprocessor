@@ -97,4 +97,4 @@ ${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o \
 clean:
 	@echo "Cleaning built directories ..."
 	@rm -rf ${OBJDIR}/*
-@rm -rf ${OUTDIR}/${OUTBIN}
+	@rm -rf ${OUTDIR}/${OUTBIN}
