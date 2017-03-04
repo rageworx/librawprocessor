@@ -43,7 +43,7 @@ ifeq (openmp,$(firstword $(MAKECMDGOALS)))
 	OPTIMIZEOPT += -fopenmp
 endif
 
-ifeq (openmp,$(firstword $(MAKECMDGOALS)))
+ifeq (debug,$(firstword $(MAKECMDGOALS)))
 	DEFINEOPT += -DDEBUG
 	OUTBIN = librawprocessor_d.a
 endif
@@ -83,6 +83,9 @@ ${OBJDIR}/rawimgtk_tmodrago03.o:
 ${OBJDIR}/rawimgtk_tmoreinhard05.o:
 	@$(GPP) -c ${SOURCEDIR}/rawimgtk_tmoreinhard05.cpp ${CFLAGS} -o $@
 
+${OBJDIR}/clahe.o:
+	@$(GCC) -c ${SOURCEDIR}/clahe.c ${CFLGAS} -o $@
+
 
 ${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o \
 					 ${OBJDIR}/stdunicode.o \
@@ -90,6 +93,7 @@ ${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o \
 					 ${OBJDIR}/rawimgtk_tmodrago03.o \
 					 ${OBJDIR}/rawimgtk_tmoreinhard05.o \
 					 ${OBJDIR}/rawfilters.o \
+					 ${OBJDIR}/clahe.o \
 					 ${OBJDIR}/rawprocessor.o
 	@echo "Generating $@ ..."
 	@$(AR) -q $@ ${OBJDIR}/*.o
@@ -98,4 +102,4 @@ ${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o \
 clean:
 	@echo "Cleaning built directories ..."
 	@rm -rf ${OBJDIR}/*
-	@rm -rf ${OUTDIR}/${OUTBIN}
+@rm -rf ${OUTDIR}/${OUTBIN}
