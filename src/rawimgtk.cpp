@@ -285,294 +285,300 @@ bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsign
 ////////////////////////////////////////////////////////////////////////////////
 // Some CLAHE depends functions here:
 
-#ifdef CLAHE_NATIVE_FEATURE
-
-void CLAHE_ClipHistogram( unsigned long* pHisto, unsigned greylevels, unsigned cliplimit)
-/* This function performs clipping of the histogram and redistribution of bins.
+/* CLAHE_ClipHistogram() :
+ * This function performs clipping of the histogram and redistribution of bins.
  * The histogram is clipped and the number of excess pixels is counted. Afterwards
  * the excess pixels are equally redistributed across the whole histogram (providing
  * the bin count is smaller than the cliplimit).
  */
+void CLAHE_ClipHistogram( unsigned long* pHisto, unsigned int greyLvl, unsigned long clipLimit )
 {
-    unsigned long* pBinPtr = NULL;
-    unsigned long* pEndPtr = NULL;
-    unsigned long* pHistoPtr = NULL;
+    unsigned long* pRangePtr = pHisto;
+	unsigned long* pEndPtr = NULL;
+	unsigned long* pHistPtr = NULL;
 
-    unsigned long nrexcess = 0;
-    unsigned long upper;
-    unsigned long bininc;
-    unsigned long stepsz;
+    unsigned long excessSz = 0;
+	unsigned long upperSz;
+	unsigned long rangeInc;
+	unsigned long stepsz;
+	unsigned long cnt;
 
-    long     binexcess;
+    long lBinExcess;
 
-    pBinPtr = pHisto;
+	/* calculate total number of excess pixels */
+    for ( cnt = 0; cnt < greyLvl; cnt++)
+	{
+		lBinExcess = (long) pRangePtr[cnt] - (long) clipLimit;
 
-    for ( unsigned cnt=0; cnt<greylevels; cnt++ )
-    { /* calculate total number of excess pixels */
-        binexcess = (long)pBinPtr[cnt] - (long)cliplimit;
-
-        if ( binexcess > 0 )
-        {
-            /* excess in current bin */
-            nrexcess += binexcess;
-        }
+		/* excess in current bin */
+		if (lBinExcess > 0)
+		{
+			excessSz += lBinExcess;
+		}
     }
 
     /* Second part: clip histogram and redistribute excess pixels in each bin */
-    bininc = nrexcess / greylevels;     /// average binincrement
-    upper  = cliplimit - bininc;	    /// Bins larger than upper set to cliplimit
+    rangeInc = excessSz / greyLvl;		 /// average binincrement
+    upperSz  = clipLimit - rangeInc;	 /// Bins larger than upperSz set to cliplimit
 
-    for ( unsigned cnt=0; cnt<greylevels; cnt++ )
-    {
-        if ( pHisto[cnt] > cliplimit )
-        {
-            pHisto[cnt] = cliplimit; /* clip bin */
-        }
-        else
-        {
-            if ( pHisto[cnt] > upper )
-            {
-                /* high bin count */
-                nrexcess   -= pHisto[cnt] - upper;
-                pHisto[cnt] = cliplimit;
-            }
-            else
-            {
-                /* low bin count */
-                nrexcess    -= bininc;
-                pHisto[cnt] += bininc;
-            }
-        }
+    for ( cnt=0; cnt<greyLvl; cnt++ )
+	{
+		if (pHisto[cnt] > clipLimit)
+		{
+			pHisto[cnt] = clipLimit;    /// clip bin
+		}
+		else
+		{
+			if (pHisto[cnt] > upperSz)
+			{	/* high bin count */
+				excessSz    -= pHisto[cnt] - upperSz;
+				pHisto[cnt]  = clipLimit;
+			}
+			else
+			{	/* low bin count */
+				excessSz    -= rangeInc;
+				pHisto[cnt] += rangeInc;
+			}
+		}
     }
 
-    while ( nrexcess > 0 )
-    {   /* Redistribute remaining excess  */
-        pEndPtr   = &pHisto[greylevels];
-        pHistoPtr = pHisto;
+    while ( excessSz > 0 )
+	{   /* Redistribute remaining excess  */
+		pEndPtr = &pHisto[greyLvl]; pHistPtr = pHisto;
 
-        while ( ( nrexcess > 0 ) && ( pHistoPtr < pEndPtr ) )
-        {
-            stepsz = greylevels / nrexcess;
+		while ( ( excessSz > 0 ) && ( pHistPtr < pEndPtr )  )
+		{
+			stepsz = greyLvl / excessSz;
 
-            if ( stepsz < 1 )
-                stepsz = 1;		  /* stepsize at least 1 */
+			if ( stepsz < 1 )
+			{
+				/* stepsize at least 1 */
+				stepsz = 1;
+			}
 
-            for ( pBinPtr = pHistoPtr;
-                  ( pBinPtr < pEndPtr ) && ( nrexcess > 0 );
-                  pBinPtr += stepsz )
-            {
-                if ( *pBinPtr < cliplimit )
-                {
-                    (*pBinPtr)++;
-                    /* reduce excess */
-                    nrexcess--;
-                }
-            }
+			for ( pRangePtr=pHistPtr;
+			      pRangePtr < pEndPtr && excessSz;
+				  pRangePtr += stepsz)
+			{
+				if (*pRangePtr < clipLimit)
+				{
+					/* reduce excess */
+					(*pRangePtr)++;
+					excessSz--;
+				}
+			}
 
-            /* restart redistributing on other bin location */
-            pHistoPtr++;
-        }
+			/* restart redistributing on other bin location */
+			pHistPtr++;
+		}
     }
 }
 
-void CLAHE_MakeHistogram ( unsigned short* pImage,
-                           unsigned wsz,
-                           unsigned sizex, unsigned sizey,
-                           unsigned long* pHisto,
-                           unsigned greylevels, unsigned short* pLUT )
-/* This function classifies the greylevels present in the array image into
+/* CLAHE_MakeHistogram() :
+ * This function classifies the greylevels present in the array image into
  * a greylevel histogram. The pLookupTable specifies the relationship
  * between the greyvalue of the pixel (typically between 0 and 4095) and
  * the corresponding bin in the histogram (usually containing only 128 bins).
  */
+void CLAHE_MakeHistogram ( unsigned short* pImage,
+                           unsigned int imgWidth,
+                           unsigned int rgnszW, unsigned int rgnszH,
+                           unsigned long* pHisto,
+                           unsigned int greyLvl, unsigned short* pLUT )
 {
-    unsigned short* pImagePointer = NULL;
+    unsigned short* pImgPtr = NULL;
+    unsigned int cnt;
 
-    memset( pHisto, 0, greylevels * sizeof( unsigned ) );
+	/* clear histogram */
+    for ( cnt=0; cnt<greyLvl; cnt++ )
+	{
+		pHisto[cnt] = 0L;
+	}
 
-    for ( unsigned cnt=0; cnt<sizey; cnt++ )
-    {
-        pImagePointer = &pImage[ sizex ];
+    for ( cnt=0; cnt< rgnszH; cnt++)
+	{
+		pImgPtr = &pImage[rgnszW];
 
-        while ( pImage < pImagePointer )
-        {
-            pHisto[ pLUT[ *pImage++ ] ]++;
-        }
+		while ( pImage < pImgPtr )
+		{
+			pHisto[ pLUT[ *pImage++ ] ]++;
+		}
 
-        pImagePointer += wsz;
-
-        pImage = &pImagePointer[-sizex];
+		pImgPtr += imgWidth;
+		pImage = &pImgPtr[-rgnszW];
     }
 }
 
-void CLAHE_MapHistogram ( unsigned long* pHisto,
-                          unsigned short minlvl, unsigned short maxlvl,
-                          unsigned greylevels, unsigned sz )
-/* This function calculates the equalized lookup table (mapping) by
+/* CLAHE_MapHistogram() :
+ * This function calculates the equalized lookup table (mapping) by
  * cumulating the input histogram. Note: lookup table is rescaled in range [Min..Max].
  */
+void CLAHE_MapHistogram ( unsigned long* pHisto,
+                          unsigned short Min, unsigned short Max,
+                          unsigned int greyLvl, unsigned long pixelsz )
 {
-    const float fScale       = ((float)(maxlvl - minlvl)) / sz;
-    const unsigned long uMin = (unsigned long) minlvl;
+    unsigned int  cnt = 0;
+	unsigned long sum = 0;
 
-    unsigned long sum = 0;
+    const float         fScale = ( (float)(Max - Min) ) / pixelsz;
+    const unsigned long ulMin  = (unsigned long) Min;
 
-    for ( unsigned cnt=0; cnt<greylevels; cnt++ )
-    {
-        sum        += pHisto[cnt];
-        pHisto[cnt] = (unsigned long)( uMin + sum * fScale );
+    for ( cnt=0; cnt<greyLvl; cnt++)
+	{
+		sum += pHisto[cnt];
+		pHisto[cnt] = (unsigned long)( ulMin + sum * fScale );
 
-        if ( pHisto[ cnt ] > maxlvl )
-        {
-            pHisto[ cnt ] = maxlvl;
-        }
+		if ( pHisto[cnt] > Max )
+		{
+			pHisto[cnt] = Max;
+		}
     }
 }
 
-void CLAHE_MakeLut( unsigned short* pLUT, unsigned short minlvl, unsigned short maxlvl, unsigned int bins )
-/* To speed up histogram clipping, the input image [Min,Max] is scaled down to
+/* CLAHE_MakeLut() :
+ * To speed up histogram clipping, the input image [Min,Max] is scaled down to
  * [0,uiNrBins-1]. This function calculates the LUT.
  */
+void CLAHE_MakeLut( unsigned short * pLUT, unsigned short Min, unsigned short Max, unsigned int ranges )
 {
-    const unsigned long binsz = 1 + ( maxlvl - minlvl ) / bins;
+    const unsigned short BinSize = (unsigned short) (1 + (Max - Min) / ranges);
 
-    for ( unsigned cnt=minlvl; cnt<=maxlvl; cnt++ )
+    for ( int cnt=Min; cnt<=Max; cnt++)
     {
-        pLUT[ cnt ] = ( cnt - minlvl ) / binsz;
+        pLUT[cnt] = (cnt - Min) / BinSize;
     }
 }
 
-/***
- * ptr         - pointer to input/output image
- * wsz         - resolution of image in x-direction
- * mapXXX      - mappings of grey levels from histograms
- * w           - Width of image submatrix
- * h           - Height of image submatrix
+/* CLAHE_Interpolate() :
+ * pImage      - pointer to input/output image
+ * imgWidth      - resolution of image in x-direction
+ * pMap*     - mappings of greylevels from histograms
+ * subszW     - subszW of image submatrix
+ * subszH     - subszH of image submatrix
  * pLUT	       - lookup table containing mapping greyvalues to bins
  * This function calculates the new greylevel assignments of pixels within a submatrix
- * of the image with size Width and Height. This is done by a bilinear interpolation
+ * of the image with size subszW and subszH. This is done by a bilinear interpolation
  * between four different mappings in order to eliminate boundary artifacts.
  * It uses a division; since division is often an expensive operation, I added code to
  * perform a logical shift instead when feasible.
-***/
-void CLAHE_Interpolate( unsigned short* pImg, unsigned wsz,
-                        unsigned long* mapLU, unsigned long* mapRU,
-                        unsigned long* mapLB, unsigned long* mapRB,
-                        unsigned subw, unsigned subh, unsigned short* pLUT )
+ */
+void CLAHE_Interpolate( unsigned short * pImage,
+                        int imgWidth, unsigned long * pMapLU,
+                        unsigned long * pMapRU, unsigned long * pMapLB,  unsigned long * pMapRB,
+                        unsigned int subszW, unsigned int subszH, unsigned short * pLUT)
 {
-    /* Pointer increment after processing row */
-    const unsigned incVal = wsz - subw;
+    const unsigned int incSz = imgWidth-subszW; /* Pointer increment after processing row */
+    unsigned short GreyValue;
+	unsigned int normFactor = subszW * subszH; /* Normalization factor */
 
-    unsigned short greyVal = 0;
+    unsigned int coefW = 0;
+	unsigned int coefH = 0;
+	unsigned int invcoefW = 0;
+	unsigned int invcoefH = 0;
+	unsigned int shifts = 0;
 
-    /* Normalization factor */
-    unsigned int counts   = subw * subh;
+	/* If normFactor is not a power of two, use division */
+    if ( normFactor & (normFactor - 1) )
+	{
+		for ( coefH=0, invcoefH = subszH;
+		      coefH < subszH;
+		      coefH++, invcoefH--,pImage+=incSz )
+		{
+			for ( coefW=0, invcoefW = subszW;
+			      coefW < subszW;
+			      coefW++, invcoefW--)
+			{
+				/* get histogram bin value */
+				GreyValue = pLUT[*pImage];
 
-    unsigned int XCoef    = 0;
-    unsigned int YCoef    = 0;
-    unsigned int XInvCoef = 0;
-    unsigned int YInvCoef = 0;
-    unsigned int Shifts   = 0;
-
-    /* If Counts is not a power of two, use division */
-    if ( ( counts > 0 ) & ( ( counts - 1 ) > 0 ) )
-    {
-        for ( YCoef = 0, YInvCoef = subh;
-              YCoef < subh;
-              YCoef++, YInvCoef--, pImg+=incVal )
-        {
-            for ( XCoef = 0, XInvCoef = subw;
-                  XCoef < subw;
-                  XCoef++, XInvCoef-- )
-            {
-                /* get histogram bin value */
-                greyVal = pLUT[ *pImg ];
-
-                *pImg++ = (unsigned short)
-                          ( YInvCoef * (XInvCoef*mapLU[greyVal]
-                            + XCoef * mapRU[greyVal])
-                            + YCoef * (XInvCoef * mapLB[greyVal]
-                            + XCoef * mapRB[greyVal]) ) / counts;
-            }
-        }
-    }
+				*pImage++ = (unsigned short )( ( invcoefH *
+												 ( invcoefW*pMapLU[GreyValue] +  coefW * pMapRU[GreyValue] ) +
+						                         coefH * (invcoefW * pMapLB[GreyValue] +
+												 coefW * pMapRB[GreyValue])) / normFactor );
+			}
+		}
+	}
     else
-    {   /* avoid the division and use a right shift instead */
-        while ( counts >>= 1 )
-        {
-            /* Calculate 2log of Counts */
-            Shifts++;
-        }
+	{	/* avoid the division and use a right shift instead */
+		while ( normFactor >>= 1 )
+		{
+			/* Calculate 2log of normFactor */
+			shifts++;
+		}
 
-        for ( YCoef = 0, YInvCoef = subh;
-              YCoef < subh;
-              YCoef++, YInvCoef--, pImg+=incVal)
-        {
-            for ( XCoef = 0, XInvCoef = subw;
-                  XCoef < subw;
-                  XCoef++, XInvCoef-- )
-            {
-                greyVal = pLUT[*pImg];	  /* get histogram bin value */
-                *pImg++ = (unsigned short)
-                          ( YInvCoef* (XInvCoef * mapLU[greyVal]
-                            + XCoef * mapRU[greyVal])
-                            + YCoef * (XInvCoef * mapLB[greyVal]
-                            + XCoef * mapRB[greyVal]) ) >> Shifts;
-            }
-        }
+		for ( coefH = 0, invcoefH = subszH;
+		      coefH < subszH;
+			  coefH++, invcoefH--,pImage+=incSz )
+		{
+			 for ( coefW = 0, invcoefW = subszW;
+			       coefW < subszW;
+			       coefW++, invcoefW-- )
+			{
+				/* get histogram bin value */
+				GreyValue = pLUT[*pImage];
+
+				*pImage++ = (unsigned short)( ( invcoefH *
+				                                ( invcoefW * pMapLU[GreyValue] + coefW * pMapRU[GreyValue] ) +
+												coefH * (invcoefW * pMapLB[GreyValue] +
+												coefW * pMapRB[GreyValue])) >> shifts );
+			}
+		}
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/*   ptr    - Pointer to the input/output image
- *   w      - Image resolution in the X direction
- *   h      - Image resolution in the Y direction
- *   minlvl - Minimum greyvalue of input image (also becomes minimum of output image)
- *   maxlvl - Maximum greyvalue of input image (also becomes maximum of output image)
- *   blkw   - Number of contextial regions in the X direction (min 2, max uiMAX_REG_X)
- *   blkh   - Number of contextial regions in the Y direction (min 2, max uiMAX_REG_Y)
- *   bins   - Number of greybins for histogram ("dynamic range")
- *   slope  - Normalized cliplimit (higher values give more contrast)
- * The number of "effective" greylevels in the output image is set by uiNrBins; selecting
+/* RAWImageToolKit::ApplyCLAHE() :
+ *   pImage - Pointer to the input/output image
+ *   imgWidth - Image resolution in the X direction
+ *   imgHeight - Image resolution in the Y direction
+ *   Min - Minimum greyvalue of input image (also becomes minimum of output image)
+ *   Max - Maximum greyvalue of input image (also becomes maximum of output image)
+ *   rgnWidth - Number of contextial regions in the X direction (min 2, max DEF_MAX_WIDTH)
+ *   rgnHeight - Number of contextial regions in the Y direction (min 2, max DEF_MAX_HEIGHT)
+ *   ranges - Number of greybins for histogram ("dynamic range")
+ *   float fCliplimit - Normalized cliplimit (higher values give more contrast)
+ * The number of "effective" greylevels in the output image is set by ranges; selecting
  * a small value (eg. 128) speeds up processing and still produce an output image of
  * good quality. The output image will have the same minimum and maximum value as the input
  * image. A clip limit smaller than 1 results in standard (non-contrast limited) AHE.
  */
 
-bool RAWImageToolKit::ApplyCLAHE( unsigned short* ptr, unsigned w, unsigned h,
-                                  unsigned short minlvl, unsigned short maxlvl,
-                                  unsigned blkw, unsigned blkh, unsigned bins, float slope )
+bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
+                                  unsigned int imgWidth, unsigned int imgHeight,
+                                  unsigned short Min, unsigned short Max,
+                                  unsigned int rgnWidth, unsigned int rgnHeight,
+                                  unsigned int ranges, float fCliplimit )
 {
     /* counters */
-    unsigned cntX;
-    unsigned cntY;
+    unsigned int cnt_x;
+    unsigned int cnt_y;
 
     /* size of context. reg. and subimages */
-    unsigned subW = 0;
-    unsigned subH = 0;
-    unsigned subX = 0;
-    unsigned subY = 0;
+    unsigned int subszW = 0;
+    unsigned int subszH = 0;
+    unsigned int subImgW = 0;
+    unsigned int subImgH = 0;
 
     /* auxiliary variables interpolation routine */
-    unsigned inpolXL;
-    unsigned inpolXR;
-    unsigned inpolYU;
-    unsigned inpolYB;
+    unsigned int cnt_xL = 0;
+    unsigned int cnt_xR = 0;
+    unsigned int cnt_yU = 0;
+    unsigned int cnt_yB = 0;
 
     /* clip limit and region pixel count */
-    unsigned long cliplimit;
-    unsigned long nrpixels;
+    unsigned long clipLimit = 0;
+    unsigned long pixelCnts = 0;
 
     /* pointer to image */
-    unsigned short* pImPointer = NULL;
+    unsigned short* pImgPtr = NULL;
 
     /* lookup table used for scaling of input image */
-    unsigned short aLUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    unsigned short aLUT[ RAWIMGTK_MAX_D_ARRAY_SZ ] = {0};
 
     /* pointer to histogram and mappings*/
     unsigned long* pulHist = NULL;
-    unsigned long* pulMapArray = NULL;
+    unsigned long* pMapArray = NULL;
 
     /* auxiliary pointers interpolation */
     unsigned long* pulLU = NULL;
@@ -580,156 +586,131 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* ptr, unsigned w, unsigned h,
     unsigned long* pulRU = NULL;
     unsigned long* pulRB = NULL;
 
-    if ( blkw > CLAHE_MAX_REG_W )
-        blkw = CLAHE_MAX_REG_W;
+    if ( rgnWidth > CLAHE_MAX_REG_W )
+		rgnWidth = CLAHE_MAX_REG_W;
 
-    if ( blkh > CLAHE_MAX_REG_H )
-        blkh = CLAHE_MAX_REG_H;
+    if ( rgnHeight > CLAHE_MAX_REG_H )
+		rgnHeight = CLAHE_MAX_REG_H;
 
-    if ( w % blkw )
-        return false;   /// x-resolution no multiple of blkw
+    if ( imgWidth % rgnWidth )
+		return false;       /// x-resolution no multiple of rgnWidth
 
-    if ( h & blkh )
-        return false;  /// y-resolution no multiple of blkh
+    if ( imgHeight & rgnHeight )
+		return false;       /// y-resolution no multiple of rgnHeight
 
-    if ( maxlvl >= RAWIMGTK_MAX_D_ARRAY_SZ )
-        return false;   /// maximum too large
+    if ( Max >= RAWIMGTK_MAX_D_ARRAY_SZ )
+		return false;       /// maximum too large
 
-    if ( minlvl >= maxlvl )
-        return false;   /// minimum equal or larger than maximum
+    if ( Min >= Max )
+		return false;       /// minimum equal or larger than maximum
 
-    if ( ( blkw< 2 ) || ( blkh< 2 ) )
-        return false;   /// at least 4 contextual regions required
+    if ( rgnWidth < 2 )
+        rgnWidth = 2;
 
-    if ( slope == 1.0f )
-        return true;    /// is OK, immediately returns original image.
+    if ( rgnHeight < 2 )
+		rgnHeight = 2;
 
-    if ( bins == 0 )
-        bins = 128;     /// default value when not specified
+    if ( fCliplimit == 1.0f )
+		return true;	    /// is OK, immediately returns original image.
 
-    pulMapArray = new unsigned long[ blkw * blkh * bins ];
+    if ( fCliplimit < 1.0f )
+        fCliplimit = 1.0f;
 
-    if ( pulMapArray == NULL )
-        return false;   /// Not enough memory! (try reducing bins)
+    if ( ranges == 0 )
+		ranges = 128;	  /* default value when not specified */
 
-    /* Actual size of contextual regions */
-    subW     = w / blkw;
-    subH     = h / blkh;
-    nrpixels = (unsigned long)subW * (unsigned long)subH;
+    pMapArray = new unsigned long[ rgnWidth * rgnHeight * ranges ];
 
-    if ( slope < 1.0f )
-        slope = 1.0f;   /// if it going under 1.0f, there's a bug in CLAHE_ClipHistogram() !
+    if ( pMapArray == NULL )
+		return false;
 
-    /* Calculate actual cliplimit */
-    cliplimit = (unsigned long)( slope * ( subW * subH ) / bins );
-    cliplimit = (cliplimit < 1UL) ? 1UL : cliplimit;
+    subszW    = imgWidth/rgnWidth; subszH = imgHeight/rgnHeight;  /* Actual size of contextual regions */
+    pixelCnts = (unsigned long)subszW * (unsigned long)subszH;
 
-    /* Make lookup table for mapping of greyvalues */
-    CLAHE_MakeLut( aLUT, minlvl, maxlvl, bins );
+    if(fCliplimit > 0.0)
+	{
+		/* Calculate actual cliplimit	 */
+		clipLimit = (unsigned long) (fCliplimit * (subszW * subszH) / ranges);
+        clipLimit = (clipLimit < 1UL) ? 1UL : clipLimit;
+    }
+    else
+	{
+		/* Large value, do not clip (AHE) */
+		clipLimit = 1UL<<14;
+	}
+
+    CLAHE_MakeLut(aLUT, Min, Max, ranges);	  /* Make lookup table for mapping of greyvalues */
 
     /* Calculate greylevel mappings for each contextual region */
-    for ( cntY=0, pImPointer=ptr; cntY<blkh; cntY++ )
-    {
-        for ( cntX=0; cntX<blkw; cntX++, pImPointer += subW )
-        {
-            pulHist = &pulMapArray[bins * (cntY * blkw + cntX)];
+    for ( cnt_y=0, pImgPtr=pImage; cnt_y<rgnHeight; cnt_y++ )
+	{
+		for ( cnt_x=0; cnt_x<rgnWidth; cnt_x++, pImgPtr+=subszW )
+		{
+			pulHist = &pMapArray[ranges * (cnt_y * rgnWidth + cnt_x)];
 
-            CLAHE_MakeHistogram( pImPointer, w, subW, subH, pulHist, bins, aLUT );
-            CLAHE_ClipHistogram( pulHist, bins, cliplimit );
-            CLAHE_MapHistogram( pulHist, minlvl, maxlvl, bins, nrpixels );
-        }
+			CLAHE_MakeHistogram( pImgPtr,
+                                 imgWidth, subszW, subszH,
+                                 pulHist, ranges, aLUT );
+			CLAHE_ClipHistogram( pulHist, ranges, clipLimit);
+			CLAHE_MapHistogram( pulHist, Min, Max, ranges, pixelCnts);
+		}
 
-        /* skip lines, set pointer */
-        pImPointer += ( subH - 1 ) * w;
+		pImgPtr += (subszH - 1) * imgWidth;		  /* skip lines, set pointer */
     }
 
     /* Interpolate greylevel mappings to get CLAHE image */
-    for ( pImPointer = ptr, cntY = 0; cntY<=blkh; cntY++ )
-    {
-        if (cntY == 0)
-        {
-            /* special case: top row */
-            subY    = subH >> 1;
-            inpolYU = 0;
-            inpolYB = 0;
-        }
-        else
-        {
-            if (cntY == blkh)
-            {
-                /* special case: bottom row */
-                subY    = subH >> 1;
-                inpolYU = blkh-1;
-                inpolYB = inpolYU;
-            }
-            else
-            {
-                /* default values */
-                subY    = subH;
-                inpolYU = cntY - 1;
-                inpolYB = inpolYU + 1;
-            }
-        }
+    for (pImgPtr = pImage, cnt_y = 0; cnt_y <= rgnHeight; cnt_y++)
+	{
+		if (cnt_y == 0)
+		{					  /* special case: top row */
+			subImgH = subszH >> 1;  cnt_yU = 0; cnt_yB = 0;
+		}
+		else
+		{
+			if (cnt_y == rgnHeight)
+			{				  /* special case: bottom row */
+				subImgH = subszH >> 1;	cnt_yU = rgnHeight-1;	 cnt_yB = cnt_yU;
+			}
+			else
+			{					  /* default values */
+				subImgH = subszH; cnt_yU = cnt_y - 1; cnt_yB = cnt_yU + 1;
+			}
+		}
+		for (cnt_x = 0; cnt_x <= rgnWidth; cnt_x++)
+		{
+			if (cnt_x == 0)
+			{				  /* special case: left column */
+				subImgW = subszW >> 1; cnt_xL = 0; cnt_xR = 0;
+			}
+			else
+			{
+				if (cnt_x == rgnWidth)
+				{			  /* special case: right column */
+					subImgW = subszW >> 1;  cnt_xL = rgnWidth - 1; cnt_xR = cnt_xL;
+				}
+				else
+				{					  /* default values */
+					subImgW = subszW; cnt_xL = cnt_x - 1; cnt_xR = cnt_xL + 1;
+				}
+			}
 
-        for ( cntX = 0; cntX <= blkw; cntX++ )
-        {
-            if ( cntX == 0 )
-            {
-                /* special case: left column */
-                subX    = subW >> 1;
-                inpolXL = 0;
-                inpolXR = 0;
-            }
-            else
-            {
-                if ( cntX == blkw )
-                {
-                    /* special case: right column */
-                    subX    = subW >> 1;
-                    inpolXL = blkw - 1;
-                    inpolXR = inpolXL;
-                }
-                else
-                {
-                    /* default values */
-                    subX    = subW;
-                    inpolXL = cntX - 1;
-                    inpolXR = inpolXL + 1;
-                }
-            }
+			pulLU = &pMapArray[ranges * (cnt_yU * rgnWidth + cnt_xL)];
+			pulRU = &pMapArray[ranges * (cnt_yU * rgnWidth + cnt_xR)];
+			pulLB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xL)];
+			pulRB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xR)];
 
-            pulLU = &pulMapArray[ bins * ( inpolYU * blkw + inpolXL ) ];
-            pulRU = &pulMapArray[ bins * ( inpolYU * blkw + inpolXR ) ];
-            pulLB = &pulMapArray[ bins * ( inpolYB * blkw + inpolXL ) ];
-            pulRB = &pulMapArray[ bins * ( inpolYB * blkw + inpolXR ) ];
+			CLAHE_Interpolate( pImgPtr,
+                               imgWidth, pulLU, pulRU, pulLB, pulRB,
+                               subImgW, subImgH, aLUT );
 
-            CLAHE_Interpolate( pImPointer, w,
-                               pulLU, pulRU, pulLB, pulRB,
-                               subX, subY, aLUT );
+			pImgPtr += subImgW;			  /* set pointer on next matrix */
+		}
 
-            /* set pointer on next matrix */
-            pImPointer += subX;
-        }
-
-        pImPointer += (subY - 1) * w;
+		pImgPtr += (subImgH - 1) * imgWidth;
     }
 
-    /* free space for histograms */
-    delete[] pulMapArray;
+    delete[] pMapArray;
 
-    return true;
+	return true;
 }
 
-#else
-bool RAWImageToolKit::ApplyCLAHE( unsigned short* ptr, unsigned w, unsigned h,
-                                  unsigned short minlvl, unsigned short maxlvl,
-                                  unsigned blkw, unsigned blkh, unsigned bins, float slope )
-{
-    int ret = CLAHE( ptr, w, h, minlvl, maxlvl, blkw, blkh, bins, slope );
-
-    if ( ret == 0 )
-        return true;
-
-    return false;
-}
-#endif /// of CLAHE_NATIVE_FEATURE
