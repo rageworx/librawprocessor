@@ -25,10 +25,11 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.42.126
-* Included prototype of CLAHE, not optimized.
+* Version marked as 0.9.45.128
+* Optimized CLAHE algorithm works.
 
 ### Previous updates ###
+* Included prototype of CLAHE, not optimized.
 * Fixed wrong range threshold method.
 * Fixed some issues
   1. Tone mapping divide & multiply fixed different range.

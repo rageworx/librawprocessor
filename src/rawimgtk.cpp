@@ -11,7 +11,6 @@
 
 #include "rawimgtk.h"
 #include "minmax.h"
-#include "clahe.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -311,7 +310,7 @@ void CLAHE_ClipHistogram( unsigned long* pHisto, unsigned int greyLvl, unsigned 
 		lBinExcess = (long) pRangePtr[cnt] - (long) clipLimit;
 
 		/* excess in current bin */
-		if (lBinExcess > 0)
+		if ( lBinExcess > 0 )
 		{
 			excessSz += lBinExcess;
 		}
@@ -395,7 +394,7 @@ void CLAHE_MakeHistogram ( unsigned short* pImage,
 		pHisto[cnt] = 0L;
 	}
 
-    for ( cnt=0; cnt< rgnszH; cnt++)
+    for ( cnt=0; cnt< rgnszH; cnt++ )
 	{
 		pImgPtr = &pImage[rgnszW];
 
