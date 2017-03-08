@@ -83,7 +83,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,45,128
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,46,130
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1615,12 +1615,130 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
 
 bool RAWProcessor::ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, unsigned bins, float slope )
 {
-    unsigned minv = report.threshold_wide_min;
-    unsigned maxv = report.threshold_wide_max;
-    unsigned short* ptr = pixel_arrays.data();
+    if ( pixel_arrays_realsz > 0 )
+    {
+        unsigned minv = report.threshold_wide_min;
+        unsigned maxv = report.threshold_wide_max;
+        unsigned short* ptr = pixel_arrays.data();
 
-    return RAWImageToolKit::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
-                                        applysz, applysz, bins, slope );
+        return RAWImageToolKit::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
+                                            applysz, applysz, bins, slope );
+    }
+
+    return false;
+}
+
+bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        unsigned short* ptr = pixel_arrays.data();
+
+        return RAWImageFilterKit::ApplyLowFreqFilter( ptr,
+                                                      img_width, img_height,
+                                                      filtersz, repeat );
+    }
+
+    return false;
+}
+
+bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        unsigned short* ptr = pixel_arrays.data();
+        unsigned        imgsz = pixel_arrays.size();
+
+        unsigned short* imgEH1 = new unsigned short[ imgsz ];
+
+        if ( imgEH1 == NULL )
+            return false;
+
+        unsigned short* imgEH2 = new unsigned short[ imgsz ];
+
+        if ( imgEH2 == NULL )
+        {
+            delete[] imgEH1;
+
+            return false;
+        }
+
+        memcpy( imgEH1, ptr, imgsz * sizeof( unsigned short ) );
+        memcpy( imgEH2, ptr, imgsz * sizeof( unsigned short ) );
+
+        bool retb = false;
+
+        retb = RAWImageFilterKit::ApplyEdgeLowFreqFilter( imgEH1,
+                                                          img_width, img_height,
+                                                          5 );
+
+        if ( retb == false )
+        {
+            delete[] imgEH1;
+            delete[] imgEH2;
+
+            return false;
+        }
+
+        retb = RAWImageFilterKit::ApplyEdgeLowFreqFilter( imgEH2,
+                                                          img_width, img_height,
+                                                          9 );
+
+        if ( retb == false )
+        {
+            delete[] imgEH1;
+            delete[] imgEH2;
+
+            return false;
+        }
+
+        unsigned cnth = 0;
+        unsigned cntw = 0;
+
+        #pragma omp parallel for private( cntw )
+        for( cnth=0; cnth<img_height; cnth++ )
+        {
+            for( cntw=0; cntw<img_width; cntw++ )
+            {
+                unsigned pos = cnth * img_width + cntw;
+                double pixelv = abs( (float)ptr[pos] + (float)imgEH1[pos] + (float)imgEH2[pos] )
+                                / ( (float)edgesz / 8.0f );
+                if ( pixelv <= 0.0 )
+                {
+                    pixelv = 0.0;
+                }
+                else
+                if ( pixelv > DEF_CALC_F_WMAX )
+                {
+                    pixelv = DEF_CALC_F_WMAX;
+                }
+
+                ptr[ pos ] = (unsigned short) pixelv;
+            }
+        }
+
+        delete[] imgEH1;
+        delete[] imgEH2;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool RAWProcessor::ApplyAnisotropicFilter( unsigned strength, unsigned param )
+{
+    if ( pixel_arrays_realsz > 0 )
+    {
+        unsigned short* ptr = pixel_arrays.data();
+
+        return RAWImageFilterKit::ApplyAnisotropicFilter( ptr,
+                                                          img_width, img_height,
+                                                          strength, param );
+    }
+
+    return false;
+
 }
 
 const unsigned long RAWProcessor::datasize()

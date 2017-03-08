@@ -25,10 +25,13 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.45.128
-* Optimized CLAHE algorithm works.
+* Version marked as 0.9.46.130
+* Added Low Frequency Filter (may used for removing artifacts)
+* Added Edge Enhancement Filter
+* Added Anistropic Filter
 
 ### Previous updates ###
+* Optimized CLAHE algorithm works.
 * Included prototype of CLAHE, not optimized.
 * Fixed wrong range threshold method.
 * Fixed some issues

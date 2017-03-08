@@ -7,6 +7,7 @@ namespace RAWImageFilterKit
 {
     #define RAWFILTER_PRESET_BLUR       "blur"
     #define RAWFILTER_PRESET_BLURMORE   "blurmore"
+    #define RAWFILTER_PRESET_GAUSSIAN   "gaussian"
     #define RAWFILTER_PRESET_EDGE       "edgeonly"
     #define RAWFILTER_PRESET_EDGE2      "edgemore"
     #define RAWFILTER_PRESET_EDGE3      "edgestrong"
@@ -17,6 +18,10 @@ namespace RAWImageFilterKit
 
     RAWProcessor::FilterConfig* GetPresetFilter( const char* name );
     void RemoveFilter( RAWProcessor::FilterConfig* fp );
+
+    bool ApplyLowFreqFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fsz, unsigned iter );
+    bool ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fsz );
+    bool ApplyAnisotropicFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fstr, unsigned fparam );
 }
 
 #endif /// of __RAWFILTERS_H__

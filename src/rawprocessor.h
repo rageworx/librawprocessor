@@ -214,6 +214,11 @@ class RAWProcessor
         bool ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, unsigned bins, float slope );
 
     public:
+        bool ApplyLowFrequency( unsigned filtersz = 3, unsigned repeat = 1);
+        bool ApplyEdgeEnhance( unsigned edgesz = 3 );
+        bool ApplyAnisotropicFilter( unsigned strength, unsigned param );
+
+    public:
         const unsigned long         datasize();
         const unsigned short*       data();
 
