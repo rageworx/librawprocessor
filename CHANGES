@@ -1,0 +1,51 @@
+2017-03-09 :
+     - Added some signal processing methods,
+	   Low frequency, Edge enhancement, Anistropic filtets.
+
+2017-03-03 :
+     - Added CLAHE algorithm.
+
+2017-01-20 :
+	 - Addded Tone mapping methods, Drago and Reinhard.
+	 
+2017-01-13 :
+	 - Supporting OpenMP, use preprocessing definition to enable openMP,
+	   USE_OMP ( -DUSE_OMP ).
+	 
+2016-12-19 :
+     - Added some graphical help methods : AdjustGamma, AdjustBrightness,
+                                           AdjustContrast, AdjustContrast,
+                                           AdjustCurve
+     - Added Version check method.
+
+2016-11-25 :
+     - set vector reserve() and resize() for allocating more faster !
+     - some optimized code for accelerated by AVX instruction.
+
+2016-12-09
+     - Moved some enum and struct to inside of class.
+     - RAW resize included, source code refer to FreeImage open source.
+       FreeImage project is place at http://freeimage.sourceforge.net/
+
+2016-12-23
+     - Changed some method name in public, removed "get*()" scheme to "*()".
+     - Renamed rescale() to Rescale()
+     - Added SaveToFile() methods.
+
+2016-12-29
+     - Added Filter processing.
+       referenced to http://lodev.org/cgtutor/filtering.html
+       basic filter algorithm by Lode Vandevenne
+
+2017-01-20
+     - Added tone mapping - a.k.a HDR imaging - methods :
+       1) DRAGO 2003
+       2) REINHARD 2005
+     - Referenced each for Free Image Library 3 and its own theory.
+
+2017-01-23
+     - Apple MAC OS X does not accept access files in _w*** methods.
+
+
+2017-01-24
+     - Fixed normalize float range fix in HDR/Tone mapping methods.
