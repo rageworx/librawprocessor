@@ -616,7 +616,7 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
         fCliplimit = 1.0f;
 
     if ( ranges == 0 )
-		ranges = 128;	  /* default value when not specified */
+		ranges = 128;	    /// default value when not specified
 
     pMapArray = new unsigned long[ rgnWidth * rgnHeight * ranges ];
 

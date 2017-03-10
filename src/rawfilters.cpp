@@ -497,7 +497,7 @@ bool RAWImageFilterKit::ApplyAnisotropicFilter( unsigned short* ptr, unsigned w,
         unsigned cnth = 0;
         unsigned cntw = 0;
 
-        #pragma omp parallel for private( cntw, grad, gcol sumf )
+        #pragma omp parallel for private( cntw, grad, gcol )
         for( cnth=0; cnth<h; cnth++ )
         {
             for( cntw=0; cntw<w; cntw++ )

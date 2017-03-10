@@ -83,7 +83,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,46,130
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,46,131
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -286,18 +286,6 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
             {
                 pixel_weights_max = worddata;
             }
-
-            if ( worddata < pixel_min_level )
-            {
-                pixel_min_level = worddata;
-            }
-            else
-            if ( worddata > pixel_max_level )
-            {
-                pixel_max_level = worddata;
-                index_max_pixel = cnt;
-            }
-
         }
 
         pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
@@ -305,6 +293,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
         rfstrm.clear();
         rfstrm.close();
 
+        calcWeights();
         analyse();
 
         raw_loaded = true;
@@ -369,22 +358,9 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
             {
                 pixel_weights_max = worddata;
             }
-
-            if ( worddata < pixel_min_level )
-            {
-                pixel_min_level = worddata;
-            }
-            else
-            if ( worddata > pixel_max_level )
-            {
-                pixel_max_level = worddata;
-                index_max_pixel = cnt;
-            }
-
         }
 
-        pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
-
+        calcWeights();
         analyse();
 
         raw_loaded = true;
@@ -1801,7 +1777,35 @@ void RAWProcessor::resetWeights()
     {
         memset( pixel_weights, 0 , ( DEF_PIXEL_WEIGHTS  + 1 ) * sizeof( unsigned int ) );
     }
+
     pixel_weights_max = 0;
+}
+
+void RAWProcessor::calcWeights()
+{
+    pixel_min_level = DEF_PIXEL16_MAX - 1;
+    pixel_max_level = 0;
+    pixel_med_level = DEF_PIXEL16_MAX / 2;
+
+    for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    {
+        if ( pixel_arrays[cnt] > pixel_max_level )
+        {
+            pixel_max_level = pixel_arrays[cnt];
+        }
+        else
+        if ( pixel_arrays[cnt] < pixel_min_level )
+        {
+            pixel_min_level = pixel_arrays[cnt];
+        }
+    }
+
+    pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
+
+#ifdef DEBUG
+    printf( "calcWeights() result min,max,med = %d, %d, %d\n",
+            pixel_min_level, pixel_max_level, pixel_med_level );
+#endif // DEBUG
 }
 
 void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y )
@@ -1895,5 +1899,21 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
             copydummy.clear();
         }
     }
+}
 
+void RAWProcessor::CutoffLevels( unsigned short minv, unsigned short maxv )
+{
+    #pragma omp parallel for
+    for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    {
+        if ( pixel_arrays[cnt] > maxv )
+        {
+            pixel_arrays[cnt] = maxv;
+        }
+        else
+        if ( pixel_arrays[cnt] < minv )
+        {
+            pixel_arrays[cnt] = minv;
+        }
+    }
 }

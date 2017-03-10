@@ -97,6 +97,10 @@ class RAWProcessor
         unsigned char BPP()             { return pixel_bpp; }
 
     public:
+        void RecalcLevels()             { calcWeights(); }
+        void CutoffLevels( unsigned short minv, unsigned short maxv );
+
+    public:
         void Version( char** retverstr ); /// put NULL initialized char* array.
         void Version( int** retverints ); /// put int[4] array.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
@@ -190,6 +194,7 @@ class RAWProcessor
     protected:
         void analyse();
         void resetWeights();
+        void calcWeights();
 
     protected:
         void addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y );
