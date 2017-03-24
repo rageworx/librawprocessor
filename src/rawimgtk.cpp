@@ -95,19 +95,16 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
         unsigned cntw = 0;
         unsigned cnth = 0;
 
+
         #pragma omp parallel for private(cnth)
-        for( cntw=new_w-1; cntw>=0; cntw-- )
+        for( cntw=new_w-1; cntw>0; cntw-- )
         {
             for( cnth=0; cnth<new_h; cnth++ )
             {
-                tempbuff[ new_w * cnth + cntw ] = ptr[ cur_w * src_y + src_x ];
+                unsigned pos1 = new_w * cnth + cntw;
+                unsigned pos2 = cur_w * ( new_w - cntw - 1 ) + cnth;
 
-                src_x++;
-                if ( src_x >= cur_w )
-                {
-                    src_x = 0;
-                    src_y++;
-                }
+				tempbuff[ pos1 ] = ptr[ pos2 ];
             }
         }
 
@@ -133,15 +130,13 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
     {
         unsigned cntw = 0;
         unsigned cnth = 0;
+		unsigned imgmax = *w * *h;
+		unsigned cntmax = imgmax / 2;
 
-        #pragma omp parallel for private(cnth)
-        for( cntw=0; cntw<cur_w; cntw++ )
+        #pragma omp parallel for
+        for( unsigned cnt=0; cnt<imgmax; cnt++ )
         {
-            for( cnth=0; cnth<cur_h; cnth++ )
-            {
-                RAWImageToolKitSwapUS( ptr[ cur_w * cnth + cntw ],
-                                       ptr[ cur_w * ( cur_h - cnth ) + ( cur_w - cntw ) ] );
-            }
+			RAWImageToolKitSwapUS( ptr[ cnt ], ptr[ imgmax - cnt ] );
         }
 
         return true;
@@ -175,16 +170,12 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
         #pragma omp parallel for private(cnth)
         for( cntw=0; cntw<new_w; cntw++ )
         {
-            for( cnth=new_h-1; cnth>=0; cnth-- )
+            for( cnth=new_h-1; cnth>0; cnth-- )
             {
-                tempbuff[ new_w * cnth + cntw ] = ptr[ cur_w * src_y + src_x ];
+                unsigned pos1 = new_w * cnth + cntw;
+                unsigned pos2 = cur_w * cntw + new_h - cnth;
 
-                src_x++;
-                if ( src_x >= cur_w )
-                {
-                    src_x = 0;
-                    src_y++;
-                }
+                tempbuff[ pos1 ] = ptr[ pos2 ];
             }
         }
 
