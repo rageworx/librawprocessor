@@ -38,7 +38,7 @@ bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, unsigned w, unsigned 
         {
             for( cntw=0; cntw<w; cntw++ )
             {
-                RAWImageToolKitSwapUS( ptr[ w * ( h - cnth ) + cntw ],
+                RAWImageToolKitSwapUS( ptr[ w * ( h - 1 - cnth ) + cntw ],
                                        ptr[ w * cnth + cntw ] );
             }
         }
