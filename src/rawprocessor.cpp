@@ -1671,6 +1671,8 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz )
         unsigned cnth = 0;
         unsigned cntw = 0;
 
+        float fedgev = (float)edgesz / 8.0f;
+
         #pragma omp parallel for private( cntw )
         for( cnth=0; cnth<img_height; cnth++ )
         {
@@ -1678,7 +1680,7 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz )
             {
                 unsigned pos = cnth * img_width + cntw;
                 double pixelv = abs( (float)ptr[pos] + (float)imgEH1[pos] + (float)imgEH2[pos] )
-                                / ( (float)edgesz / 8.0f );
+                                / fedgev;
                 if ( pixelv <= 0.0 )
                 {
                     pixelv = 0.0;
