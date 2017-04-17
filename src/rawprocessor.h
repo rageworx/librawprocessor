@@ -203,7 +203,7 @@ class RAWProcessor
 
     public:
         bool ApplyLowFrequency( unsigned filtersz = 3, unsigned repeat = 1);
-        bool ApplyEdgeEnhance( unsigned edgesz = 3 );
+        bool ApplyEdgeEnhance( unsigned edgesz = 3, unsigned margin = 4 );
         bool ApplyAnisotropicFilter( unsigned strength, unsigned param );
 
     public:

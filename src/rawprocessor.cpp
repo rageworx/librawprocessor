@@ -1690,7 +1690,7 @@ bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
     return false;
 }
 
-bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz )
+bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz, unsigned margin )
 {
     if ( pixel_arrays_realsz > 0 )
     {
@@ -1740,30 +1740,39 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz )
             return false;
         }
 
+		if ( ( img_width < (margin * 2) ) || ( img_height < (margin * 2) ) )
+		{
+			margin = 0;
+		}
+		
         unsigned cnth = 0;
         unsigned cntw = 0;
+		unsigned mgnx = margin;
+		unsigned mgny = margin;
+		unsigned mgnw = img_width - (margin * 2);
+		unsigned mgnh = img_height - (margin * 2);
 
         float fedgev = (float)edgesz / 8.0f;
 
         #pragma omp parallel for private( cntw )
-        for( cnth=0; cnth<img_height; cnth++ )
+        for( cnth=mgny; cnth<mgnh; cnth++ )
         {
-            for( cntw=0; cntw<img_width; cntw++ )
+            for( cntw=mgnx; cntw<mgnw; cntw++ )
             {
-                unsigned pos = cnth * img_width + cntw;
-                double pixelv = abs( (float)ptr[pos] + (float)imgEH1[pos] + (float)imgEH2[pos] )
-                                / fedgev;
-                if ( pixelv <= 0.0 )
-                {
-                    pixelv = 0.0;
-                }
-                else
-                if ( pixelv > DEF_CALC_F_WMAX )
-                {
-                    pixelv = DEF_CALC_F_WMAX;
-                }
+				unsigned pos = cnth * img_width + cntw;
+				double pixelv = abs( (float)ptr[pos] + (float)imgEH1[pos] + (float)imgEH2[pos] )
+								/ fedgev;
+				if ( pixelv <= 0.0 )
+				{
+					pixelv = 0.0;
+				}
+				else
+				if ( pixelv > DEF_CALC_F_WMAX )
+				{
+					pixelv = DEF_CALC_F_WMAX;
+				}
 
-                ptr[ pos ] = (unsigned short) pixelv;
+				ptr[ pos ] = (unsigned short) pixelv;
             }
         }
 
