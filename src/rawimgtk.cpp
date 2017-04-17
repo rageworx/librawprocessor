@@ -134,7 +134,7 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
 		unsigned cntmax = imgmax / 2;
 
         #pragma omp parallel for
-        for( unsigned cnt=0; cnt<imgmax; cnt++ )
+        for( unsigned cnt=0; cnt<cntmax; cnt++ )
         {
 			RAWImageToolKitSwapUS( ptr[ cnt ], ptr[ imgmax - cnt ] );
         }
