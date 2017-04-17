@@ -102,26 +102,40 @@ class RAWProcessor
         void CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin = 0, unsigned short valmax = 65536 );
 
     public:
+        // Get Versions in string or, integer array.
         void Version( char** retverstr ); /// put NULL initialized char* array.
         void Version( int** retverints ); /// put int[4] array.
+
+        // Load from file.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #ifndef __APPLE__
         bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #endif // __APPLE__
+
+        // Load from memory.
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+
+        // Reload from file, actually same as like Load.
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #ifndef __APPLE__
 		bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #endif // __APPLE__
 		bool Reload();
+
+		// Unload clears internal memory.
         void Unload();
+
+        // Transform related...
         bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
         // rotated image may cropped to same size of previous in center.
-        bool RotateFree( unsigned int degree );
+        // recommended degrees : 0.0 ~ 359.99
+        bool RotateFree( float degree );
         void ChangeHeight( unsigned h );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Invert( unsigned char maxbits = 16 );
         bool InvertAuto();
+
+        // GetXXXX methods --
         bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed = false );
         bool GetWeights( std::vector<unsigned int>* weight_arrays );
@@ -139,7 +153,7 @@ class RAWProcessor
 
     public:
         // image may enlarged.
-        RAWProcessor* RotateFree( unsigned degree, unsigned int background = 0 );
+        RAWProcessor* RotateFree( float degree, unsigned int background = 0 );
         RAWProcessor* Rescale( unsigned w, unsigned h, RescaleType st = RESCALE_NEAREST );
         RAWProcessor* Clone();
 

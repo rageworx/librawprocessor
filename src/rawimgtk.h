@@ -12,7 +12,7 @@ namespace RAWImageToolKit
     bool Rotate270( unsigned short* ptr, unsigned* w, unsigned* h );
 
     bool RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
-                     unsigned short** newptr, unsigned degree,
+                     unsigned short** newptr, float degree,
                      unsigned short background );
 
     bool Crop( unsigned short* ptr, unsigned w, unsigned h,

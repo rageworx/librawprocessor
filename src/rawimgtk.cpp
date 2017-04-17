@@ -210,12 +210,12 @@ float ritk_max4(float a, float b, float c, float d)
    return mx;
 }
 
-bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h, unsigned short** newptr, unsigned degree, unsigned short background )
+bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h, unsigned short** newptr, float degree, unsigned short background )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
         return false;
 
-    float fdeg = (float)( degree - ( degree / 360 ) ) / 360.0f * 100.0f;
+    float fdeg = ( degree - ( degree / 360.0f ) ) / 360.0f * 100.0f;
 
     int img_w = *w;
     int img_h = *h;

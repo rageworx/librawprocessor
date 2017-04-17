@@ -83,7 +83,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,47,134
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,47,135
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -938,7 +938,7 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
 }
 #endif // __APPLE__
 
-bool RAWProcessor::RotateFree( unsigned int degree )
+bool RAWProcessor::RotateFree( float degree )
 {
     unsigned short* src = (unsigned short*)pixel_arrays.data();
     unsigned short* dst = NULL;
@@ -969,7 +969,7 @@ bool RAWProcessor::RotateFree( unsigned int degree )
     return retb;
 }
 
-RAWProcessor* RAWProcessor::RotateFree( unsigned degree, unsigned int background )
+RAWProcessor* RAWProcessor::RotateFree( float degree, unsigned int background )
 {
     unsigned short* src = (unsigned short*)pixel_arrays.data();
     unsigned short* dst = NULL;
