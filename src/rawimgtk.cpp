@@ -769,9 +769,6 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     if ( imgHeight & rgnHeight )
 		return false;       /// y-resolution no multiple of rgnHeight
 
-    if ( Max >= RAWIMGTK_MAX_D_ARRAY_SZ )
-		return false;       /// maximum too large
-
     if ( Min >= Max )
 		return false;       /// minimum equal or larger than maximum
 

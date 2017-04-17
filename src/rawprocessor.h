@@ -99,7 +99,7 @@ class RAWProcessor
     public:
         void RecalcLevels()             { calcWeights(); }
         void CutoffLevels( unsigned short minv, unsigned short maxv );
-        void CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin = 0, unsigned short valmax = 65536 );
+        void CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin = 0, unsigned short valmax = 65535 );
 
     public:
         // Get Versions in string or, integer array.
