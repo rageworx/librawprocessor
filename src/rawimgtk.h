@@ -1,6 +1,8 @@
 #ifndef __RAWIMGTOOLKIT_H__
 #define __RAWIMGTOOLKIT_H__
 
+////////////////////////////////////////////////////////////////////////////////
+
 namespace RAWImageToolKit
 {
     bool FlipHorizontal( unsigned short* ptr, unsigned w, unsigned h );
@@ -8,6 +10,18 @@ namespace RAWImageToolKit
     bool Rotate90( unsigned short* ptr, unsigned* w, unsigned* h );
     bool Rotate180( unsigned short* ptr, unsigned* w, unsigned* h );
     bool Rotate270( unsigned short* ptr, unsigned* w, unsigned* h );
+
+    bool RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
+                     unsigned short** newptr, unsigned degree,
+                     unsigned short background );
+
+    bool Crop( unsigned short* ptr, unsigned w, unsigned h,
+               unsigned short** newptr,
+               unsigned cx, unsigned cy, unsigned cw, unsigned ch );
+
+    bool CropCenter( unsigned short* ptr, unsigned w, unsigned h,
+                     unsigned short** newptr, unsigned cw, unsigned ch );
+
 
     /***
     *

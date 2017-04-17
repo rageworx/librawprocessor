@@ -13,9 +13,9 @@
 
 # Compiler configure.
 CCPATH =
-GCC = ${CCPATH}gcc
-GPP = ${CCPATH}g++
-AR  = ${CCPATH}ar
+GCC = ${CCPATH}llvm-gcc
+GPP = ${CCPATH}llvm-g++
+AR  = ${CCPATH}llvm-ar
 
 # Sources and how it built
 # Optimization issue: recommend to build with using -ffast-math option.
@@ -28,24 +28,12 @@ DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR
 OPTIMIZEOPT = -ffast-math -O3 -s
 CPUARCHOPT    = -mavx
 
-ifeq (64bit,$(firstword $(MAKECMDGOALS)))
-	OBJDIR = ./obj64/Release
-	OUTDIR = ./lib64
-	CPUARCHOPT += -m64
-endif
-
-ifeq (openmp,$(firstword $(MAKECMDGOALS)))
-	OPTIMIZEOPT += -fopenmp
-endif
-
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
 	DEFINEOPT += -DDEBUG
 	OUTBIN = librawprocessor_d.a
 endif
 
 CFLAGS    = -I$(SOURCEDIR) $(DEFINEOPT) $(OPTIMIZEOPT) $(CPUARCHOPT) $(BITSOPT)
-
-.PHONY: 64bit openmp
 
 all: prepare clean ${OUTDIR}/${OUTBIN}
 

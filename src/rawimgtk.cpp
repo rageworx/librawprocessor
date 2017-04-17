@@ -192,6 +192,187 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
     return false;
 }
 
+float ritk_min4(float a, float b, float c, float d)
+{
+   float mn = a;
+   if(mn > b) mn = b;
+   if(mn > c) mn = c;
+   if(mn > d) mn = d;
+   return mn;
+}
+
+float ritk_max4(float a, float b, float c, float d)
+{
+   float mx = a;
+   if(mx < b) mx = b;
+   if(mx < c) mx = c;
+   if(mx < d) mx = d;
+   return mx;
+}
+
+bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h, unsigned short** newptr, unsigned degree, unsigned short background )
+{
+    if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
+        return false;
+
+    float fdeg = (float)( degree - ( degree / 360 ) ) / 360.0f * 100.0f;
+
+    int img_w = *w;
+    int img_h = *h;
+
+	float CtX = ( (float) img_w ) / 2.0f;
+	float CtY = ( (float) img_h ) / 2.0f;
+
+	float cA = (float)cos( fdeg );
+	float sA = (float)sin( fdeg );
+
+	float x1 = CtX + (-CtX) * cA - (-CtY) * sA;
+	float x2 = CtX + (img_w - CtX) * cA - (-CtY) * sA;
+	float x3 = CtX + (img_w - CtX) * cA - (img_h - CtY) * sA;
+	float x4 = CtX + (-CtX) * cA - (img_h - CtY) * sA;
+
+	float y1 = CtY + (-CtY) * cA + (-CtX) * sA;
+	float y2 = CtY + (img_h - CtY) * cA + (-CtX) * sA;
+	float y3 = CtY + (img_h - CtY) * cA + (img_w - CtX) * sA;
+	float y4 = CtY + (-CtY) * cA + (img_w - CtX) * sA;
+
+	int OfX = ((int)floor(ritk_min4(x1, x2, x3, x4)));
+	int OfY = ((int)floor(ritk_min4(y1, y2, y3, y4)));
+
+	int dstW = ((int)ceil(ritk_max4(x1, x2, x3, x4))) - OfX;
+	int dstH = ((int)ceil(ritk_max4(y1, y2, y3, y4))) - OfY;
+
+    // Now new image !
+    unsigned short* obuff = new unsigned short[ dstW * dstH ];
+
+    if ( obuff == NULL )
+        return false;
+
+    #pragma omp parellel for
+    for( int cnt=0; cnt<(dstW * dstH); cnt++ )
+    {
+        obuff[ cnt ] = background;
+    }
+
+    int stepY = 0;
+    int stepX = 0;
+
+    // pointer to destination.
+    unsigned short* dst = obuff;
+
+	#pragma omp parellel for private( stepX )
+	for ( stepY = 0; stepY<dstH; stepY++ )
+	{
+		for ( stepX = 0; stepX<dstW; stepX++ )
+		{
+            float CtX2 = CtX - OfX;
+            float CtY2 = CtY - OfY;
+
+            float orgX = ( cA*(stepX-CtX2) + sA*(stepY-CtY2)) + CtX;
+            float orgY = (-sA*(stepX-CtX2) + cA*(stepY-CtY2)) + CtY;
+
+			int iorgX  = (int) orgX;
+			int iorgY  = (int) orgY;
+
+            float diffX = (orgX - iorgX);
+            float diffY = (orgY - iorgY);
+
+            if ((orgX >= 0) && (orgY >= 0) && (orgX < img_w-1) && (orgY < img_h-1))
+            {
+                unsigned short* pd = &obuff[ stepY * dstW + stepX ];
+                unsigned short* ps = &ptr[ iorgX + iorgY * img_w ];
+
+                // Doing interpolated pixel calculation .
+                float pv[4] = {0.0f};
+
+                pv[0] = ps[ 0 ];
+                pv[1] = ps[ 1 ]; /// Right pixel
+                pv[2] = ps[ img_w ]; /// Below pixel
+                pv[3] = ps[ img_w + 1 ]; /// Right below pixel.
+
+                float \
+                pf  = pv[0] * ( 1.0f - diffX ) * ( 1.0f - diffY ) +
+                      pv[1] *          diffX   * ( 1.0f - diffY ) +
+                      pv[2] * ( 1.0f - diffX ) *          diffY +
+                      pv[3] *          diffX   *          diffY;
+
+                *pd = (unsigned short)pf;
+            }
+		}
+
+		dst += dstW;
+	}
+
+	*newptr = obuff;
+	*w      = dstW;
+	*h      = dstH;
+
+	return true;
+}
+
+bool RAWImageToolKit::Crop( unsigned short* ptr, unsigned w, unsigned h, unsigned short** newptr, unsigned cx, unsigned cy, unsigned cw, unsigned ch )
+{
+    if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
+        return false;
+
+    if ( ( cx == 0 ) || ( cx > w ) || ( cw > w ) ||
+         ( cy == 0 ) || ( cy > h ) || ( ch > h ) )
+    return false;
+
+    unsigned rsx = cx;
+    unsigned rsy = cy;
+    unsigned rw  = cw;
+    unsigned rh  = ch;
+
+    if ( w < ( rw + rsx ) )
+    {
+        rw = w - rsx;
+    }
+
+    if ( h < ( rh + rsy ) )
+    {
+        rh = h - rsy;
+    }
+
+    unsigned short* obuff = new unsigned short[ rw * rh ];
+
+    if ( obuff != NULL )
+    {
+        unsigned srcw = w;
+        unsigned srch = h;
+        unsigned dsth = srch - rsy;
+        unsigned cnty;
+        unsigned cntx;
+
+        #pragma omp parellel for private( cntx )
+        for( cnty=rsy; cnty<srch; cnty++ )
+        {
+            for( cntx=rsx; cntx<srcw; cntx ++ )
+            {
+                obuff[ (cnty - rsy) * rw + ( cntx - rsx) ] = ptr[ cnty * srcw + cntx ];
+            }
+        }
+
+        *newptr = obuff;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool RAWImageToolKit::CropCenter( unsigned short* ptr, unsigned w, unsigned h, unsigned short** newptr, unsigned cw, unsigned ch )
+{
+    if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) ||
+         ( cw == 0 ) || ( cw > w ) || ( ch == 0 ) || ( ch > h ) )
+        return false;
+
+    unsigned c_l = ( w - cw ) / 2;
+    unsigned c_t = ( h - ch ) / 2;
+
+    return Crop( ptr, w, h, newptr, c_l, c_t, cw, ch );
+}
+
 bool RAWImageToolKit::AdjustGamma( unsigned short* ptr, unsigned arraysz, double gamma )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )

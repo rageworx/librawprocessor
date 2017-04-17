@@ -87,6 +87,11 @@ using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define rawimgtk            RAWImageToolKit
+#define rawimgfk            RAWImageFilterKit
+
+////////////////////////////////////////////////////////////////////////////////
+
 bool RAWProcessor_sortcondition( int i,int j )
 {
     return ( i < j );
@@ -426,12 +431,12 @@ bool RAWProcessor::ApplyTransform( unsigned int trnsfm )
         {
             if ( ( trnsfm & TRANSFORM_PARAM_SWAP_H ) > 0 )
             {
-                retb = RAWImageToolKit::FlipHorizontal( ptrd, img_width, img_height );
+                retb = rawimgtk::FlipHorizontal( ptrd, img_width, img_height );
             }
 
             if ( ( trnsfm & TRANSFORM_PARAM_SWAP_V ) > 0 )
             {
-                retb = RAWImageToolKit::FlipVertical( ptrd, img_width, img_height );
+                retb = rawimgtk::FlipVertical( ptrd, img_width, img_height );
             }
         }
 
@@ -439,32 +444,32 @@ bool RAWProcessor::ApplyTransform( unsigned int trnsfm )
         {
             if ( ( trnsfm & TRANSFORM_PARAM_ROT_C90 ) > 0 )
             {
-                retb = RAWImageToolKit::Rotate90( ptrd, &img_width, &img_height );
+                retb = rawimgtk::Rotate90( ptrd, &img_width, &img_height );
             }
             else
             if ( ( trnsfm & TRANSFORM_PARAM_ROT_C180 ) > 0 )
             {
-                retb = RAWImageToolKit::Rotate180( ptrd, &img_width, &img_height );
+                retb = rawimgtk::Rotate180( ptrd, &img_width, &img_height );
             }
             else
             if ( ( trnsfm & TRANSFORM_PARAM_ROT_C270 ) > 0 )
             {
-                retb = RAWImageToolKit::Rotate270( ptrd, &img_width, &img_height );
+                retb = rawimgtk::Rotate270( ptrd, &img_width, &img_height );
             }
             else
             if ( ( trnsfm & TRANSFORM_PARAM_ROT_RC90 ) > 0 )
             {
-                retb = RAWImageToolKit::Rotate270( ptrd, &img_width, &img_height );
+                retb = rawimgtk::Rotate270( ptrd, &img_width, &img_height );
             }
             else
             if ( ( trnsfm & TRANSFORM_PARAM_ROT_RC180 ) > 0 )
             {
-                retb = RAWImageToolKit::Rotate180( ptrd, &img_width, &img_height );
+                retb = rawimgtk::Rotate180( ptrd, &img_width, &img_height );
             }
             else
             if ( ( trnsfm & TRANSFORM_PARAM_ROT_RC270 ) > 0 )
             {
-                retb = RAWImageToolKit::Rotate90( ptrd, &img_width, &img_height );
+                retb = rawimgtk::Rotate90( ptrd, &img_width, &img_height );
             }
         }
 
@@ -484,7 +489,7 @@ void RAWProcessor::SetUserScale( RAWUserScaleIF* ptr )
     userscaler = ptr;
 }
 
-bool RAWProcessor::Reverse( unsigned char maxbits )
+bool RAWProcessor::Invert( unsigned char maxbits )
 {
     if ( maxbits < 8 )
         return false;
@@ -504,7 +509,7 @@ bool RAWProcessor::Reverse( unsigned char maxbits )
     return true;
 }
 
-bool RAWProcessor::ReverseAuto()
+bool RAWProcessor::InvertAuto()
 {
     unsigned dlen = pixel_arrays.size();
 
@@ -932,6 +937,73 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
     return false;
 }
 #endif // __APPLE__
+
+bool RAWProcessor::RotateFree( unsigned int degree )
+{
+    unsigned short* src = (unsigned short*)pixel_arrays.data();
+    unsigned short* dst = NULL;
+
+    unsigned dst_w = img_width;
+    unsigned dst_h = img_height;
+
+    unsigned short bgl = pixel_min_level;
+
+    bool retb = false;
+
+    if ( rawimgtk::RotateFree( src, &dst_w, &dst_h, &dst, degree, bgl ) == true )
+    {
+        unsigned short* dstcrop = NULL;
+
+        if ( rawimgtk::CropCenter( dst, dst_w, dst_h, &dstcrop, img_width, img_height ) == true )
+        {
+            memcpy( src, dstcrop, pixel_arrays_srcsz * sizeof( unsigned short ) );
+
+            retb = true;
+
+            delete[] dstcrop;
+        }
+
+        delete[] dst;
+    }
+
+    return retb;
+}
+
+RAWProcessor* RAWProcessor::RotateFree( unsigned degree, unsigned int background )
+{
+    unsigned short* src = (unsigned short*)pixel_arrays.data();
+    unsigned short* dst = NULL;
+
+    unsigned dst_w = img_width;
+    unsigned dst_h = img_height;
+
+    unsigned short bgl = background;
+
+    bool retb = false;
+
+    if ( rawimgtk::RotateFree( src, &dst_w, &dst_h, &dst, degree, bgl ) == true )
+    {
+        RAWProcessor* newrp = new RAWProcessor();
+        if ( newrp != NULL )
+        {
+            const char* ptr     = (const char*)dst;
+            unsigned long ptrsz =  dst_w * dst_h * sizeof(unsigned short);
+
+            retb = newrp->LoadFromMemory( ptr, ptrsz, TRANSFORM_NONE, dst_h );
+
+            delete[] dst;
+
+            if ( retb == true )
+            {
+                return newrp;
+            }
+
+            delete newrp;
+        }
+    }
+
+    return NULL;
+}
 
 RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
 {
@@ -1513,9 +1585,9 @@ bool RAWProcessor::AdjustGamma( float gamma )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        return RAWImageToolKit::AdjustGamma( pixel_arrays.data(),
-                                             pixel_arrays.size(),
-                                             gamma );
+        return rawimgtk::AdjustGamma( pixel_arrays.data(),
+                                      pixel_arrays.size(),
+                                      gamma );
     }
 
     return false;
@@ -1525,9 +1597,9 @@ bool RAWProcessor::AdjustBrightness( float percent )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        return RAWImageToolKit::AdjustBrightness( pixel_arrays.data(),
-                                                  pixel_arrays.size(),
-                                                  percent );
+        return rawimgtk::AdjustBrightness( pixel_arrays.data(),
+                                           pixel_arrays.size(),
+                                           percent );
     }
 
     return false;
@@ -1537,9 +1609,9 @@ bool RAWProcessor::AdjustContrast( float percent )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        return RAWImageToolKit::AdjustContrast( pixel_arrays.data(),
-                                                pixel_arrays.size(),
-                                                percent );
+        return rawimgtk::AdjustContrast( pixel_arrays.data(),
+                                         pixel_arrays.size(),
+                                         percent );
     }
 
     return false;
@@ -1556,12 +1628,12 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
                     float gamma = p1;
                     float exposure = p2;
 
-                    return RAWImageToolKit::tmoDrago03( pixel_arrays.data(),
-                                                        pixel_arrays.size(),
-                                                        pixel_max_level,
-                                                        pixel_max_level,
-                                                        gamma,
-                                                        exposure );
+                    return rawimgtk::tmoDrago03( pixel_arrays.data(),
+                                                 pixel_arrays.size(),
+                                                 pixel_max_level,
+                                                 pixel_max_level,
+                                                 gamma,
+                                                 exposure );
                 }
                 break;
 
@@ -1572,14 +1644,14 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
                     float adaptation = p3;
                     float colorcorrection = p4;
 
-                    return RAWImageToolKit::tmoReinhard2005( pixel_arrays.data(),
-                                                             pixel_arrays.size(),
-                                                             pixel_max_level,
-                                                             pixel_max_level,
-                                                             intensity,
-                                                             contrast,
-                                                             adaptation,
-                                                             colorcorrection );
+                    return rawimgtk::tmoReinhard2005( pixel_arrays.data(),
+                                                      pixel_arrays.size(),
+                                                      pixel_max_level,
+                                                      pixel_max_level,
+                                                      intensity,
+                                                      contrast,
+                                                      adaptation,
+                                                      colorcorrection );
                 }
                 break;
 
@@ -1597,8 +1669,8 @@ bool RAWProcessor::ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, u
         unsigned maxv = report.threshold_wide_max;
         unsigned short* ptr = pixel_arrays.data();
 
-        return RAWImageToolKit::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
-                                            applysz, applysz, bins, slope );
+        return rawimgtk::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
+                                     applysz, applysz, bins, slope );
     }
 
     return false;
@@ -1610,9 +1682,9 @@ bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
     {
         unsigned short* ptr = pixel_arrays.data();
 
-        return RAWImageFilterKit::ApplyLowFreqFilter( ptr,
-                                                      img_width, img_height,
-                                                      filtersz, repeat );
+        return rawimgfk::ApplyLowFreqFilter( ptr,
+                                             img_width, img_height,
+                                             filtersz, repeat );
     }
 
     return false;
@@ -1916,6 +1988,23 @@ void RAWProcessor::CutoffLevels( unsigned short minv, unsigned short maxv )
         if ( pixel_arrays[cnt] < minv )
         {
             pixel_arrays[cnt] = minv;
+        }
+    }
+}
+
+void RAWProcessor::CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin, unsigned short valmax )
+{
+    #pragma omp parallel for
+    for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    {
+        if ( pixel_arrays[cnt] > maxv )
+        {
+            pixel_arrays[cnt] = valmax;
+        }
+        else
+        if ( pixel_arrays[cnt] < minv )
+        {
+            pixel_arrays[cnt] = valmin;
         }
     }
 }

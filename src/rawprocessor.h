@@ -99,6 +99,7 @@ class RAWProcessor
     public:
         void RecalcLevels()             { calcWeights(); }
         void CutoffLevels( unsigned short minv, unsigned short maxv );
+        void CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin = 0, unsigned short valmax = 65536 );
 
     public:
         void Version( char** retverstr ); /// put NULL initialized char* array.
@@ -115,10 +116,12 @@ class RAWProcessor
 		bool Reload();
         void Unload();
         bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
+        // rotated image may cropped to same size of previous in center.
+        bool RotateFree( unsigned int degree );
         void ChangeHeight( unsigned h );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
-        bool Reverse( unsigned char maxbits = 16 );
-        bool ReverseAuto();
+        bool Invert( unsigned char maxbits = 16 );
+        bool InvertAuto();
         bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed = false );
         bool GetWeights( std::vector<unsigned int>* weight_arrays );
@@ -135,6 +138,8 @@ class RAWProcessor
 #endif // __APPLE__
 
     public:
+        // image may enlarged.
+        RAWProcessor* RotateFree( unsigned degree, unsigned int background = 0 );
         RAWProcessor* Rescale( unsigned w, unsigned h, RescaleType st = RESCALE_NEAREST );
         RAWProcessor* Clone();
 
