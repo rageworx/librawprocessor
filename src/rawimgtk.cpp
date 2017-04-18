@@ -766,7 +766,7 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     if ( imgWidth % rgnWidth )
 		return false;       /// x-resolution no multiple of rgnWidth
 
-    if ( imgHeight & rgnHeight )
+    if ( imgHeight % rgnHeight )
 		return false;       /// y-resolution no multiple of rgnHeight
 
     if ( Min >= Max )
