@@ -25,7 +25,7 @@ OBJDIR    = ./obj/Release
 OUTBIN    = librawprocessor.a
 OUTDIR    = ./lib
 DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR
-OPTIMIZEOPT = -ffast-math -O3 -s
+OPTIMIZEOPT = -ffast-math -O3
 CPUARCHOPT    = -mavx
 
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
