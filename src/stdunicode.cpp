@@ -1,6 +1,3 @@
-#ifdef __APPLE__
-    #include <wchar.h>
-#endif // __APPLE__
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

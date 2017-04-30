@@ -80,9 +80,9 @@ class RAWProcessor
     public:
         RAWProcessor();
         RAWProcessor( const char* raw_file, unsigned int height = 0 );
-#ifndef __APPLE__
+#ifdef _WIN32
         RAWProcessor( const wchar_t* raw_file, unsigned int height = 0 );
-#endif // __APPLE__
+#endif // _WIN32
         virtual~RAWProcessor();
 
     public:
@@ -108,18 +108,18 @@ class RAWProcessor
 
         // Load from file.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#ifndef __APPLE__
+#ifdef _WIN32
         bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#endif // __APPLE__
+#endif // _WIN32
 
         // Load from memory.
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 
         // Reload from file, actually same as like Load.
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#ifndef __APPLE__
+#ifndef _WIN32
 		bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#endif // __APPLE__
+#endif // _WIN32
 		bool Reload();
 
 		// Unload clears internal memory.
@@ -147,9 +147,9 @@ class RAWProcessor
     // Some additional tools here ...
     public:
         bool SaveToFile( const char* path );
-#ifndef __APPLE__
+#ifdef _WIN32
         bool SaveToFile( const wchar_t* path );
-#endif // __APPLE__
+#endif // _WIN32
 
     public:
         // image may enlarged.

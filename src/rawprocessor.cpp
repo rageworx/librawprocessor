@@ -1,9 +1,13 @@
 #ifdef __APPLE__
     #include <sys/uio.h>
     #include <unistd.h>
+#elif __linux__
+	#include <sys/io.h>	
 #else
     #include <io.h>
 #endif // __APPLE__
+
+#include <unistd.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -20,26 +24,6 @@
 #ifdef USE_OMP
 #include <omp.h>
 #endif // USE_OMP
-
-#ifdef __APPLE__
-    #ifndef RAWPROCESSOR_USE_LOCALTCHAR
-        #define RAWPROCESSOR_USE_LOCALTCHAR
-    #endif
-#else
-    #if !defined(__TEXT)
-        #define __TEXT  _TEXT
-    #endif /// of __TEXT
-#endif // __APPLE__
-
-#ifdef RAWPROCESSOR_USE_LOCALTCHAR
-	#include "tchar.h"
-#else
-	#ifdef _WIN32
-		#include <tchar.h>
-	#else
-		#include "tchar.h"
-	#endif
-#endif
 
 #include "rawprocessor.h"
 #include "rawscale.h"
@@ -145,7 +129,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
     }
 }
 
-#ifndef __APPLE__
+#ifdef _WIN32
 RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
@@ -165,7 +149,7 @@ RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
         Load( raw_file, TRANSFORM_NONE, height );
     }
 }
-#endif // __APPLE__
+#endif // _WIN32
 
 RAWProcessor::~RAWProcessor()
 {
@@ -211,7 +195,7 @@ void RAWProcessor::Version( int** retverints )
     memcpy( *retverints, retia, sizeof(int)*4 );
 }
 
-#ifndef __APPLE__
+#ifdef _WIN32
 bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     if ( height <= 0 )
@@ -221,7 +205,7 @@ bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned 
 
     return Load( fname.c_str(), trnsfm, height );
 }
-#endif // __APPLE__
+#endif // _WIN32
 
 bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
@@ -380,12 +364,12 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
     return false;
 }
 
-#ifndef __APPLE__
+#ifdef _WIN32
 bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     return Load( raw_file, trnsfm, height );
 }
-#endif /// of __APPLE__
+#endif /// of _WIN32
 
 bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
@@ -397,11 +381,11 @@ bool RAWProcessor::Reload()
     if ( raw_file_name == __TEXT(DEF_MEMORY_LOADED) )
         return false;
 
-#ifndef __APPLE__
+#ifndef _WIN32
 	return Reload( raw_file_name.c_str() );
 #else
     return Reload( _TCM2W(raw_file_name.c_str()) );
-#endif /// of __APPLE__
+#endif /// of _WIN32
 }
 
 void RAWProcessor::Unload()
@@ -910,7 +894,7 @@ bool RAWProcessor::SaveToFile( const char* path )
     return false;
 }
 
-#ifndef __APPLE__
+#ifdef _WIN32
 bool RAWProcessor::SaveToFile( const wchar_t* path )
 {
     if ( pixel_arrays.size() == 0 )
@@ -936,7 +920,7 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
 
     return false;
 }
-#endif // __APPLE__
+#endif // _WIN32
 
 bool RAWProcessor::RotateFree( float degree )
 {

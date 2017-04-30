@@ -8,6 +8,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef RAWPROCESSOR_USE_LOCALTCHAR
+#include "tchar.h"
+#endif /// of RAWPROCESSOR_USE_LOCALTCHAR
+#include <wchar.h>
+
 char*    convertW2M(const wchar_t* src);
 wchar_t* convertM2W(const char* src);
 
