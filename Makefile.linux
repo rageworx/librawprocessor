@@ -3,18 +3,15 @@
 #
 
 #########################################################################
-# This Makefile for Mac OS X with HPC gcc 6.2
 #
-#  If you are using X-Code gcc symbolic link, it will not possible to 
-# build with -fopenmp. So if you need build with your OpenMP & AVX SIMD,
-# replace your default gcc to HPC gcc 6.2 or above version.
-# 
+# This Makefile for General Linux GCC
+#
 #########################################################################
 
 # Compiler configure.
 CCPATH =
-GCC = ${CCPATH}llvm-gcc
-GPP = ${CCPATH}llvm-g++
+GCC = ${CCPATH}gcc
+GPP = ${CCPATH}g++
 AR  = ${CCPATH}ar
 
 # Sources and how it built
@@ -25,7 +22,7 @@ OBJDIR    = ./obj/Release
 OUTBIN    = librawprocessor.a
 OUTDIR    = ./lib
 DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR
-OPTIMIZEOPT = -ffast-math -O3 -s
+OPTIMIZEOPT = -fopenmp -ffast-math -O3 -s
 CPUARCHOPT    = -mavx
 
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
