@@ -9,9 +9,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef RAWPROCESSOR_USE_LOCALTCHAR
-#include "tchar.h"
+    #include "tchar.h"
+#elif __MINGW__
+    #include <tchar.h>
+#else
+    #include <wchar.h>
 #endif /// of RAWPROCESSOR_USE_LOCALTCHAR
-#include <wchar.h>
+
 
 char*    convertW2M(const wchar_t* src);
 wchar_t* convertM2W(const char* src);

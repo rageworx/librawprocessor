@@ -2,7 +2,7 @@
     #include <sys/uio.h>
     #include <unistd.h>
 #elif __linux__
-	#include <sys/io.h>	
+	#include <sys/io.h>
 #else
     #include <io.h>
 #endif // __APPLE__
@@ -48,10 +48,12 @@ using namespace std;
     #define _TSTRING        wstring
     #define _TCM2W( _x_ )   convertM2W( (const char*)_x_ )
     #define _TCW2M( _x_ )   convertW2M( (const wchar_t*)_x_ )
+    #define _T( _x_ )       L##_x_
 #else
     #define _TSTRING        string
     #define _TCM2W( _x_ )   _x_
     #define _TCW2M( _x_ )   _x_
+    #define _T( _x_ )       _x_
 #endif //// of UNICODE
 
 
@@ -129,7 +131,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
     }
 }
 
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
 RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
@@ -149,7 +151,7 @@ RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
         Load( raw_file, TRANSFORM_NONE, height );
     }
 }
-#endif // _WIN32
+#endif /// of WCHAR_SUPPORTED
 
 RAWProcessor::~RAWProcessor()
 {
@@ -195,7 +197,7 @@ void RAWProcessor::Version( int** retverints )
     memcpy( *retverints, retia, sizeof(int)*4 );
 }
 
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
 bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     if ( height <= 0 )
@@ -205,7 +207,7 @@ bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned 
 
     return Load( fname.c_str(), trnsfm, height );
 }
-#endif // _WIN32
+#endif // of WCHAR_SUPPORTED
 
 bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
@@ -356,7 +358,7 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
 
         ApplyTransform( trnsfm );
 
-        raw_file_name = __TEXT(DEF_MEMORY_LOADED);
+        raw_file_name = _T(DEF_MEMORY_LOADED);
 
         return true;
     }
@@ -364,12 +366,12 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
     return false;
 }
 
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
 bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
 {
     return Load( raw_file, trnsfm, height );
 }
-#endif /// of _WIN32
+#endif /// of WCHAR_SUPPORTED
 
 bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned height )
 {
@@ -378,14 +380,14 @@ bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned h
 
 bool RAWProcessor::Reload()
 {
-    if ( raw_file_name == __TEXT(DEF_MEMORY_LOADED) )
+    if ( raw_file_name == _T(DEF_MEMORY_LOADED) )
         return false;
 
-#ifndef _WIN32
+#ifndef WCHAR_SUPPORTED
 	return Reload( raw_file_name.c_str() );
 #else
     return Reload( _TCM2W(raw_file_name.c_str()) );
-#endif /// of _WIN32
+#endif /// of WCHAR_SUPPORTED
 }
 
 void RAWProcessor::Unload()
@@ -894,7 +896,7 @@ bool RAWProcessor::SaveToFile( const char* path )
     return false;
 }
 
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
 bool RAWProcessor::SaveToFile( const wchar_t* path )
 {
     if ( pixel_arrays.size() == 0 )
@@ -920,7 +922,7 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
 
     return false;
 }
-#endif // _WIN32
+#endif /// of WCHAR_SUPPORTED
 
 bool RAWProcessor::RotateFree( float degree )
 {
@@ -1728,7 +1730,7 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz, unsigned margin )
 		{
 			margin = 0;
 		}
-		
+
         unsigned cnth = 0;
         unsigned cntw = 0;
 		unsigned mgnx = margin;

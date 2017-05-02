@@ -17,6 +17,10 @@
 #include <vector>
 #include <string>
 
+#if defined(_WIN32)&&(__MINGW__)
+    #define WCHAR_SUPPORTED
+#endif
+
 class RAWUserScaleIF
 {
     public:
@@ -80,9 +84,9 @@ class RAWProcessor
     public:
         RAWProcessor();
         RAWProcessor( const char* raw_file, unsigned int height = 0 );
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
         RAWProcessor( const wchar_t* raw_file, unsigned int height = 0 );
-#endif // _WIN32
+#endif // WCHAR_SUPPORTED
         virtual~RAWProcessor();
 
     public:
@@ -108,18 +112,18 @@ class RAWProcessor
 
         // Load from file.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
         bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#endif // _WIN32
+#endif // WCHAR_SUPPORTED
 
         // Load from memory.
         bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 
         // Reload from file, actually same as like Load.
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#ifndef _WIN32
+#ifndef WCHAR_SUPPORTED
 		bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#endif // _WIN32
+#endif // WCHAR_SUPPORTED
 		bool Reload();
 
 		// Unload clears internal memory.
@@ -147,9 +151,9 @@ class RAWProcessor
     // Some additional tools here ...
     public:
         bool SaveToFile( const char* path );
-#ifdef _WIN32
+#ifdef WCHAR_SUPPORTED
         bool SaveToFile( const wchar_t* path );
-#endif // _WIN32
+#endif // WCHAR_SUPPORTED
 
     public:
         // image may enlarged.
@@ -233,7 +237,7 @@ class RAWProcessor
         unsigned short              pixel_med_level;
         unsigned short              index_max_pixel;
         unsigned int                current_transform;
-#ifdef UNICODE
+#ifdef WCHAR_SUPPORTED
         std::wstring                raw_file_name;
 #else
         std::string                 raw_file_name;

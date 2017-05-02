@@ -763,11 +763,13 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     if ( rgnHeight > CLAHE_MAX_REG_H )
 		rgnHeight = CLAHE_MAX_REG_H;
 
+    /*
     if ( imgWidth % rgnWidth )
 		return false;       /// x-resolution no multiple of rgnWidth
 
     if ( imgHeight % rgnHeight )
 		return false;       /// y-resolution no multiple of rgnHeight
+    */
 
     if ( Min >= Max )
 		return false;       /// minimum equal or larger than maximum
