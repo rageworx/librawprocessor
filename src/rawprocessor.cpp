@@ -654,7 +654,7 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
 
     // # phase 02
     // find highest value in pixels ... ( 50% of maximum level )
-    int identify_min_level = int( float(pixel_max_level) * 0.2f );
+    unsigned identify_min_level = (unsigned)( float(pixel_max_level) * 0.2f );
     if ( start_minlevel_zero == true )
     {
         identify_min_level = 0;
@@ -662,7 +662,7 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
 
     unsigned index_center_thld  = 0;
 
-    for( int cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
+    for( unsigned cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
     {
         if ( pixel_weights[ cnt ] > index_center_thld )
         {
@@ -677,66 +677,97 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
     unsigned short min_weight_wide = 0;
     unsigned short max_weight_wide = 0;
 
-    if ( index_center_thld > 1 )
+    typedef struct
     {
-        report.base_threshold_index = index_center_thld;
-        int            weight_idx   = index_center_thld;
-        unsigned int   curweight    = pixel_weights[ weight_idx ];
+        unsigned min_v;
+        unsigned max_v;
+    }minmaxpair;
 
-        // # phase 03-01
-        // under counting ...
-        while( true )
+    vector< minmaxpair > mmpairs;
+
+    unsigned avr_l = 0;
+    const unsigned min_l = 100;   /// Minimal amount of pixel counts.
+    unsigned min_q = 0;
+    bool raised = false;
+
+    // Makes min-max pairs.
+    for( unsigned cnt=0; cnt<pixel_max_level; cnt++ )
+    {
+        avr_l += pixel_weights[ cnt ];
+        avr_l /= 2;
+
+        if ( ( avr_l > min_l ) && ( raised == false ) )
         {
-            weight_idx--;
+            min_q = cnt;
+            raised = true;
+        }
+        else
+        if ( ( avr_l < min_l ) && ( raised == true ) )
+        {
+            minmaxpair ppair = {0,0};
+            ppair.min_v = min_q;
+            ppair.max_v = cnt;
+            mmpairs.push_back( ppair );
+            min_q = cnt;
+            raised = false;
+        }
+    }
 
-            curweight = pixel_weights[ weight_idx ];
+    // Find longest pairs.
+    int longest_idx = -1;
+    int next_idx = -1;
+    unsigned test_long = 0;
+    unsigned scnd_long = 0;
 
-            if ( ( curweight <= (unsigned)identify_min_level ) ||
-                 ( weight_idx == identify_min_level ) )
-            {
-                min_weight_wide = weight_idx;
-                break;
-            }
+    for( unsigned cnt=0; cnt<mmpairs.size(); cnt++ )
+    {
+        unsigned tmp_long = mmpairs[ cnt ].max_v - mmpairs[ cnt ].min_v;
 
-            if ( curweight > report.threshold_max_amount )
-            {
-                report.threshold_max_amount = curweight;
-            }
+        if ( tmp_long > test_long )
+        {
+            scnd_long = test_long;
+            test_long = tmp_long;
+            longest_idx = cnt;
+        }
+        else
+        if ( tmp_long > scnd_long )
+        {
+            scnd_long = tmp_long;
+            next_idx = cnt;
+        }
+    }
+
+    bool retb = false;
+
+    if ( longest_idx >= 0 )
+    {
+        min_weight_wide = (float)mmpairs[ longest_idx ].min_v;
+
+        if ( ( next_idx >= 0 ) && ( next_idx > longest_idx ) )
+        {
+            max_weight_wide = (float)mmpairs[ next_idx ].max_v;
+        }
+        else
+        {
+            max_weight_wide = (float)mmpairs[ longest_idx ].max_v;
         }
 
-        // #phase 03-02
-        // over counting ...
-        weight_idx = index_center_thld;
-        curweight  = pixel_weights[ weight_idx ];
-        while( true )
-        {
-            weight_idx++;
-            curweight = pixel_weights[ weight_idx ];
-
-            if ( ( curweight <= (unsigned)identify_min_level ) ||
-                 ( weight_idx == ( DEF_PIXEL_WEIGHTS - 1 ) ) )
-            {
-                max_weight_wide = weight_idx;
-                break;
-            }
-
-            if ( curweight > report.threshold_max_amount )
-            {
-                report.threshold_max_amount = curweight;
-            }
-        }
+        retb = true;
     }
     else
     {
-        return false;
+        min_weight_wide = 0;
+        max_weight_wide = DEF_PIXEL_WEIGHTS;
     }
+
+    mmpairs.clear();
 
     // # phase 04
     // get wide count.
     report.threshold_wide_min = min_weight_wide;
     report.threshold_wide_max = max_weight_wide;
 
-    return true;
+    return retb;
 }
 
 bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vector<unsigned short>* word_arrays, bool reversed )

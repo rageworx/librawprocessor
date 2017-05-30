@@ -1,3 +1,6 @@
+2017-05-30 :
+     - Improved GetAnalysisReport().
+
 2017-03-09 :
      - Added some signal processing methods,
 	   Low frequency, Edge enhancement, Anistropic filtets.
