@@ -180,6 +180,9 @@
 		</Build>
 		<Compiler>
 			<Add option="-ffast-math" />
+			<Add option="-DUNICODE" />
+			<Add option="-D_UNICODE" />
+			<Add option="-DWCHAR_SUPPORTED" />
 		</Compiler>
 		<Unit filename="src/minmax.h" />
 		<Unit filename="src/rawfilters.cpp" />
