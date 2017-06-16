@@ -121,7 +121,7 @@ class RAWProcessor
 
         // Reload from file, actually same as like Load.
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
-#ifndef WCHAR_SUPPORTED
+#ifdef WCHAR_SUPPORTED
 		bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #endif // WCHAR_SUPPORTED
 		bool Reload();

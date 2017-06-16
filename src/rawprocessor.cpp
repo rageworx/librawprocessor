@@ -48,16 +48,20 @@ using namespace std;
     #define _TSTRING        wstring
     #define _TCM2W( _x_ )   convertM2W( (const char*)_x_ )
     #define _TCW2M( _x_ )   convertW2M( (const wchar_t*)_x_ )
-    #define _T( _x_ )       L##_x_
+    #ifndef _T
+        #define _T( _x_ )       L##_x_
+    #endif
 #else
     #define _TSTRING        string
     #define _TCM2W( _x_ )   _x_
     #define _TCW2M( _x_ )   _x_
-    #define _T( _x_ )       _x_
+    #ifndef _T
+        #define _T( _x_ )       _x_
+    #endif
 #endif //// of UNICODE
 
 
-#define DEF_MEMORY_LOADED   "//MEMORY_LOAD//"
+#define DEF_MEMORY_LOADED   _T("//MEMORY_LOAD//")
 #define DEF_RAW_I_HEIGHT    1024
 #define DEF_PIXEL_WEIGHTS   65535
 
@@ -358,7 +362,7 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
 
         ApplyTransform( trnsfm );
 
-        raw_file_name = _T(DEF_MEMORY_LOADED);
+        raw_file_name = DEF_MEMORY_LOADED;
 
         return true;
     }
@@ -380,7 +384,7 @@ bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned h
 
 bool RAWProcessor::Reload()
 {
-    if ( raw_file_name == _T(DEF_MEMORY_LOADED) )
+    if ( raw_file_name == DEF_MEMORY_LOADED )
         return false;
 
 #ifndef WCHAR_SUPPORTED

@@ -14,6 +14,9 @@
     #include <tchar.h>
 #else
     #include <wchar.h>
+    #ifdef UNICODE
+    #include <tchar.h>
+    #endif
 #endif /// of RAWPROCESSOR_USE_LOCALTCHAR
 
 
