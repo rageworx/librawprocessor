@@ -51,6 +51,7 @@ using namespace std;
     #ifndef _T
         #define _T( _x_ )       L##_x_
     #endif
+	#define DEF_MEMORY_LOADED	L"//MEMORY_LOAD//"
 #else
     #define _TSTRING        string
     #define _TCM2W( _x_ )   _x_
@@ -58,10 +59,9 @@ using namespace std;
     #ifndef _T
         #define _T( _x_ )       _x_
     #endif
+	#define DEF_MEMORY_LOADED	"//MEMORY_LOAD//"
 #endif //// of UNICODE
 
-
-#define DEF_MEMORY_LOADED   _T("//MEMORY_LOAD//")
 #define DEF_RAW_I_HEIGHT    1024
 #define DEF_PIXEL_WEIGHTS   65535
 
