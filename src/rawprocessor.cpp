@@ -82,6 +82,14 @@ using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef struct
+{
+    unsigned min_v;
+    unsigned max_v;
+}minmaxpair;
+
+////////////////////////////////////////////////////////////////////////////////
+
 bool RAWProcessor_sortcondition( int i,int j )
 {
     return ( i < j );
@@ -680,12 +688,6 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
     // find change pixel count fall into min level.
     unsigned short min_weight_wide = 0;
     unsigned short max_weight_wide = 0;
-
-    typedef struct
-    {
-        unsigned min_v;
-        unsigned max_v;
-    }minmaxpair;
 
     vector< minmaxpair > mmpairs;
 

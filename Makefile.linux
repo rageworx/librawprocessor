@@ -21,9 +21,10 @@ SOURCEDIR = ./src
 OBJDIR    = ./obj/Release
 OUTBIN    = librawprocessor.a
 OUTDIR    = ./lib
-DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR
+#DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR
+DEFINEOPT = 
 OPTIMIZEOPT = -fopenmp -ffast-math -O3 -s
-CPUARCHOPT    = -mavx
+CPUARCHOPT  = -mavx
 
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
 	DEFINEOPT += -DDEBUG
