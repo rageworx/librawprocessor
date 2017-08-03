@@ -236,3 +236,9 @@ lib64/
 *.jpe
 *.png
 *.gif
+
+############
+# Locals
+############
+
+Makefile
