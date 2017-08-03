@@ -13,12 +13,10 @@
 #elif __MINGW__
     #include <tchar.h>
 #else
-    #include <wchar.h>
     #ifdef UNICODE
-    #include <tchar.h>
+    	#include <tchar.h>
     #endif
 #endif /// of RAWPROCESSOR_USE_LOCALTCHAR
-
 
 char*    convertW2M(const wchar_t* src);
 wchar_t* convertM2W(const char* src);

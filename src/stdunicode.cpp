@@ -4,6 +4,8 @@
 
 #include "stdunicode.h"
 
+#include <wchar.h>
+
 char* convertW2M(const wchar_t* src)
 {
     static char* convM = NULL;
