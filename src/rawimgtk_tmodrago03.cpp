@@ -138,7 +138,7 @@ static bool rec709GammaCorrection( unsigned short* src, unsigned srcsz, const fl
     {
 		float pixel = src[ cnt ];
         pixel = ( pixel <= start ) ? pixel * slope : ( 1.099f * pow( pixel, fgamma ) - 0.099f );
-        src[ cnt ] = pixel;
+        src[ cnt ] = (unsigned short)pixel;
 	}
 
 	return true;
@@ -186,10 +186,32 @@ bool RAWImageToolKit::tmoDrago03( unsigned short *src, unsigned srcsz, float max
         return false;
     }
 
+    // Check overflown
+    float recoverf = 1.0f;
+
+    for( unsigned cnt=0; cnt<srcsz; cnt++ )
+    {
+        if ( convf[ cnt ] > recoverf )
+        {
+            recoverf = convf[ cnt ];
+        }
+    }
+
+    if ( recoverf > 1.0f )
+    {
+        float divf = 1.0f / recoverf;
+        #pragma omp parallel for
+        for( unsigned cnt=0; cnt<srcsz; cnt++ )
+        {
+            convf[ cnt ] *= divf;
+        }
+    }
+
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<srcsz; cnt++ )
     {
-        src[cnt] = MIN( (unsigned short)( convf[ cnt ] * normalf ), normalf );
+        //src[cnt] = MIN( (unsigned short)( convf[ cnt ] * normalf ), normalf );
+        src[ cnt ] = (unsigned short)( convf[ cnt ] * normalf );
     }
 
     delete[] convf;
