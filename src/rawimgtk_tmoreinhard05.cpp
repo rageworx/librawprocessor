@@ -141,7 +141,6 @@ static bool toneMappingReinhard05( float* src, float* lumiY, unsigned srcsz,
     {
 		// when using default values, use a fastest code
 
-		#pragma omp parallel for
 		for( unsigned cnt=0; cnt<srcsz; cnt++ )
         {
             I_a = lumiY[ cnt ];	// luminance(x, y)
@@ -159,7 +158,6 @@ static bool toneMappingReinhard05( float* src, float* lumiY, unsigned srcsz,
 		// Average of color/Level
 		if( ( adapt != 1.0f ) && ( cc != 0.0f ) )
         {
-            #pragma omp parallel for
 			for(unsigned cnt=0; cnt<srcsz; cnt++ )
 			{
 				Cav += src[ cnt ];
@@ -169,8 +167,6 @@ static bool toneMappingReinhard05( float* src, float* lumiY, unsigned srcsz,
 		}
 
 		// perform tone mapping
-
-		#pragma omp parallel for
 		for( unsigned cnt=0; cnt<srcsz; cnt++ )
         {
             L = lumiY[ cnt ];	// luminance(x, y)

@@ -572,7 +572,7 @@ void CLAHE_MakeHistogram ( unsigned short* pImage,
 
 		while ( pImage < pImgPtr )
 		{
-			pHisto[ pLUT[ *pImage++ ] ]++;
+			pHisto[ pLUT[ (unsigned short)*pImage++ ] ]++;
 		}
 
 		pImgPtr += imgWidth;
@@ -789,7 +789,7 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     if ( ranges == 0 )
 		ranges = 65535;	    /// default value when not specified
 
-    pMapArray = new unsigned long[ rgnWidth * rgnHeight * ranges ];
+    pMapArray = new unsigned long[ rgnWidth * rgnHeight * ( ranges + 1 ) ];
 
     if ( pMapArray == NULL )
 		return false;

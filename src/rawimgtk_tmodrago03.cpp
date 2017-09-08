@@ -67,7 +67,7 @@ static bool toneMappingDrago03( float* src, unsigned srcsz, const float maxLum, 
     {
         double Yw   = (double)src[cnt] / (double)avgLum;
         Yw         *= exposure;
-        interpol    = log( 2.0 + biasFunction( biasP, Yw / Lmax ) * 8.0f );
+        interpol    = log( 2.0 + biasFunction( biasP, Yw / Lmax ) * 8.0 );
         L           = pade_log(Yw);// log(Yw + 1)
         src[cnt]    = (float)( ( L / interpol) / divider );
 	}
