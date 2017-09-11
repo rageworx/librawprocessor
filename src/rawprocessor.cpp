@@ -73,7 +73,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,47,135
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,48,140
 
 ////////////////////////////////////////////////////////////////////////////////
 
