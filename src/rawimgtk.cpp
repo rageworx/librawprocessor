@@ -636,8 +636,8 @@ void CLAHE_MakeLut( unsigned short * pLUT, unsigned short Min, unsigned short Ma
  * perform a logical shift instead when feasible.
  */
 void CLAHE_Interpolate( unsigned short * pImage,
-                        int imgWidth, unsigned long * pMapLU,
-                        unsigned long * pMapRU, unsigned long * pMapLB,  unsigned long * pMapRB,
+                        int imgWidth, unsigned skipWidth,
+                        unsigned long * pMapLU, unsigned long * pMapRU, unsigned long * pMapLB,  unsigned long * pMapRB,
                         unsigned int subszW, unsigned int subszH, unsigned short * pLUT)
 {
     const unsigned int incSz = imgWidth-subszW; /* Pointer increment after processing row */
@@ -669,6 +669,8 @@ void CLAHE_Interpolate( unsigned short * pImage,
 						                         coefH * (invcoefW * pMapLB[GreyValue] +
 												 coefW * pMapRB[GreyValue]) )
                                                / normFactor );
+
+                pImage += skipWidth;
 			}
 		}
 	}
@@ -696,6 +698,7 @@ void CLAHE_Interpolate( unsigned short * pImage,
 												coefH * (invcoefW * pMapLB[GreyValue] +
 												coefW * pMapRB[GreyValue]) )
                                               >> shifts );
+                pImage += skipWidth;
 			}
 		}
     }
@@ -734,6 +737,7 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     unsigned int subszH = 0;
     unsigned int subImgW = 0;
     unsigned int subImgH = 0;
+    unsigned int skipW = 0;
 
     /* auxiliary variables interpolation routine */
     unsigned int cnt_xL = 0;
@@ -784,11 +788,21 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     if ( rgnHeight < 2 )
 		rgnHeight = 2;
 
+    // Make it skip when image size not divided done by zero.
+    skipW = imgWidth % rgnWidth;
+    if ( skipW > 0 )
+    {
+        skipW++;
+    }
+
     if ( fCliplimit == 1.0f )
 		return true;	    /// is OK, immediately returns original image.
 
     if ( fCliplimit < 1.0f )
-        fCliplimit = 1.0f;
+        return false;
+
+    if ( fCliplimit < 2.0f )
+        fCliplimit = 2.1f;
 
     if ( ranges == 0 )
 		ranges = 65536;	    /// default value when not specified
@@ -829,7 +843,8 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
 			CLAHE_MapHistogram( pulHist, Min, Max, ranges, pixelCnts);
 		}
 
-		pImgPtr += (subszH - 1) * imgWidth;		  /* skip lines, set pointer */
+		/* skip lines, set pointer */
+		pImgPtr += (subszH - 1) * imgWidth + skipW;
     }
 
     /* Interpolate greylevel mappings to get CLAHE image */
@@ -892,13 +907,23 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
 			pulRB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xR)];
 
 			CLAHE_Interpolate( pImgPtr,
-                               imgWidth, pulLU, pulRU, pulLB, pulRB,
+                               imgWidth, 0,
+                               pulLU, pulRU, pulLB, pulRB,
                                subImgW, subImgH, aLUT );
 
-			pImgPtr += subImgW;			  /* set pointer on next matrix */
+			/* set pointer on next matrix */
+			pImgPtr += subImgW;
 		}
 
-		pImgPtr += (subImgH - 1) * imgWidth;
+		if ( skipW > 0 )
+        {
+            pImgPtr += (subImgH - 1) * imgWidth + skipW - 1;
+        }
+        else
+        {
+            pImgPtr += (subImgH - 1) * imgWidth;
+        }
+
     }
 
     delete[] pMapArray;
