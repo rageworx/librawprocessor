@@ -571,12 +571,14 @@ void CLAHE_MakeHistogram ( unsigned short* pImage,
 		pImgPtr = &pImage[rgnszW];
 
 		while ( pImage < pImgPtr )
+		//for( unsigned int cntq=0; cntq<rgnszW; cntq++ )
 		{
 			pHisto[ pLUT[ (unsigned short)*pImage++ ] ]++;
+            //pHisto[ pLUT[ pImage[ cntq ] ] ]++;
 		}
 
 		pImgPtr += imgWidth;
-		pImage = &pImgPtr[-rgnszW];
+		pImage = &pImgPtr[-(long long)rgnszW];
     }
 }
 
