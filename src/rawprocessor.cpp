@@ -558,6 +558,8 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
         for( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
             float fdspixel = float(ref_pixel_arrays[cnt]) * dscale_ratio;
+            if ( fdspixel > 255.f )
+                fdspixel = 255.f;
             unsigned char dspixel = (unsigned char)fdspixel;
 
             if ( reversed == true )
@@ -580,6 +582,8 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
         {
             float fuspixel = float(ref_pixel_arrays[cnt]) * uscale_ratio;
             float fdspixel = fuspixel * dscale_ratio;
+            if ( fdspixel > 255.f )
+                fdspixel = 255.f;
             unsigned char dspixel = (unsigned char)fdspixel;
 
             if ( reversed == true )
@@ -1713,7 +1717,7 @@ bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
     return false;
 }
 
-bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz, unsigned margin )
+bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edgesz, unsigned margin )
 {
     if ( pixel_arrays_realsz > 0 )
     {
@@ -1739,9 +1743,12 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz, unsigned margin )
 
         bool retb = false;
 
+        if ( fszh < 2 )
+            fszh = 2;
+
         retb = RAWImageFilterKit::ApplyEdgeLowFreqFilter( imgEH1,
                                                           img_width, img_height,
-                                                          5 );
+                                                          fszh );
 
         if ( retb == false )
         {
@@ -1751,9 +1758,12 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz, unsigned margin )
             return false;
         }
 
+        if ( fszv < 2 )
+            fszv = 2;
+
         retb = RAWImageFilterKit::ApplyEdgeLowFreqFilter( imgEH2,
                                                           img_width, img_height,
-                                                          9 );
+                                                          fszv );
 
         if ( retb == false )
         {
@@ -1785,7 +1795,7 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned edgesz, unsigned margin )
 				unsigned pos = cnth * img_width + cntw;
 				double pixelv = abs( (float)ptr[pos] + (float)imgEH1[pos] + (float)imgEH2[pos] )
 								/ fedgev;
-				if ( pixelv <= 0.0 )
+				if ( pixelv < 0.0 )
 				{
 					pixelv = 0.0;
 				}

@@ -667,7 +667,8 @@ void CLAHE_Interpolate( unsigned short * pImage,
 				*pImage++ = (unsigned short )( ( invcoefH *
 												 ( invcoefW*pMapLU[GreyValue] +  coefW * pMapRU[GreyValue] ) +
 						                         coefH * (invcoefW * pMapLB[GreyValue] +
-												 coefW * pMapRB[GreyValue])) / normFactor );
+												 coefW * pMapRB[GreyValue]) )
+                                               / normFactor );
 			}
 		}
 	}
@@ -681,7 +682,7 @@ void CLAHE_Interpolate( unsigned short * pImage,
 
 		for ( coefH = 0, invcoefH = subszH;
 		      coefH < subszH;
-			  coefH++, invcoefH--,pImage+=incSz )
+			  coefH++, invcoefH--, pImage+=incSz )
 		{
 			 for ( coefW = 0, invcoefW = subszW;
 			       coefW < subszW;
@@ -693,7 +694,8 @@ void CLAHE_Interpolate( unsigned short * pImage,
 				*pImage++ = (unsigned short)( ( invcoefH *
 				                                ( invcoefW * pMapLU[GreyValue] + coefW * pMapRU[GreyValue] ) +
 												coefH * (invcoefW * pMapLB[GreyValue] +
-												coefW * pMapRB[GreyValue])) >> shifts );
+												coefW * pMapRB[GreyValue]) )
+                                              >> shifts );
 			}
 		}
     }
@@ -789,7 +791,7 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
         fCliplimit = 1.0f;
 
     if ( ranges == 0 )
-		ranges = 65535;	    /// default value when not specified
+		ranges = 65536;	    /// default value when not specified
 
     pMapArray = new unsigned long[ rgnWidth * rgnHeight * ( ranges + 1 ) ];
 
@@ -834,35 +836,53 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     for (pImgPtr = pImage, cnt_y = 0; cnt_y <= rgnHeight; cnt_y++)
 	{
 		if (cnt_y == 0)
-		{					  /* special case: top row */
-			subImgH = subszH >> 1;  cnt_yU = 0; cnt_yB = 0;
+		{
+		    /* special case: top row */
+			subImgH = subszH >> 1;
+			cnt_yU = 0;
+			cnt_yB = 0;
 		}
 		else
 		{
 			if (cnt_y == rgnHeight)
-			{				  /* special case: bottom row */
-				subImgH = subszH >> 1;	cnt_yU = rgnHeight-1;	 cnt_yB = cnt_yU;
+			{
+			    /* special case: bottom row */
+				subImgH = subszH >> 1;
+				cnt_yU = rgnHeight-1;
+				cnt_yB = cnt_yU;
 			}
 			else
-			{					  /* default values */
-				subImgH = subszH; cnt_yU = cnt_y - 1; cnt_yB = cnt_yU + 1;
+			{
+			    /* default values */
+				subImgH = subszH;
+				cnt_yU = cnt_y - 1;
+				cnt_yB = cnt_yU + 1;
 			}
 		}
 		for (cnt_x = 0; cnt_x <= rgnWidth; cnt_x++)
 		{
 			if (cnt_x == 0)
-			{				  /* special case: left column */
-				subImgW = subszW >> 1; cnt_xL = 0; cnt_xR = 0;
+			{
+			    /* special case: left column */
+				subImgW = subszW >> 1;
+				cnt_xL = 0;
+				cnt_xR = 0;
 			}
 			else
 			{
 				if (cnt_x == rgnWidth)
-				{			  /* special case: right column */
-					subImgW = subszW >> 1;  cnt_xL = rgnWidth - 1; cnt_xR = cnt_xL;
+				{
+				    /* special case: right column */
+					subImgW = subszW >> 1;
+					cnt_xL = rgnWidth - 1;
+					cnt_xR = cnt_xL;
 				}
 				else
-				{					  /* default values */
-					subImgW = subszW; cnt_xL = cnt_x - 1; cnt_xR = cnt_xL + 1;
+				{
+				    /* default values */
+					subImgW = subszW;
+					cnt_xL = cnt_x - 1;
+					cnt_xR = cnt_xL + 1;
 				}
 			}
 

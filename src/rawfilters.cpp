@@ -350,15 +350,15 @@ bool RAWImageFilterKit::ApplyLowFreqFilter( unsigned short* ptr, unsigned w, uns
         {
             for( cntw=0; cntw<w; cntw++ )
             {
-                unsigned sum   = 0;
+                unsigned long long sum = 0;
                 unsigned sumsz = 0;
 
                 for( int lp1=(-sfsz/2); lp1<=(sfsz/2); lp1++ )
                 {
                     for( int lp2=(-sfsz/2); lp2<=(sfsz/2); lp2++ )
                     {
-                        int chkh = cnth + lp1;
-                        int chkv = cntw + lp2;
+                        long long chkh = cnth + lp1;
+                        long long chkv = cntw + lp2;
 
                         if ( ( chkv >= 0 ) && ( chkh >= 0 ) &&
                              ( chkv < maxw ) && ( chkh < maxh ) )
@@ -425,13 +425,14 @@ bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w,
 
     unsigned cntw = 0;
     unsigned cnth = 0;
+    unsigned powfsz = ( fsz * fsz );
 
     #pragma omp parallel for private( cntw )
     for( cnth=halfsz; cnth<(h-halfsz); cnth++)
     {
         for( cntw=halfsz; cntw<(w-halfsz); cntw++ )
         {
-            unsigned sum = 0;
+            unsigned long long sum = 0;
 
             for( int lp1=(-halfsz); lp1<(halfsz+1); lp1++ )
             {
@@ -441,7 +442,7 @@ bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w,
                 }
             }
 
-            imgLF[ cnth * w + cntw ] = sum / ( fsz * fsz );
+            imgLF[ cnth * w + cntw ] = sum / powfsz;
         }
     }
 
