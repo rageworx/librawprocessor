@@ -108,7 +108,7 @@ class RAWProcessor
     public:
         // Get Versions in string or, integer array.
         void Version( char** retverstr ); /// put NULL initialized char* array.
-        void Version( int** retverints ); /// put int[4] array.
+        void Version( int* retverints ); /// put int[4] array.
 
         // Load from file.
         bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );

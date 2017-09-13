@@ -25,13 +25,16 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.47.134
+* Version marked as 0.9.49.142
+* Fixed some bugs in AdjustingXXX methods.
+* Enhanced CLAHE region divider, no failure at running, but result may affected.
+* Fixed getting version information.
+
+### Previous updates ###
 * Added RotateFree, RotateFree in cropped for original image size.
 * Changed method name Reverse() to Invert()
 * Changed method name ReverseAuto() to InvertAuto()
 * Fixed a bug of Rotate180()
-
-### Previous updates ###
 * Added Low Frequency Filter (may used for removing artifacts)
 * Added Edge Enhancement Filter
 * Added Anistropic Filter

@@ -73,7 +73,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,48,140
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,49,142
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -198,7 +198,7 @@ void RAWProcessor::Version( char** retverstr )
     }
 }
 
-void RAWProcessor::Version( int** retverints )
+void RAWProcessor::Version( int* retverints )
 {
     if ( retverints == NULL )
     {
@@ -206,7 +206,10 @@ void RAWProcessor::Version( int** retverints )
     }
 
     int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
-    memcpy( *retverints, retia, sizeof(int)*4 );
+    for( unsigned cnt=0; cnt<4; cnt++ )
+    {
+        retverints[ cnt ] = retia[ cnt ];
+    }
 }
 
 #ifdef WCHAR_SUPPORTED
@@ -1697,7 +1700,7 @@ bool RAWProcessor::ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, u
         unsigned short* ptr = pixel_arrays.data();
 
         return rawimgtk::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
-                                     applysz, applysz, bins, slope );
+                                     applysz, applysz, 0, slope );
     }
 
     return false;
