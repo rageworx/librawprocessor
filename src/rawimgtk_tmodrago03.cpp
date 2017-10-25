@@ -211,7 +211,16 @@ bool RAWImageToolKit::tmoDrago03( unsigned short *src, unsigned srcsz, float max
     for( unsigned cnt=0; cnt<srcsz; cnt++ )
     {
         //src[cnt] = MIN( (unsigned short)( convf[ cnt ] * normalf ), normalf );
-        src[ cnt ] = (unsigned short)( convf[ cnt ] * normalf );
+
+        //Fixing clipped over exposures.
+        float tmpfv = convf[ cnt ] * normalf;
+
+        if ( tmpfv > 65535.f )
+        {
+            tmpfv = 65535.f;
+        }
+
+        src[ cnt ] = (unsigned short)tmpfv;
     }
 
     delete[] convf;

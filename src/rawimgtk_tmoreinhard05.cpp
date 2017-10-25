@@ -241,7 +241,15 @@ bool RAWImageToolKit::tmoReinhard2005( unsigned short* src, unsigned srcsz,
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<srcsz; cnt++ )
     {
-        src[cnt] = MIN( (unsigned short)( convf[ cnt ] * (float)normalf ), normalf );
+        //src[cnt] = MIN( (unsigned short)( convf[ cnt ] * (float)normalf ), normalf );
+        float tmpfv = convf[ cnt ] * (float)normalf;
+
+        if ( tmpfv > 65535.f )
+        {
+            tmpfv = 65535.f;
+        }
+
+        src[cnt] = (unsigned short)tmpfv;
     }
 
     delete[] convf;
