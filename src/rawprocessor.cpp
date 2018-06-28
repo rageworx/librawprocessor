@@ -73,7 +73,7 @@ using namespace std;
 #define DEF_CALC_F_BMAX     255.0f
 #define DEF_CALC_I_BMAX     255
 
-#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,49,142
+#define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,50,145
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -109,6 +109,7 @@ int RAWProcessor_uscompare (const void * a, const void * b)
 
 RAWProcessor::RAWProcessor()
  : raw_loaded(false),
+   pixel_swaping(false),
    pixel_arrays_realsz(0),
    pixel_weights(NULL),
    pixel_weights_max(0),
@@ -283,7 +284,14 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
             unsigned short worddata = 0;
 
             rfstrm.read( chardata, sizeof(unsigned short) );
-            worddata = ( chardata[1] << 8 ) + ( chardata[0] & 0x00FF );
+            if ( pixel_swaping == false )
+            {
+                worddata = ( chardata[1] << 8 ) + ( chardata[0] & 0x00FF );
+            }
+            else
+            {
+                worddata = ( chardata[0] << 8 ) + ( chardata[1] & 0x00FF );
+            }
             //pixel_arrays.push_back( worddata );
             pixel_arrays[ cnt ] = worddata;
             pixel_weights[ worddata ] += 1;

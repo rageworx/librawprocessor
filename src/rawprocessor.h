@@ -99,8 +99,10 @@ class RAWProcessor
         unsigned Height()               { return img_height; }
         unsigned WeightsCount()         { return pixel_weights_max; }
         unsigned char BPP()             { return pixel_bpp; }
+        bool Swapping()                 { return pixel_swaping; }
 
     public:
+        void Swapping( bool onoff )     { pixel_swaping = onoff; }
         void RecalcLevels()             { calcWeights(); }
         void CutoffLevels( unsigned short minv, unsigned short maxv );
         void CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin = 0, unsigned short valmax = 65535 );
@@ -226,6 +228,7 @@ class RAWProcessor
     protected:
         bool                        bigendian;
         bool                        raw_loaded;
+        bool                        pixel_swaping;
         std::vector<unsigned short> pixel_arrays;
         unsigned long               pixel_arrays_srcsz;
         unsigned long               pixel_arrays_realsz;

@@ -25,12 +25,13 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.49.142
+* Version marked as 0.9.50.145
+* Included byte swapping
+
+### Previous updates ###
 * Fixed some bugs in AdjustingXXX methods.
 * Enhanced CLAHE region divider, no failure at running, but result may affected.
 * Fixed getting version information.
-
-### Previous updates ###
 * Added RotateFree, RotateFree in cropped for original image size.
 * Changed method name Reverse() to Invert()
 * Changed method name ReverseAuto() to InvertAuto()
