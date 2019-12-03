@@ -1,0 +1,7 @@
+POSIX:
+    link makes/Makefile.{your platform} as Makefile.
+        eg. $ ln -s makes/Makefile.gcc Makefile
+    then proceed make.
+    
+CodeBlocks:
+    load librawprocessor.cbp in cbp directory.
