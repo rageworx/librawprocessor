@@ -1,22 +1,21 @@
 # librawprocessor #
-* A library for 16bit gray scaled medical RAW image processor in GCC-5 & 6 for any different systems.
-* This library is designed for GCC(MinGW) with FLTK 1.3.3 or 1.3.4. but any other platform should have no problem to use it for 32 and 64bit platforms include Windows, Linux and Mac OS X.
-* Reading 12 to 16bit gray scaled RAW image and make its threshold cut-off image into 8bit another RAW image.
+* A library for processing 16bit gray scaled medical RAW images.
+* Supports multi-platforms: Windows, Linux and MacOSX.
+* Reading 8 to 16bit gray scaled RAW image and make its downscale window size into 8bit another RAW image, or reverse.
 
 ### This library supports these functions. ###
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
- 1. Get weight informations.
- 1. Threshold cut-off (for lose useless image datas, or make it easy to processing)
+ 1. Get weight informations to calculating window size.
+ 1. Windowing - threshold cut-off (for lose useless image datas, or make it easy to processing)
  1. CLAHE( Contrast Limited Adaptive Histogram Equalization )
  1. Export to 8bit pixel array(vector array)
  1. Export to 16bit pixel array(vector array)
- 1. Reverse all pixels
+ 1. Reverse all pixels ( black to white, or white to black )
  1. Flip H/V and Rotate in 90,180,270 degrees.
  1. 2 different ways for tone mapping (known as H.D.R image)
 
 ### Makefile rule ###
- 1. Please copy Makefile.{appendix} to your compiler.
- 1. appendix follows gcc, MinGW, MinGW-W64 : gcc, Mac OS X : macosx.
+ 1. Refer to HOW2MAKE.
 
 ### And still these functions are not embodied. ###
  1. Nothing in now.
@@ -25,7 +24,7 @@
 * Nothing now, bug fix if found.
 
 ### Latest update ###
-* Version marked as 0.9.50.145
+* Version marked as 0.9.35.150.
 * Included byte swapping
 
 ### Previous updates ###
@@ -98,11 +97,6 @@
 * Source refer to Free Image Project (http://freeimage.sourceforge.net/)
 * Removed class methods not handles TCHAR casting.
 * Compatible with 64bit gcc compilers.
-* Some array struct enhanced for be optimized with AVX SIMD.</br>
-  It may easily enhanced by compiler optimized option as like:
-  ````
-  -mavx (or) -march=core-i7avx
-  ````
 
 ### Usage & Help ###
  1. [See wiki page](https://github.com/rageworx/librawprocessor/wiki)
