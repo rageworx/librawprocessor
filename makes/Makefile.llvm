@@ -14,15 +14,16 @@ AR  = ar
 # Sources and how it built
 # Optimization issue: recommend to build with using -ffast-math option.
 # Change if your CPU architecture supports more high technologies.
-SOURCEDIR = ./src
-OBJDIR    = ./obj/Release
-OUTBIN    = librawprocessor.a
-OUTDIR    = ./lib
-DEFINEOPT = -DRAWPROCESSOR_USE_LOCALTCHAR -DUNICODE -D_UNICODE
-OPTIMIZEOPT = -ffast-math -O3
-CPUARCHOPT    = -mavx
+SOURCEDIR     = ./src
+OBJDIR        = ./obj/Release
+OUTBIN        = librawprocessor.a
+OUTDIR        = ./lib
+DEFINEOPT     = -DRAWPROCESSOR_USE_LOCALTCHAR -DUNICODE -D_UNICODE
+OPTIMIZEOPT   = -ffast-math -O2
+CPUARCHOPT    = -mtune=native
 
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
+	OBJDIR = ./obj/Debug
 	DEFINEOPT += -DDEBUG
 	OUTBIN = librawprocessor_d.a
 endif

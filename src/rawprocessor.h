@@ -17,10 +17,6 @@
 #include <vector>
 #include <string>
 
-#if defined(_WIN32)&&(__MINGW__)
-    #define WCHAR_SUPPORTED
-#endif
-
 class RAWUserScaleIF
 {
     public:

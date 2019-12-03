@@ -51,7 +51,7 @@ using namespace std;
     #ifndef _T
         #define _T( _x_ )       L##_x_
     #endif
-	#define DEF_MEMORY_LOADED	L"//MEMORY_LOAD//"
+	#define DEF_MEMORY_LOADED	_T("//MEMORY_LOAD//")
 #else
     #define _TSTRING        string
     #define _TCM2W( _x_ )   _x_

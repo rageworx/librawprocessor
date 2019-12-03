@@ -1,37 +1,56 @@
-# Makefile for librawprocessor for formal GCC.
-# (C)2019 Raphael Kim / rageworx@gmail.com
+# Makefile for librawprocessor
+# (C)2016 Raphael Kim / rageworx@gmail.com
 #
 
 #########################################################################
-# You can decide ${GCCPREFIX} in make argument like mnake GCCPREFX=arm-
+# About cross compiler, or other platform :
+#
+# To enable build for embedded linux, you may encomment next 2 lines.
+# Or, may need to change your cross compiler path with environments.
+# It is up to developer !
+
+# CCPREPATH = ${ARM_LINUX_GCC_PATH}
+# CCPREFIX  = arm-linux-
+
+# To enable build for embedded linux, change following line.
+# CCPATH    = ${CCPREPATH}/${CCPREFIX}
+CCPATH =
 #########################################################################
 
 # Compiler configure.
-GCC = ${GCCPREFIX}gcc
-GPP = ${GCCPREFIX}g++
-AR  = ar
+GCC = ${CCPATH}gcc
+GPP = ${CCPATH}g++
+AR  = ${CCPATH}ar
 
 # Sources and how it built
 # Optimization issue: recommend to build with using -ffast-math option.
 # Change if your CPU architecture supports more high technologies.
-SOURCEDIR   = ./src
-OBJDIR      = ./obj/Release
-OUTBIN      = librawprocessor.a
-OUTDIR      = ./lib
-DEFINEOPT   = -DRAWPROCESSOR_USE_LOCALTCHAR
-OPTIMIZEOPT = -ffast-math -O2
-CPUARCHOPT  = -mtune=native
+SOURCEDIR    = ./src
+OBJDIR       = ./obj/Release
+OUTBIN       = librawprocessor.a
+OUTDIR       = ./lib
+DEFINEOPT    = -DRAWPROCESSOR_USE_LOCALTCHAR -DUNICODE -D_UNICODE
+DEFINEOPT   += -DWCHAR_SUPPORTED
+OPTIMIZEOPT  = -ffast-math -O2 -s
+CPUARCHOPT   = -mwindows -mtune=native
+
+ifeq (openmp,$(firstword $(MAKECMDGOALS)))
+	OPTIMIZEOPT += -fopenmp
+endif
 
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
-    OBJDIR = ./obj/Debug
+	OBJDIR = ./obj/Debug
 	DEFINEOPT += -DDEBUG
 	OUTBIN = librawprocessor_d.a
 endif
 
 CFLAGS    = -I$(SOURCEDIR) $(DEFINEOPT) $(OPTIMIZEOPT) $(CPUARCHOPT) $(BITSOPT)
 
+.PHONY: openmp
+
 all: prepare clean ${OUTDIR}/${OUTBIN}
 
+openmp: all
 debug: all
 
 prepare:
