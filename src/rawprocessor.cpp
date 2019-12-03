@@ -1,10 +1,5 @@
 #ifdef __APPLE__
     #include <sys/uio.h>
-    #include <unistd.h>
-#elif __linux__
-	#include <sys/io.h>
-#else
-    #include <io.h>
 #endif // __APPLE__
 
 #include <unistd.h>
