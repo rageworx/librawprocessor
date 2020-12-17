@@ -17,7 +17,7 @@
 #include <algorithm>
 
 #ifdef USE_OMP
-#include <omp.h>
+    #include <omp.h>
 #endif // USE_OMP
 
 #include "rawprocessor.h"
@@ -36,7 +36,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __APPLE__
-    #undef UNICODE
+    #ifdef UNICODE
+        #undef UNICODE
+    #endif
 #endif // __APPLE__
 
 #ifdef UNICODE
@@ -77,11 +79,25 @@ using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+
+#define BYTE_SWAP_16(n) ((((n) >> 8) & 0xffu) | (((n) & 0xffu) << 8))
+#define BYTE_SWAP_32(x)  \
+     ((((x) & 0xff000000u) >> 24) | (((x) & 0x00ff0000u) >>  8) |  \
+      (((x) & 0x0000ff00u) <<  8) | (((x) & 0x000000ffu) << 24))
+
+////////////////////////////////////////////////////////////////////////////////
+
 typedef struct
 {
     unsigned min_v;
     unsigned max_v;
 }minmaxpair;
+
+typedef struct
+{
+    float min_v;
+    float max_v;
+}minmaxfpair;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -92,10 +108,36 @@ bool RAWProcessor_sortcondition( int i,int j )
 
 int RAWProcessor_uscompare (const void * a, const void * b)
 {
-    if( *(const unsigned short*)a < *(const unsigned short*)b )
+    if( *(const float*)a < *(const float*)b )
         return -1;
 
-    return *(const unsigned short*)a > *(const unsigned short*)b;
+    return *(const float*)a > *(const float*)b;
+}
+
+int RAWProcessor_fcompare (const void * a, const void * b)
+{
+    if( *(const float*)a < *(const float*)b )
+        return -1;
+
+    return *(const float*)a > *(const float*)b;
+}
+
+inline void _bswap2( void* ptr )
+{
+    unsigned char* pcast = (unsigned char*)ptr;
+    unsigned char  tmpstr[2] = { pcast[0], pcast[1] };
+    pcast[0] = tmpstr[1];
+    pcast[1] = tmpstr[2];
+}
+
+inline void _bswap4( void* ptr )
+{
+    unsigned char* pcast = (unsigned char*)ptr;
+    unsigned char  tmpstr[4] = { pcast[0], pcast[1], pcast[2], pcast[3] };
+    pcast[0] = tmpstr[3];
+    pcast[1] = tmpstr[2];
+    pcast[2] = tmpstr[1];
+    pcast[3] = tmpstr[0];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -104,18 +146,16 @@ int RAWProcessor_uscompare (const void * a, const void * b)
 
 RAWProcessor::RAWProcessor()
  : raw_loaded(false),
-   pixel_swaping(false),
    pixel_arrays_realsz(0),
    pixel_weights(NULL),
    pixel_weights_max(0),
-   pixel_bpp(10),
+   pixel_bpp(32),
    pixel_min_level(0),
    pixel_max_level(0),
    img_height(0),
    img_width(0),
    userscaler(NULL)
 {
-    pixel_weights = new unsigned int[ DEF_PIXEL_WEIGHTS + 1 ];
     resetWeights();
 }
 
@@ -130,7 +170,6 @@ RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
    img_height(height),
    img_width(0)
 {
-    pixel_weights = new unsigned int[ DEF_PIXEL_WEIGHTS + 1];
     resetWeights();
 
     if ( raw_file != NULL )
@@ -151,7 +190,6 @@ RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
    img_height(height),
    img_width(0)
 {
-    pixel_weights = new unsigned int[ DEF_PIXEL_WEIGHTS + 1];
     resetWeights();
 
     if ( raw_file != NULL )
@@ -164,12 +202,7 @@ RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
 RAWProcessor::~RAWProcessor()
 {
     Unload();
-
-    if  ( pixel_weights != NULL )
-    {
-        delete[] pixel_weights;
-        pixel_weights = NULL;
-    }
+    resetWeights();
 }
 
 void RAWProcessor::Version( char** retverstr )
@@ -202,27 +235,34 @@ void RAWProcessor::Version( int* retverints )
     }
 
     int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
-    for( unsigned cnt=0; cnt<4; cnt++ )
+    for( size_t cnt=0; cnt<4; cnt++ )
     {
         retverints[ cnt ] = retia[ cnt ];
     }
 }
 
 #ifdef WCHAR_SUPPORTED
-bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
+bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, size_t height, unsigned int dtype, bool byteswap )
 {
     if ( height <= 0 )
         return false;
 
-    string fname = convertW2M( raw_file );
+    const char* pconv = convertW2M( raw_file );
 
-    return Load( fname.c_str(), trnsfm, height );
+    if ( pconv != NULL )
+    {
+        string fname = pconv;
+
+        return Load( fname.c_str(), trnsfm, height );
+    }
+
+    return false;
 }
 #endif // of WCHAR_SUPPORTED
 
-bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned height )
+bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t height, unsigned int dtype, bool byteswap )
 {
-    if ( height <= 0 )
+    if ( height == 0 )
         return false;
 
     fstream rfstrm;
@@ -245,12 +285,32 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
             return false;
         }
 
-        pixel_min_level = 0;
-        pixel_med_level = 0;
-        pixel_max_level = 0;
+        pixel_min_level = 0.f;
+        pixel_med_level = 0.f;
+        pixel_max_level = 0.f;
         img_height = height;
+        size_t readsz = 1;
 
-        pixel_arrays_srcsz   = fsize / sizeof( unsigned short );
+        switch( dtype )
+        {
+            case DATATYPE_BYTE:
+                pixel_arrays_srcsz = fsize;
+                break;
+
+            case DATATYPE_USHORT:
+                readsz = sizeof( unsigned short );
+                pixel_arrays_srcsz = fsize / readsz;
+                break;
+
+            case DATATYPE_FLOAT:
+                readsz = sizeof( float );
+                pixel_arrays_srcsz = fsize/ readsz;
+                break;
+
+            default:
+                return false;
+        }
+
         unsigned blancsz = 0;
 
         if (  pixel_arrays_srcsz > 0 )
@@ -273,31 +333,58 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
         resetWeights();
 
         // To save memory, it doesn't using direct load to memory.
-        for( unsigned cnt=0; cnt<fsize / sizeof(unsigned short); cnt++)
+        for( unsigned cnt=0; cnt<fsize/readsz; cnt++)
         {
-            char           chardata[2] = {0};
-            unsigned short worddata = 0;
+            char  chardata[4] = {0};
+            float convdata = 0.f;
 
-            rfstrm.read( chardata, sizeof(unsigned short) );
-            if ( pixel_swaping == false )
-            {
-                worddata = ( chardata[1] << 8 ) + ( chardata[0] & 0x00FF );
-            }
-            else
-            {
-                worddata = ( chardata[0] << 8 ) + ( chardata[1] & 0x00FF );
-            }
-            //pixel_arrays.push_back( worddata );
-            pixel_arrays[ cnt ] = worddata;
-            pixel_weights[ worddata ] += 1;
+            rfstrm.read( chardata, readsz );
 
-            if ( pixel_weights_max < worddata )
+            // convert each data type to floating point 4 byte.
+            switch( dtype )
             {
-                pixel_weights_max = worddata;
+                case DATATYPE_BYTE:
+                    convdata = (float)chardata[0];
+                    break;
+
+                case DATATYPE_USHORT:
+                    {
+                        unsigned short usdata = *(unsigned short*)chardata;
+
+                        if ( byteswap == false )
+                        {
+                            convdata = (float)usdata;
+                        }
+                        else
+                        {
+                            _bswap2( &usdata );
+                            convdata = (float)usdata;
+                        }
+                    }
+                    break;
+
+                case DATATYPE_FLOAT:
+                    {
+                        convdata = *(float*)chardata;
+
+                        if ( byteswap == true )
+                        {
+                            _bswap4( &convdata );
+                        }
+                    }
+                    break;
+            }
+
+            pixel_arrays[ cnt ] = convdata;
+            //pixel_weights[ convdata ] += 1;
+
+            if ( pixel_weights_max < convdata )
+            {
+                pixel_weights_max = convdata;
             }
         }
 
-        pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
+        pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2.f;
 
         rfstrm.clear();
         rfstrm.close();
@@ -315,19 +402,41 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, unsigned hei
     return false;
 }
 
-bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm, unsigned height )
+bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int trnsfm, size_t height, unsigned int dtype, bool byteswap )
 {
     if ( height <= 0 )
         return false;
 
     if ( ( buffer != NULL ) && ( bufferlen > 0 ) )
     {
+        const char* pbuff = (const char*)buffer;
         pixel_min_level = 0;
         pixel_med_level = 0;
         pixel_max_level = 0;
         img_height = height;
+        size_t readsz = 1;
 
-        pixel_arrays_srcsz = bufferlen / sizeof( unsigned short );
+        switch( dtype )
+        {
+            case DATATYPE_BYTE:
+                pixel_arrays_srcsz = bufferlen;
+                break;
+
+            case DATATYPE_USHORT:
+                readsz = sizeof( unsigned short );
+                pixel_arrays_srcsz = bufferlen / readsz;
+                break;
+
+            case DATATYPE_FLOAT:
+                readsz = sizeof( float );
+                pixel_arrays_srcsz = bufferlen/ readsz;
+                break;
+
+            default:
+                return false;
+        }
+
+        pixel_arrays_srcsz = bufferlen / readsz;
         unsigned blancsz   = 0;
 
         if (  pixel_arrays_srcsz > 0 )
@@ -351,21 +460,52 @@ bool RAWProcessor::LoadFromMemory( const char* buffer, unsigned long bufferlen, 
         resetWeights();
 
         // To save memory, it doesn't using direct load to memory.
-        for( unsigned cnt=0; cnt<bufferlen / sizeof(unsigned short); cnt++)
+        #pragma omp parallel for
+        for( unsigned cnt=0; cnt<bufferlen / readsz; cnt++)
         {
-            char           chardata[2] = {0};
-            unsigned short worddata = 0;
+            char  chardata[4] = {0};
+            float convdata = 0;
 
-            chardata[0] = buffer[cnt*2];
-            chardata[1] = buffer[cnt*2+1];
-            worddata = ( chardata[1] << 8 ) + ( chardata[0] & 0x00FF );
-            //pixel_arrays.push_back( worddata );
-            pixel_arrays[ cnt ] = worddata;
-            pixel_weights[ worddata ] += 1;
-
-            if ( pixel_weights_max < worddata )
+            switch( dtype )
             {
-                pixel_weights_max = worddata;
+                case DATATYPE_BYTE:
+                    convdata = (float)pbuff[cnt];
+                    break;
+
+                case DATATYPE_USHORT:
+                    {
+                        unsigned short usdata = *(unsigned short*)pbuff[cnt*readsz];
+
+                        if ( byteswap == false )
+                        {
+                            convdata = (float)usdata;
+                        }
+                        else
+                        {
+                            _bswap2( &usdata );
+                            convdata = (float)usdata;
+                        }
+                    }
+                    break;
+
+                case DATATYPE_FLOAT:
+                    {
+                        convdata = *(float*)pbuff[cnt*readsz];
+
+                        if ( byteswap == true )
+                        {
+                            _bswap4( &convdata );
+                        }
+                    }
+                    break;
+            }
+
+            pixel_arrays[ cnt ] = convdata;
+            //pixel_weights[ worddata ] += 1;
+
+            if ( pixel_weights_max < convdata )
+            {
+                pixel_weights_max = convdata;
             }
         }
 
@@ -429,7 +569,7 @@ bool RAWProcessor::ApplyTransform( unsigned int trnsfm )
     if ( ( raw_loaded == true ) && ( trnsfm > 0 ) )
     {
         bool retb = false;
-        unsigned short* ptrd = pixel_arrays.data();
+        float* ptrd = pixel_arrays.data();
 
         if ( ( trnsfm & TRANSFORM_SWAP ) > 0 )
         {
@@ -498,7 +638,7 @@ bool RAWProcessor::Invert( unsigned char maxbits )
     if ( maxbits < 8 )
         return false;
 
-    unsigned short maxval = pow( 2, maxbits );
+    float maxval = pow( 2, maxbits );
 
     unsigned dlen = pixel_arrays.size();
 
@@ -554,7 +694,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
     byte_arrays->reserve( arrsz );
     byte_arrays->resize( arrsz );
 
-    unsigned short* ref_pixel_arrays = pixel_arrays.data();
+    float* ref_pixel_arrays = pixel_arrays.data();
 
     if ( dntype == DNSCALE_NORMAL )
     {
@@ -600,16 +740,18 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
             byte_arrays->at( cnt ) = dspixel;
         }
     }
+    /*
     else
     if ( userscaler != NULL )
     {
         return userscaler->processUserScale( pixel_arrays, byte_arrays );
     }
+    */
 
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed )
+bool RAWProcessor::Get16bitRawImage( vector<float>* word_arrays, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
@@ -623,7 +765,7 @@ bool RAWProcessor::Get16bitRawImage( std::vector<unsigned short>* word_arrays, b
     word_arrays->reserve( arrsz );
     word_arrays->resize( arrsz );
 
-    unsigned short* ref_pixel_arrays = pixel_arrays.data();
+    float* ref_pixel_arrays = pixel_arrays.data();
 
     if ( reversed == true )
     {
@@ -696,8 +838,8 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
 
     // # phase 03
     // find change pixel count fall into min level.
-    unsigned short min_weight_wide = 0;
-    unsigned short max_weight_wide = 0;
+    float min_weight_wide = 0;
+    float max_weight_wide = 0;
 
     vector< minmaxpair > mmpairs;
 
@@ -786,7 +928,7 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
     return retb;
 }
 
-bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vector<unsigned short>* word_arrays, bool reversed )
+bool RAWProcessor::GetThresholdedImage( WeightAnalysisReport &report,  vector<float>* word_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -806,8 +948,8 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
     #pragma omp parallel for
     for( int cnt=0; cnt<array_max; cnt++ )
     {
-        //unsigned short apixel = pixel_arrays[cnt] - thld_min - 1;
-        unsigned short apixel = pixel_arrays[cnt];
+        //float apixel = pixel_arrays[cnt] - thld_min - 1;
+        float apixel = pixel_arrays[cnt];
         float          fpixel = 0.0f;
 
         // cut off threhold pixel value.
@@ -825,7 +967,7 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
 
         // Rescaling pixel  !
         fpixel = (float)(apixel) * normf;
-        apixel = (unsigned short)( fpixel );
+        apixel = (float)( fpixel );
 
         if ( reversed == true )
         {
@@ -838,7 +980,7 @@ bool RAWProcessor::Get16bitThresholdedImage( WeightAnalysisReport &report,  vect
     return true;
 }
 
-bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed )
+bool RAWProcessor::GetThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -858,7 +1000,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     #pragma omp parallel for
     for( int cnt=0; cnt<array_max; cnt++ )
     {
-        unsigned short apixel = pixel_arrays[cnt];
+        float apixel = pixel_arrays[cnt];
         float          fpixel = 0.0f;
         unsigned char  bpixel = 0;
 
@@ -902,7 +1044,7 @@ bool RAWProcessor::Get8bitThresholdedImage( WeightAnalysisReport &report, std::v
     return true;
 }
 
-bool RAWProcessor::Get16bitPixel( unsigned x, unsigned y, unsigned short &px )
+bool RAWProcessor::GetPixel( unsigned x, unsigned y, float &px )
 {
     if ( pixel_arrays.size() == 0 )
         return false;
@@ -973,23 +1115,23 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
 
 bool RAWProcessor::RotateFree( float degree )
 {
-    unsigned short* src = (unsigned short*)pixel_arrays.data();
-    unsigned short* dst = NULL;
+    float* src = (float*)pixel_arrays.data();
+    float* dst = NULL;
 
     unsigned dst_w = img_width;
     unsigned dst_h = img_height;
 
-    unsigned short bgl = pixel_min_level;
+    float bgl = pixel_min_level;
 
     bool retb = false;
 
     if ( rawimgtk::RotateFree( src, &dst_w, &dst_h, &dst, degree, bgl ) == true )
     {
-        unsigned short* dstcrop = NULL;
+        float* dstcrop = NULL;
 
         if ( rawimgtk::CropCenter( dst, dst_w, dst_h, &dstcrop, img_width, img_height ) == true )
         {
-            memcpy( src, dstcrop, pixel_arrays_srcsz * sizeof( unsigned short ) );
+            memcpy( src, dstcrop, pixel_arrays_srcsz * sizeof( float ) );
 
             retb = true;
 
@@ -1002,15 +1144,15 @@ bool RAWProcessor::RotateFree( float degree )
     return retb;
 }
 
-RAWProcessor* RAWProcessor::RotateFree( float degree, unsigned int background )
+RAWProcessor* RAWProcessor::RotateFree( float degree, float background )
 {
-    unsigned short* src = (unsigned short*)pixel_arrays.data();
-    unsigned short* dst = NULL;
+    float* src = (float*)pixel_arrays.data();
+    float* dst = NULL;
 
     unsigned dst_w = img_width;
     unsigned dst_h = img_height;
 
-    unsigned short bgl = background;
+    float bgl = background;
 
     bool retb = false;
 
@@ -1020,9 +1162,9 @@ RAWProcessor* RAWProcessor::RotateFree( float degree, unsigned int background )
         if ( newrp != NULL )
         {
             const char* ptr     = (const char*)dst;
-            unsigned long ptrsz =  dst_w * dst_h * sizeof(unsigned short);
+            unsigned long ptrsz =  dst_w * dst_h * sizeof(float);
 
-            retb = newrp->LoadFromMemory( ptr, ptrsz, TRANSFORM_NONE, dst_h );
+            retb = newrp->LoadFromMemory( (void*)ptr, ptrsz, TRANSFORM_NONE, dst_h );
 
             delete[] dst;
 
@@ -1072,9 +1214,9 @@ RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
         {
             RAWResizeEngine rawrse( afilter );
 
-            const unsigned short* refsrc = pixel_arrays.data();
-            unsigned short* dst = NULL;
-            unsigned long retsz = rawrse.scale( refsrc, img_width, img_height, w, h, &dst );
+            const float* refsrc = pixel_arrays.data();
+            float* dst = NULL;
+            size_t retsz = rawrse.scale( refsrc, img_width, img_height, w, h, &dst );
             delete afilter;
 
             if ( retsz > 0 )
@@ -1082,7 +1224,7 @@ RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
                 RAWProcessor* newme = new RAWProcessor();
                 if ( newme != NULL )
                 {
-                    bool retb = newme->LoadFromMemory( (const char*)dst, retsz,
+                    bool retb = newme->LoadFromMemory( (void*)dst, retsz,
                                                        TRANSFORM_NONE, h );
                     if ( retb == true )
                     {
@@ -1105,8 +1247,8 @@ RAWProcessor* RAWProcessor::Clone()
         RAWProcessor* newone = new RAWProcessor();
         if ( newone != NULL )
         {
-            bool retb = newone->LoadFromMemory( (const char*)data(),
-                                                datasize() * sizeof( unsigned short ),
+            bool retb = newone->LoadFromMemory( (void*)data(),
+                                                datasize() * sizeof( float ),
                                                 TRANSFORM_NONE,
                                                 img_height );
             if( retb == true )
@@ -1121,7 +1263,7 @@ RAWProcessor* RAWProcessor::Clone()
     return NULL;
 }
 
-void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, vector<unsigned short>* pixels )
+void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, vector<float>* pixels )
 {
     if ( pixels == NULL )
     {
@@ -1264,7 +1406,7 @@ void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsig
     }
 }
 
-void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, vector<unsigned short>* pixels)
+void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, vector<float>* pixels)
 {
     if ( pixels == NULL )
     {
@@ -1298,7 +1440,7 @@ void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h
     }
 }
 
-void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<unsigned short>* pixels)
+void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>* pixels)
 {
     if ( ( coords == NULL ) || ( pixels == NULL ) )
     {
@@ -1380,7 +1522,7 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<unsign
     }
 }
 
-void RAWProcessor::GetAnalysisFromPixels( std::vector<unsigned short>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info )
+void RAWProcessor::GetAnalysisFromPixels( std::vector<float>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info )
 {
     if ( ( pixels == NULL ) || ( weights == NULL ) || ( info == NULL ) )
     {
@@ -1396,13 +1538,13 @@ void RAWProcessor::GetAnalysisFromPixels( std::vector<unsigned short>* pixels, s
     }
 
     unsigned       pxsz      = pixels->size();
-    unsigned short max_level = 0;
-    unsigned short min_level = DEF_PIXEL_WEIGHTS;
+    float max_level = 0;
+    float min_level = DEF_PIXEL_WEIGHTS;
     double         summ      = 0.0;
 
     for( unsigned cnt=0; cnt<pxsz; cnt++ )
     {
-        unsigned short apixel = pixels->at( cnt );
+        float apixel = pixels->at( cnt );
 
         weights->at( apixel ) ++;
 
@@ -1448,14 +1590,14 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
         if ( ( fconfig->width > 0 ) && ( fconfig->height > 0 ) &&
              ( pixel_arrays_realsz > 0 ) )
         {
-            unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
+            float* copy_arrays = new float[ pixel_arrays_realsz ];
 
             if ( copy_arrays == NULL )
             {
                 return false;
             }
 
-            memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
+            memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( float ) );
 
             #pragma omp parallel for
             for( unsigned cntx=0; cntx<img_width; cntx++ )
@@ -1485,7 +1627,7 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
                     }
                     // -- applying matrix ---
 
-                    unsigned short rpixel = MIN( \
+                    float rpixel = MIN( \
                                                 MAX( fconfig->factor * adjustedp + fconfig->bias \
                                                     , 0) \
                                             , 65535 );
@@ -1494,7 +1636,7 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
                 }
             }
 
-            memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( unsigned short ) );
+            memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( float ) );
 
             delete[] copy_arrays;
 
@@ -1509,21 +1651,21 @@ bool RAWProcessor::ApplyMedianFilter()
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        unsigned short* copy_arrays = new unsigned short[ pixel_arrays_realsz ];
+        float* copy_arrays = new float[ pixel_arrays_realsz ];
 
         if ( copy_arrays == NULL )
         {
             return false;
         }
 
-        memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( unsigned short ) );
+        memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( float ) );
 
         #pragma omp parallel for
         for( unsigned cntx=0; cntx<img_width; cntx++ )
         {
             for( unsigned cnty=0; cnty<img_height; cnty++ )
             {
-                unsigned short medimatrix[9] = {0};
+                float medimatrix[9] = {0};
                 unsigned char  medimatrixsz  = 0;
 
                 // -- applying matrix ---
@@ -1549,13 +1691,13 @@ bool RAWProcessor::ApplyMedianFilter()
                 // -- applying matrix ---
 
                 // sort it !
-                qsort( medimatrix, medimatrixsz, sizeof(unsigned short), RAWProcessor_uscompare );
+                qsort( medimatrix, medimatrixsz, sizeof(float), RAWProcessor_uscompare );
 
                 copy_arrays[ cnty * img_width + cntx ] = medimatrix[ medimatrixsz / 2 ];
             }
         }
 
-        memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( unsigned short ) );
+        memcpy( pixel_arrays.data(), copy_arrays, pixel_arrays_realsz * sizeof( float ) );
 
         delete[] copy_arrays;
         return true;
@@ -1652,6 +1794,7 @@ bool RAWProcessor::AdjustContrast( float percent )
 
 bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float p3, float p4 )
 {
+    /*
     if ( pixel_arrays_realsz > 0 )
     {
         switch ( ttype )
@@ -1690,6 +1833,7 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
 
         }
     }
+    */
 
     return false;
 }
@@ -1700,7 +1844,7 @@ bool RAWProcessor::ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, u
     {
         unsigned minv = report.threshold_wide_min;
         unsigned maxv = report.threshold_wide_max;
-        unsigned short* ptr = pixel_arrays.data();
+        float* ptr = pixel_arrays.data();
 
         return rawimgtk::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
                                      applysz, applysz, 0, slope );
@@ -1713,7 +1857,7 @@ bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        unsigned short* ptr = pixel_arrays.data();
+        float* ptr = pixel_arrays.data();
 
         return rawimgfk::ApplyLowFreqFilter( ptr,
                                              img_width, img_height,
@@ -1727,15 +1871,15 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edge
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        unsigned short* ptr = pixel_arrays.data();
+        float* ptr = pixel_arrays.data();
         unsigned        imgsz = pixel_arrays.size();
 
-        unsigned short* imgEH1 = new unsigned short[ imgsz ];
+        float* imgEH1 = new float[ imgsz ];
 
         if ( imgEH1 == NULL )
             return false;
 
-        unsigned short* imgEH2 = new unsigned short[ imgsz ];
+        float* imgEH2 = new float[ imgsz ];
 
         if ( imgEH2 == NULL )
         {
@@ -1744,8 +1888,8 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edge
             return false;
         }
 
-        memcpy( imgEH1, ptr, imgsz * sizeof( unsigned short ) );
-        memcpy( imgEH2, ptr, imgsz * sizeof( unsigned short ) );
+        memcpy( imgEH1, ptr, imgsz * sizeof( float ) );
+        memcpy( imgEH2, ptr, imgsz * sizeof( float ) );
 
         bool retb = false;
 
@@ -1811,7 +1955,7 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edge
 					pixelv = DEF_CALC_F_WMAX;
 				}
 
-				ptr[ pos ] = (unsigned short) pixelv;
+				ptr[ pos ] = (float) pixelv;
             }
         }
 
@@ -1828,7 +1972,7 @@ bool RAWProcessor::ApplyAnisotropicFilter( unsigned strength, unsigned param )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        unsigned short* ptr = pixel_arrays.data();
+        float* ptr = pixel_arrays.data();
 
         return RAWImageFilterKit::ApplyAnisotropicFilter( ptr,
                                                           img_width, img_height,
@@ -1839,13 +1983,13 @@ bool RAWProcessor::ApplyAnisotropicFilter( unsigned strength, unsigned param )
 
 }
 
-const unsigned long RAWProcessor::datasize()
+const size_t RAWProcessor::datasize()
 {
     //return pixel_arrays.size();
     return pixel_arrays_realsz;
 }
 
-const unsigned short* RAWProcessor::data()
+const float* RAWProcessor::data()
 {
     if ( pixel_arrays.size() == 0 )
         return NULL;
@@ -1888,28 +2032,26 @@ void RAWProcessor::analyse()
 
 void RAWProcessor::resetWeights()
 {
-#ifdef DEBUG
-    if ( pixel_weights == NULL )
+    if ( pixel_weights.size() > 0 )
     {
-        printf("????? why pixel_weights is NULL ???\n");
-        pixel_weights = new unsigned int[ DEF_PIXEL_WEIGHTS + 1 ];
-    }
-#endif // DEBUG
-    if ( pixel_weights != NULL )
-    {
-        memset( pixel_weights, 0 , ( DEF_PIXEL_WEIGHTS  + 1 ) * sizeof( unsigned int ) );
+        pixel_weights.clear();
     }
 
-    pixel_weights_max = 0;
+    if ( pixel_arrays_realsz > 0 )
+    {
+        pixel_weights.resize( pixel_arrays_realsz );
+    }
+
+    pixel_weights_max = (float)pixel_arrays_realsz;
 }
 
 void RAWProcessor::calcWeights()
 {
-    pixel_min_level = DEF_PIXEL16_MAX - 1;
-    pixel_max_level = 0;
-    pixel_med_level = DEF_PIXEL16_MAX / 2;
+    pixel_min_level = 1.f;
+    pixel_max_level = 0.f;
+    pixel_med_level = 0.5f;
 
-    for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
     {
         if ( pixel_arrays[cnt] > pixel_max_level )
         {
@@ -1922,15 +2064,15 @@ void RAWProcessor::calcWeights()
         }
     }
 
-    pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2;
+    pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2.f;
 
 #ifdef DEBUG
-    printf( "calcWeights() result min,max,med = %d, %d, %d\n",
+    printf( "calcWeights() result min,max,med = %.5f %.5f, %.5f\n",
             pixel_min_level, pixel_max_level, pixel_med_level );
 #endif // DEBUG
 }
 
-void RAWProcessor::addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y )
+void RAWProcessor::addpixelarray( std::vector<float>* outpixels, unsigned x, unsigned y )
 {
     if ( outpixels == NULL )
     {
@@ -2023,7 +2165,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
     }
 }
 
-void RAWProcessor::CutoffLevels( unsigned short minv, unsigned short maxv )
+void RAWProcessor::CutoffLevels( float minv, float maxv )
 {
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
@@ -2040,7 +2182,7 @@ void RAWProcessor::CutoffLevels( unsigned short minv, unsigned short maxv )
     }
 }
 
-void RAWProcessor::CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin, unsigned short valmax )
+void RAWProcessor::CutoffLevelsRanged( float minv, float maxv, float valmin, float valmax )
 {
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )

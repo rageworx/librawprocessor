@@ -166,8 +166,8 @@ RAWResizeEngine::RAWResizeEngine( RAWGenericFilter* filter )
 {
 }
 
-unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, unsigned src_height,
-                                 unsigned dst_width, unsigned dst_height, unsigned short** dst )
+unsigned RAWResizeEngine::scale( const float* src, unsigned src_width, unsigned src_height,
+                                 unsigned dst_width, unsigned dst_height, float** dst )
 {
 	if ( src == NULL)
         return 0;
@@ -182,7 +182,7 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
         delete[] *dst;
     }
 
-    *dst = new unsigned short[ imgsz ];
+    *dst = new float[ imgsz ];
 
     if ( *dst == NULL )
     {
@@ -193,7 +193,7 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
 	{
         if ( *dst != NULL )
         {
-            unsigned cpsz = src_width * src_height * sizeof( unsigned short );
+            unsigned cpsz = src_width * src_height * sizeof( float );
             memcpy( *dst, src, cpsz );
             return cpsz;
         }
@@ -201,13 +201,13 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
 
 	if ( dst_width <= src_width )
 	{
-        unsigned short* tmp_buff = NULL;
+        float* tmp_buff = NULL;
 
         if ( src_width != dst_width )
         {
             if ( src_height != dst_height )
             {
-                tmp_buff = new unsigned short[ dst_width * src_height ];
+                tmp_buff = new float[ dst_width * src_height ];
 
                 if ( tmp_buff == NULL )
                 {
@@ -226,7 +226,7 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
         }
         else
         {
-            tmp_buff = (unsigned short*)src;
+            tmp_buff = (float*)src;
         }
 
         if ( src_height != dst_height )
@@ -244,13 +244,13 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
 	}
 	else    /// == ( dst_width > src->w() )
 	{
-		unsigned short* tmp_buff = NULL;
+		float* tmp_buff = NULL;
 
 		if ( src_height != dst_height )
 		{
 			if ( src_width != dst_width )
 			{
-			    tmp_buff = new unsigned short[ src_width * dst_height ];
+			    tmp_buff = new float[ src_width * dst_height ];
 				if ( tmp_buff == NULL )
 				{
 					delete[] dst;
@@ -268,7 +268,7 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
 		}
 		else
 		{
-			tmp_buff = (unsigned short*)src;
+			tmp_buff = (float*)src;
 		}
 
 		if ( src_width != dst_width )
@@ -286,14 +286,14 @@ unsigned RAWResizeEngine::scale( const unsigned short* src, unsigned src_width, 
 
 	if ( dst != NULL )
 	{
-        return imgsz * sizeof( unsigned short );
+        return imgsz * sizeof( float );
 	}
 
 	return 0;
 }
 
-void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigned height, const unsigned src_width,
-                                        const unsigned src_offset_x, const unsigned src_offset_y, unsigned short* dst, const unsigned dst_width )
+void RAWResizeEngine::horizontalFilter( const float* src, const unsigned height, const unsigned src_width,
+                                        const unsigned src_offset_x, const unsigned src_offset_y, float* dst, const unsigned dst_width )
 {
 	// allocate and calculate the contributions
 	RawScaleWeightsTable weightsTable( _pFilter, dst_width, src_width );
@@ -306,8 +306,8 @@ void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigne
     for ( y = 0; y < height; y++)
     {
         const
-        unsigned short* src_bits = &src[ ( ( y + src_offset_y ) * src_width ) + src_offset_x  ];
-        unsigned short* dst_bits = &dst[ y * dst_width ];
+        float* src_bits = &src[ ( ( y + src_offset_y ) * src_width ) + src_offset_x  ];
+        float* dst_bits = &dst[ y * dst_width ];
 
         // scale each row
         for ( x = 0; x < dst_width; x++)
@@ -315,7 +315,7 @@ void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigne
             // loop through row
             const unsigned          iLeft  = weightsTable.getLeftBoundary(x);			/// retrieve left boundary
             const unsigned          iLimit = weightsTable.getRightBoundary(x) - iLeft;	/// retrieve right boundary
-            const unsigned short*   pixel  = src_bits + iLeft;
+            const float*   pixel  = src_bits + iLeft;
             double                  gray   = 0.0;
 
             // for(i = iLeft to iRight)
@@ -330,22 +330,22 @@ void RAWResizeEngine::horizontalFilter( const unsigned short* src, const unsigne
                 pixel++;
             }
 
-            *dst_bits = (unsigned short)CLAMP<long long>((long long)(gray + 0.5f), 0, 0xFFFFFFFF);
+            *dst_bits = (float)CLAMP<long long>((long long)(gray + 0.5f), 0, 0xFFFFFFFF);
             dst_bits++;
         }
     }
 }
 
 /// Performs vertical image filtering
-void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width, unsigned src_height, unsigned src_offset_x, unsigned src_offset_y,
-                                      unsigned short* dst, const unsigned dst_width, unsigned dst_height)
+void RAWResizeEngine::verticalFilter( const float* src, unsigned width, unsigned src_height, unsigned src_offset_x, unsigned src_offset_y,
+                                      float* dst, const unsigned dst_width, unsigned dst_height)
 {
 	// allocate and calculate the contributions
 	RawScaleWeightsTable weightsTable( _pFilter, dst_height, src_height );
 
     //unsigned dst_pitch = dst_width * src_bpp;
     unsigned        dst_pitch = width;
-    unsigned short* dst_base  = dst;
+    float* dst_base  = dst;
     unsigned        src_pitch = width;
 
 	unsigned y = 0;
@@ -357,18 +357,18 @@ void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width,
     {
         // work on column x in dst
         const unsigned  index = x;
-        unsigned short* dst_bits = dst_base + index;
+        float* dst_bits = dst_base + index;
 
         // scale each column
         for ( y = 0; y < dst_height; y++)
         {
             const
-            unsigned short* src_base  = &src[ ( src_offset_y * width ) +
+            float* src_base  = &src[ ( src_offset_y * width ) +
                                               ( src_offset_y * src_pitch + src_offset_x ) ];
             // loop through column
             const unsigned          iLeft       = weightsTable.getLeftBoundary(y);				// retrieve left boundary
             const unsigned          iLimit      = weightsTable.getRightBoundary(y) - iLeft;	// retrieve right boundary
-            const unsigned short*   src_bits    = src_base + ( iLeft * src_pitch + index );
+            const float*   src_bits    = src_base + ( iLeft * src_pitch + index );
             double                  gray        = 0.0;
 
             for ( i = 0; i <= iLimit; i++)
@@ -383,7 +383,7 @@ void RAWResizeEngine::verticalFilter( const unsigned short* src, unsigned width,
             }
 
             // clamp and place result in destination pixel
-            *dst_bits = (unsigned short)CLAMP<long long>((long long) (gray + 0.5f), 0, 0xFFFFFFFF);
+            *dst_bits = (float)CLAMP<long long>((long long) (gray + 0.5f), 0, 0xFFFFFFFF);
             dst_bits += dst_pitch;
         }
     }

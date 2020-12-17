@@ -5,22 +5,22 @@
 
 namespace RAWImageToolKit
 {
-    bool FlipHorizontal( unsigned short* ptr, unsigned w, unsigned h );
-    bool FlipVertical( unsigned short* ptr, unsigned w, unsigned h );
-    bool Rotate90( unsigned short* ptr, unsigned* w, unsigned* h );
-    bool Rotate180( unsigned short* ptr, unsigned* w, unsigned* h );
-    bool Rotate270( unsigned short* ptr, unsigned* w, unsigned* h );
+    bool FlipHorizontal( float* ptr, unsigned w, unsigned h );
+    bool FlipVertical( float* ptr, unsigned w, unsigned h );
+    bool Rotate90( float* ptr, unsigned* w, unsigned* h );
+    bool Rotate180( float* ptr, unsigned* w, unsigned* h );
+    bool Rotate270( float* ptr, unsigned* w, unsigned* h );
 
-    bool RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
-                     unsigned short** newptr, float degree,
-                     unsigned short background );
+    bool RotateFree( float* ptr, unsigned* w, unsigned* h,
+                     float** newptr, float degree,
+                     float background );
 
-    bool Crop( unsigned short* ptr, unsigned w, unsigned h,
-               unsigned short** newptr,
+    bool Crop( float* ptr, unsigned w, unsigned h,
+               float** newptr,
                unsigned cx, unsigned cy, unsigned cw, unsigned ch );
 
-    bool CropCenter( unsigned short* ptr, unsigned w, unsigned h,
-                     unsigned short** newptr, unsigned cw, unsigned ch );
+    bool CropCenter( float* ptr, unsigned w, unsigned h,
+                     float** newptr, unsigned cw, unsigned ch );
 
 
     /***
@@ -35,11 +35,11 @@ namespace RAWImageToolKit
     * reprogrammed by Raph.K. (rageworx@gmail.com) for librawprocessor.
     *
     ***/
-    bool AdjustGamma( unsigned short* ptr, unsigned arraysz, double gamma );
-    bool AdjustBrightness( unsigned short* ptr, unsigned arraysz, double perc );
-    bool AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc );
+    bool AdjustGamma( float* ptr, unsigned arraysz, double gamma );
+    bool AdjustBrightness( float* ptr, unsigned arraysz, double perc );
+    bool AdjustContrast( float* ptr, unsigned arraysz, double perc );
 
-    bool AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT );
+    bool AdjustCurve( float* ptr, unsigned arraysz, float* LUT );
 
     /***
     * CLAHE ( Contrast Limited Adaptive Histogram Equalization )
@@ -51,8 +51,8 @@ namespace RAWImageToolKit
     * Karel Zuiderveld, karel@cv.ruu.nl of "Contrast Limited Adaptive Histogram Equalization"
     * http://www.realtimerendering.com/resources/GraphicsGems/gemsiv/clahe.c
     ***/
-    bool ApplyCLAHE( unsigned short* ptr, unsigned w, unsigned h,
-                     unsigned short minlvl, unsigned short maxlvl,
+    bool ApplyCLAHE( float* ptr, unsigned w, unsigned h,
+                     float minlvl, float maxlvl,
                      unsigned blkw, unsigned blkh, unsigned bins, float slope );
 }
 

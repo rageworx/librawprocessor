@@ -312,19 +312,19 @@ void RAWImageFilterKit::RemoveFilter( RAWProcessor::FilterConfig* fp )
     }
 }
 
-bool RAWImageFilterKit::ApplyLowFreqFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fsz, unsigned iter )
+bool RAWImageFilterKit::ApplyLowFreqFilter( float* ptr, unsigned w, unsigned h, unsigned fsz, unsigned iter )
 {
     if ( ptr == NULL )
         return false;
 
     unsigned imgsz = w * h;
 
-    unsigned short* imgSRC = new unsigned short[ imgsz ];
+    float* imgSRC = new float[ imgsz ];
 
     if ( imgSRC == NULL )
         return false;
 
-    unsigned short* imgLF = new unsigned short[ imgsz ];
+    float* imgLF = new float[ imgsz ];
 
     if ( imgLF == NULL )
     {
@@ -333,8 +333,8 @@ bool RAWImageFilterKit::ApplyLowFreqFilter( unsigned short* ptr, unsigned w, uns
         return false;
     }
 
-    memcpy( imgSRC, ptr, imgsz * sizeof( unsigned short ) );
-    memset( imgLF, 0 , imgsz * sizeof( unsigned short ) );
+    memcpy( imgSRC, ptr, imgsz * sizeof( float ) );
+    memset( imgLF, 0 , imgsz * sizeof( float ) );
 
     long     sfsz  = (long)fsz;
     unsigned itcnt = 0;
@@ -350,7 +350,7 @@ bool RAWImageFilterKit::ApplyLowFreqFilter( unsigned short* ptr, unsigned w, uns
         {
             for( cntw=0; cntw<w; cntw++ )
             {
-                unsigned long long sum = 0;
+                float    sum = 0;
                 unsigned sumsz = 0;
 
                 for( int lp1=(-sfsz/2); lp1<=(sfsz/2); lp1++ )
@@ -369,17 +369,17 @@ bool RAWImageFilterKit::ApplyLowFreqFilter( unsigned short* ptr, unsigned w, uns
                     }
                 }
 
-                imgLF[ cnth * w + cntw ] = sum / sumsz;
+                imgLF[ cnth * w + cntw ] = sum / (float)sumsz;
             }
         }
 
         if ( itcnt == ( iter - 1 ) )
         {
-            memcpy( ptr, imgLF, imgsz * sizeof( unsigned short ) );
+            memcpy( ptr, imgLF, imgsz * sizeof( float ) );
         }
         else
         {
-            memcpy( imgSRC, imgLF, imgsz * sizeof( unsigned short ) );
+            memcpy( imgSRC, imgLF, imgsz * sizeof( float ) );
         }
     }
 
@@ -389,19 +389,19 @@ bool RAWImageFilterKit::ApplyLowFreqFilter( unsigned short* ptr, unsigned w, uns
     return true;
 }
 
-bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fsz )
+bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( float* ptr, unsigned w, unsigned h, unsigned fsz )
 {
     if ( ptr == NULL )
         return false;
 
     unsigned imgsz = w * h;
 
-    unsigned short* imgSRC = new unsigned short[ imgsz ];
+    float* imgSRC = new float[ imgsz ];
 
     if ( imgSRC == NULL )
         return false;
 
-    unsigned short* imgLF = new unsigned short[ imgsz ];
+    float* imgLF = new float[ imgsz ];
 
     if ( imgLF == NULL )
     {
@@ -410,8 +410,8 @@ bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w,
         return false;
     }
 
-    memcpy( imgSRC, ptr, imgsz * sizeof( unsigned short ) );
-    memset( imgLF, 0 , imgsz * sizeof( unsigned short ) );
+    memcpy( imgSRC, ptr, imgsz * sizeof( float ) );
+    memset( imgLF, 0 , imgsz * sizeof( float ) );
 
     long halfsz = (int)fsz / 2;
 
@@ -432,7 +432,7 @@ bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w,
     {
         for( cntw=halfsz; cntw<(w-halfsz); cntw++ )
         {
-            unsigned long long sum = 0;
+            float sum = 0;
 
             for( int lp1=(-halfsz); lp1<(halfsz+1); lp1++ )
             {
@@ -442,11 +442,11 @@ bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w,
                 }
             }
 
-            imgLF[ cnth * w + cntw ] = sum / powfsz;
+            imgLF[ cnth * w + cntw ] = sum / (float)powfsz;
         }
     }
 
-    memcpy( ptr, imgLF, imgsz * sizeof( unsigned short ) );
+    memcpy( ptr, imgLF, imgsz * sizeof( float ) );
 
     delete[] imgSRC;
     delete[] imgLF;
@@ -454,7 +454,7 @@ bool RAWImageFilterKit::ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w,
     return true;
 }
 
-bool RAWImageFilterKit::ApplyAnisotropicFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fstr, unsigned fparam )
+bool RAWImageFilterKit::ApplyAnisotropicFilter( float* ptr, unsigned w, unsigned h, unsigned fstr, unsigned fparam )
 {
     if ( ptr == NULL )
         return false;
@@ -467,27 +467,13 @@ bool RAWImageFilterKit::ApplyAnisotropicFilter( unsigned short* ptr, unsigned w,
     const float diamf  = pow( (float)( fparam / 4 ), 2.0f );
     const float lambda = 0.005f;
 
-    float* imgSRC = new float[ imgsz ];
-
-    if ( imgSRC == NULL )
-        return false;
-
     float* imgAF = new float[ imgsz ];
 
     if ( imgAF == NULL )
     {
-        delete[] imgSRC;
-
         return false;
     }
-
-    #pragma omp parallel for
-    for( unsigned cnt=0; cnt<imgsz; cnt++ )
-    {
-        // Normalize to vector.
-        imgSRC[ cnt ] = (float)ptr[ cnt ] / 65536.0f;
-    }
-
+    
     memset( imgAF, 0 , imgsz * sizeof( float ) );
 
     for( unsigned cnt=0; cnt<fstr; cnt++ )
@@ -508,16 +494,16 @@ bool RAWImageFilterKit::ApplyAnisotropicFilter( unsigned short* ptr, unsigned w,
                 if ( ( cntw > 0 ) && ( cntw < ( w - 1 ) ) &&
                      ( cnth > 0 ) && ( cnth < ( h - 1 ) ) )
                 {
-                    float decf   = imgSRC[ pos ];
+                    float decf   = ptr[ pos ];
 
-                    grad[0] = imgSRC[ ( cnth - 1 ) * w + ( cntw - 1 ) ] - decf;
-                    grad[1] = imgSRC[ ( cnth - 1 ) * w + ( cntw + 0 ) ] - decf;
-                    grad[2] = imgSRC[ ( cnth - 1 ) * w + ( cntw + 1 ) ] - decf;
-                    grad[3] = imgSRC[ ( cnth + 0 ) * w + ( cntw - 1 ) ] - decf;
-                    grad[4] = imgSRC[ ( cnth + 0 ) * w + ( cntw + 1 ) ] - decf;
-                    grad[5] = imgSRC[ ( cnth + 1 ) * w + ( cntw - 1 ) ] - decf;
-                    grad[6] = imgSRC[ ( cnth + 1 ) * w + ( cntw + 0 ) ] - decf;
-                    grad[7] = imgSRC[ ( cnth + 1 ) * w + ( cntw + 1 ) ] - decf;
+                    grad[0] = ptr[ ( cnth - 1 ) * w + ( cntw - 1 ) ] - decf;
+                    grad[1] = ptr[ ( cnth - 1 ) * w + ( cntw + 0 ) ] - decf;
+                    grad[2] = ptr[ ( cnth - 1 ) * w + ( cntw + 1 ) ] - decf;
+                    grad[3] = ptr[ ( cnth + 0 ) * w + ( cntw - 1 ) ] - decf;
+                    grad[4] = ptr[ ( cnth + 0 ) * w + ( cntw + 1 ) ] - decf;
+                    grad[5] = ptr[ ( cnth + 1 ) * w + ( cntw - 1 ) ] - decf;
+                    grad[6] = ptr[ ( cnth + 1 ) * w + ( cntw + 0 ) ] - decf;
+                    grad[7] = ptr[ ( cnth + 1 ) * w + ( cntw + 1 ) ] - decf;
 
                     for( unsigned gcnt=0; gcnt<8; gcnt ++ )
                     {
@@ -538,26 +524,18 @@ bool RAWImageFilterKit::ApplyAnisotropicFilter( unsigned short* ptr, unsigned w,
                         sumf += gcol[ gcnt ] * grad[ gcnt ];
                     }
 
-                    imgAF[ pos ] = imgSRC[ pos ] + lambda * sumf;
+                    imgAF[ pos ] = ptr[ pos ] + lambda * sumf;
                 }
                 else
                 {
-                    imgAF[ pos ] = imgSRC[ pos ];
+                    imgAF[ pos ] = ptr[ pos ];
                 }
             }
         }
 
-        memcpy( imgSRC, imgAF, imgsz * sizeof( float ) );
+        memcpy( ptr, imgAF, imgsz * sizeof( float ) );
     }
 
-    #pragma omp parallel for
-    for( unsigned cnt=0; cnt<imgsz; cnt++ )
-    {
-        // Restore .
-        ptr[ cnt ] = (unsigned short)( imgSRC[ cnt ] * 65536.0f );
-    }
-
-    delete[] imgSRC;
     delete[] imgAF;
 
     return true;

@@ -21,11 +21,11 @@
 #define CLAHE_MAX_REG_W             16
 #define CLAHE_MAX_REG_H             16
 
-#define RAWImageToolKitSwapUS( _a_, _b_ )   unsigned short t=_a_; _a_=_b_; _b_=t;
+#define RAWImageToolKitSwapUS( _a_, _b_ )   float t=_a_; _a_=_b_; _b_=t;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, unsigned w, unsigned h )
+bool RAWImageToolKit::FlipHorizontal( float* ptr, unsigned w, unsigned h )
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
@@ -49,7 +49,7 @@ bool RAWImageToolKit::FlipHorizontal( unsigned short* ptr, unsigned w, unsigned 
     return false;
 }
 
-bool RAWImageToolKit::FlipVertical( unsigned short* ptr, unsigned w, unsigned h )
+bool RAWImageToolKit::FlipVertical( float* ptr, unsigned w, unsigned h )
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
@@ -73,7 +73,7 @@ bool RAWImageToolKit::FlipVertical( unsigned short* ptr, unsigned w, unsigned h 
     return false;
 }
 
-bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
+bool RAWImageToolKit::Rotate90( float* ptr, unsigned* w, unsigned* h )
 {
     unsigned cur_w = *w;
     unsigned cur_h = *h;
@@ -85,12 +85,12 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
         unsigned new_w = cur_h;
         unsigned new_h = cur_w;
 
-        unsigned short* tempbuff = new unsigned short[ new_w * new_h ];
+        float* tempbuff = new float[ new_w * new_h ];
 
         if ( tempbuff == NULL )
             return false;
 
-        memset( tempbuff, 0, new_w * new_h * sizeof( unsigned short ) );
+        memset( tempbuff, 0, new_w * new_h * sizeof( float ) );
 
         unsigned cntw = 0;
         unsigned cnth = 0;
@@ -108,7 +108,7 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
             }
         }
 
-        memcpy( ptr, tempbuff,  new_w * new_h * sizeof( unsigned short ) );
+        memcpy( ptr, tempbuff,  new_w * new_h * sizeof( float ) );
 
         delete[] tempbuff;
 
@@ -121,7 +121,7 @@ bool RAWImageToolKit::Rotate90( unsigned short* ptr, unsigned* w, unsigned* h )
     return false;
 }
 
-bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
+bool RAWImageToolKit::Rotate180( float* ptr, unsigned* w, unsigned* h )
 {
     unsigned cur_w = *w;
     unsigned cur_h = *h;
@@ -145,7 +145,7 @@ bool RAWImageToolKit::Rotate180( unsigned short* ptr, unsigned* w, unsigned* h )
     return false;
 }
 
-bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
+bool RAWImageToolKit::Rotate270( float* ptr, unsigned* w, unsigned* h )
 {
     unsigned cur_w = *w;
     unsigned cur_h = *h;
@@ -157,12 +157,12 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
         unsigned new_w = cur_h;
         unsigned new_h = cur_w;
 
-        unsigned short* tempbuff = new unsigned short[ new_w * new_h ];
+        float* tempbuff = new float[ new_w * new_h ];
 
         if ( tempbuff == NULL )
             return false;
 
-        memset( tempbuff, 0,  new_w * new_h * sizeof( unsigned short ) );
+        memset( tempbuff, 0,  new_w * new_h * sizeof( float ) );
 
         unsigned cntw = 0;
         unsigned cnth = 0;
@@ -179,7 +179,7 @@ bool RAWImageToolKit::Rotate270( unsigned short* ptr, unsigned* w, unsigned* h )
             }
         }
 
-        memcpy( ptr, tempbuff,  new_w * new_h * sizeof( unsigned short ) );
+        memcpy( ptr, tempbuff,  new_w * new_h * sizeof( float ) );
 
         delete[] tempbuff;
 
@@ -210,7 +210,7 @@ float ritk_max4(float a, float b, float c, float d)
    return mx;
 }
 
-bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h, unsigned short** newptr, float degree, unsigned short background )
+bool RAWImageToolKit::RotateFree( float* ptr, unsigned* w, unsigned* h, float** newptr, float degree, float background )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
         return false;
@@ -243,7 +243,7 @@ bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
 	int dstH = ((int)ceil(ritk_max4(y1, y2, y3, y4))) - OfY;
 
     // Now new image !
-    unsigned short* obuff = new unsigned short[ dstW * dstH ];
+    float* obuff = new float[ dstW * dstH ];
 
     if ( obuff == NULL )
         return false;
@@ -258,7 +258,7 @@ bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
     int stepX = 0;
 
     // pointer to destination.
-    unsigned short* dst = obuff;
+    float* dst = obuff;
 
 	#pragma omp parellel for private( stepX )
 	for ( stepY = 0; stepY<dstH; stepY++ )
@@ -279,8 +279,8 @@ bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
 
             if ((orgX >= 0) && (orgY >= 0) && (orgX < img_w-1) && (orgY < img_h-1))
             {
-                unsigned short* pd = &obuff[ stepY * dstW + stepX ];
-                unsigned short* ps = &ptr[ iorgX + iorgY * img_w ];
+                float* pd = &obuff[ stepY * dstW + stepX ];
+                float* ps = &ptr[ iorgX + iorgY * img_w ];
 
                 // Doing interpolated pixel calculation .
                 float pv[4] = {0.0f};
@@ -296,7 +296,7 @@ bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
                       pv[2] * ( 1.0f - diffX ) *          diffY +
                       pv[3] *          diffX   *          diffY;
 
-                *pd = (unsigned short)pf;
+                *pd = (float)pf;
             }
 		}
 
@@ -310,7 +310,7 @@ bool RAWImageToolKit::RotateFree( unsigned short* ptr, unsigned* w, unsigned* h,
 	return true;
 }
 
-bool RAWImageToolKit::Crop( unsigned short* ptr, unsigned w, unsigned h, unsigned short** newptr, unsigned cx, unsigned cy, unsigned cw, unsigned ch )
+bool RAWImageToolKit::Crop( float* ptr, unsigned w, unsigned h, float** newptr, unsigned cx, unsigned cy, unsigned cw, unsigned ch )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
         return false;
@@ -334,7 +334,7 @@ bool RAWImageToolKit::Crop( unsigned short* ptr, unsigned w, unsigned h, unsigne
         rh = h - rsy;
     }
 
-    unsigned short* obuff = new unsigned short[ rw * rh ];
+    float* obuff = new float[ rw * rh ];
 
     if ( obuff != NULL )
     {
@@ -361,7 +361,7 @@ bool RAWImageToolKit::Crop( unsigned short* ptr, unsigned w, unsigned h, unsigne
     return false;
 }
 
-bool RAWImageToolKit::CropCenter( unsigned short* ptr, unsigned w, unsigned h, unsigned short** newptr, unsigned cw, unsigned ch )
+bool RAWImageToolKit::CropCenter( float* ptr, unsigned w, unsigned h, float** newptr, unsigned cw, unsigned ch )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) ||
          ( cw == 0 ) || ( cw > w ) || ( ch == 0 ) || ( ch > h ) )
@@ -373,12 +373,12 @@ bool RAWImageToolKit::CropCenter( unsigned short* ptr, unsigned w, unsigned h, u
     return Crop( ptr, w, h, newptr, c_l, c_t, cw, ch );
 }
 
-bool RAWImageToolKit::AdjustGamma( unsigned short* ptr, unsigned arraysz, double gamma )
+bool RAWImageToolKit::AdjustGamma( float* ptr, unsigned arraysz, double gamma )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    unsigned short LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    float LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
     double expn     = 1.0 / gamma;
     double newv     = RAWIMGTK_MAX_F_VAL * (double)pow( (double)RAWIMGTK_MAX_F_VAL, -expn );
     double newlvl   = 0.0;
@@ -391,18 +391,18 @@ bool RAWImageToolKit::AdjustGamma( unsigned short* ptr, unsigned arraysz, double
         {
             newlvl = RAWIMGTK_MAX_F_VAL;
         }
-        LUT[ cnt ] = (unsigned short)floor( newlvl + 0.5 );
+        LUT[ cnt ] = (float)floor( newlvl + 0.5 );
     }
 
     return AdjustCurve( ptr, arraysz, LUT );
 }
 
-bool RAWImageToolKit::AdjustBrightness( unsigned short* ptr, unsigned arraysz, double perc )
+bool RAWImageToolKit::AdjustBrightness( float* ptr, unsigned arraysz, double perc )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    unsigned short LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    float LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
     const \
     double bscaled  = ( 100.0 + perc ) / 100.0;
     double bval     = 0.0;
@@ -412,18 +412,18 @@ bool RAWImageToolKit::AdjustBrightness( unsigned short* ptr, unsigned arraysz, d
     {
         bval = (double)cnt * bscaled;
         bval = MAX( 0.0, MIN( bval, RAWIMGTK_MAX_F_VAL ) );
-        LUT[ cnt ] = (unsigned short)floor( bval + 0.5 );
+        LUT[ cnt ] = (float)floor( bval + 0.5 );
     }
 
     return AdjustCurve( ptr, arraysz, LUT );
 }
 
-bool RAWImageToolKit::AdjustContrast( unsigned short* ptr, unsigned arraysz, double perc )
+bool RAWImageToolKit::AdjustContrast( float* ptr, unsigned arraysz, double perc )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    unsigned short LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
+    float LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
     const \
     double bscaled  = ( 100.0 + perc ) / 100.0;
     double bval     = 0.0;
@@ -433,13 +433,13 @@ bool RAWImageToolKit::AdjustContrast( unsigned short* ptr, unsigned arraysz, dou
     {
         bval = (double)RAWIMGTK_HALF_F_VAL + ( (double)cnt - RAWIMGTK_HALF_F_VAL ) * bscaled;
         bval = MAX( 0.0, MIN( bval, RAWIMGTK_MAX_F_VAL ) );
-        LUT[ cnt ] = (unsigned short)floor( bval + 0.5 );
+        LUT[ cnt ] = (float)floor( bval + 0.5 );
     }
 
     return AdjustCurve( ptr, arraysz, LUT );
 }
 
-bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsigned short* LUT )
+bool RAWImageToolKit::AdjustCurve( float* ptr, unsigned arraysz, float* LUT )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) || ( LUT == NULL ) )
         return false;
@@ -447,7 +447,7 @@ bool RAWImageToolKit::AdjustCurve( unsigned short* ptr, unsigned arraysz, unsign
     #pragma omp parallel for
     for( unsigned cnt=0; cnt<arraysz; cnt++ )
     {
-        ptr[ cnt ] = LUT[ ptr[ cnt ] ];
+        //ptr[ cnt ] = LUT[ ptr[ cnt ] ];
     }
 
     return true;
@@ -551,13 +551,13 @@ void CLAHE_ClipHistogram( unsigned long* pHisto, unsigned int greyLvl, unsigned 
  * between the greyvalue of the pixel (typically between 0 and 4095) and
  * the corresponding bin in the histogram (usually containing only 128 bins).
  */
-void CLAHE_MakeHistogram ( unsigned short* pImage,
+void CLAHE_MakeHistogram ( float* pImage,
                            unsigned int imgWidth,
                            unsigned int rgnszW, unsigned int rgnszH,
                            unsigned long* pHisto,
-                           unsigned int greyLvl, unsigned short* pLUT )
+                           unsigned int greyLvl, float* pLUT )
 {
-    unsigned short* pImgPtr = NULL;
+    float* pImgPtr = NULL;
     unsigned int cnt;
 
 	/* clear histogram */
@@ -571,10 +571,8 @@ void CLAHE_MakeHistogram ( unsigned short* pImage,
 		pImgPtr = &pImage[rgnszW];
 
 		while ( pImage < pImgPtr )
-		//for( unsigned int cntq=0; cntq<rgnszW; cntq++ )
 		{
-			pHisto[ pLUT[ (unsigned short)*pImage++ ] ]++;
-            //pHisto[ pLUT[ pImage[ cntq ] ] ]++;
+			//pHisto[ pLUT[ (float)*pImage++ ] ]++;
 		}
 
 		pImgPtr += imgWidth;
@@ -587,7 +585,7 @@ void CLAHE_MakeHistogram ( unsigned short* pImage,
  * cumulating the input histogram. Note: lookup table is rescaled in range [Min..Max].
  */
 void CLAHE_MapHistogram ( unsigned long* pHisto,
-                          unsigned short Min, unsigned short Max,
+                          float Min, float Max,
                           unsigned int greyLvl, unsigned long pixelsz )
 {
     unsigned int  cnt = 0;
@@ -612,9 +610,9 @@ void CLAHE_MapHistogram ( unsigned long* pHisto,
  * To speed up histogram clipping, the input image [Min,Max] is scaled down to
  * [0,uiNrBins-1]. This function calculates the LUT.
  */
-void CLAHE_MakeLut( unsigned short * pLUT, unsigned short Min, unsigned short Max, unsigned int ranges )
+void CLAHE_MakeLut( float * pLUT, float Min, float Max, unsigned int ranges )
 {
-    const unsigned short BinSize = (unsigned short) (1 + (Max - Min) / ranges);
+    const float BinSize = (float) (1 + (Max - Min) / ranges);
 
     for ( int cnt=Min; cnt<=Max; cnt++)
     {
@@ -635,13 +633,13 @@ void CLAHE_MakeLut( unsigned short * pLUT, unsigned short Min, unsigned short Ma
  * It uses a division; since division is often an expensive operation, I added code to
  * perform a logical shift instead when feasible.
  */
-void CLAHE_Interpolate( unsigned short * pImage,
+void CLAHE_Interpolate( float * pImage,
                         int imgWidth, unsigned skipWidth,
                         unsigned long * pMapLU, unsigned long * pMapRU, unsigned long * pMapLB,  unsigned long * pMapRB,
-                        unsigned int subszW, unsigned int subszH, unsigned short * pLUT)
+                        unsigned int subszW, unsigned int subszH, float * pLUT)
 {
     const unsigned int incSz = imgWidth-subszW; /* Pointer increment after processing row */
-    unsigned short GreyValue;
+    float GreyValue;
 	unsigned int normFactor = subszW * subszH; /* Normalization factor */
 
     unsigned int coefW = 0;
@@ -662,15 +660,17 @@ void CLAHE_Interpolate( unsigned short * pImage,
 			      coefW++, invcoefW--)
 			{
 				/* get histogram bin value */
+				/*
 				GreyValue = pLUT[*pImage];
 
-				*pImage++ = (unsigned short )( ( invcoefH *
+				*pImage++ = (float )( ( invcoefH *
 												 ( invcoefW*pMapLU[GreyValue] +  coefW * pMapRU[GreyValue] ) +
 						                         coefH * (invcoefW * pMapLB[GreyValue] +
 												 coefW * pMapRB[GreyValue]) )
                                                / normFactor );
 
                 pImage += skipWidth;
+                */
 			}
 		}
 	}
@@ -691,14 +691,16 @@ void CLAHE_Interpolate( unsigned short * pImage,
 			       coefW++, invcoefW-- )
 			{
 				/* get histogram bin value */
+				/*
 				GreyValue = pLUT[*pImage];
 
-				*pImage++ = (unsigned short)( ( invcoefH *
+				*pImage++ = (float)( ( invcoefH *
 				                                ( invcoefW * pMapLU[GreyValue] + coefW * pMapRU[GreyValue] ) +
 												coefH * (invcoefW * pMapLB[GreyValue] +
 												coefW * pMapRB[GreyValue]) )
                                               >> shifts );
                 pImage += skipWidth;
+                */
 			}
 		}
     }
@@ -722,9 +724,9 @@ void CLAHE_Interpolate( unsigned short * pImage,
  * image. A clip limit smaller than 1 results in standard (non-contrast limited) AHE.
  */
 
-bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
+bool RAWImageToolKit::ApplyCLAHE( float* pImage,
                                   unsigned int imgWidth, unsigned int imgHeight,
-                                  unsigned short Min, unsigned short Max,
+                                  float Min, float Max,
                                   unsigned int rgnWidth, unsigned int rgnHeight,
                                   unsigned int ranges, float fCliplimit )
 {
@@ -750,10 +752,10 @@ bool RAWImageToolKit::ApplyCLAHE( unsigned short* pImage,
     unsigned long pixelCnts = 0;
 
     /* pointer to image */
-    unsigned short* pImgPtr = NULL;
+    float* pImgPtr = NULL;
 
     /* lookup table used for scaling of input image */
-    unsigned short aLUT[ RAWIMGTK_MAX_D_ARRAY_SZ ] = {0};
+    float aLUT[ RAWIMGTK_MAX_D_ARRAY_SZ ] = {0};
 
     /* pointer to histogram and mappings*/
     unsigned long* pulHist = NULL;

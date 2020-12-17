@@ -254,16 +254,16 @@ class RAWResizeEngine
         virtual ~RAWResizeEngine() {}
 
     public:
-        unsigned scale( const unsigned short* src, unsigned src_width, unsigned src_height,
-                        unsigned dst_width, unsigned dst_height, unsigned short** dst );
+        unsigned scale( const float* src, unsigned src_width, unsigned src_height,
+                        unsigned dst_width, unsigned dst_height, float** dst );
 
     private:
-        void horizontalFilter( const unsigned short* src, const unsigned height, const unsigned src_width,
+        void horizontalFilter( const float* src, const unsigned height, const unsigned src_width,
                                const unsigned src_offset_x, const unsigned src_offset_y,
-                               unsigned short* dst, const unsigned dst_width);
-        void verticalFilter( const unsigned short* src, const unsigned width, const unsigned src_height,
+                               float* dst, const unsigned dst_width);
+        void verticalFilter( const float* src, const unsigned width, const unsigned src_height,
                              const unsigned src_offset_x, const unsigned src_offset_y,
-                             unsigned short* dst, const unsigned dst_width, const unsigned dst_height);
+                             float* dst, const unsigned dst_width, const unsigned dst_height);
 };
 
 

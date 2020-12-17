@@ -2,8 +2,8 @@
 #define __RAWPROCESSOR_H__
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  16bit gray scale RAW image processor for stdc++ w/ FLTK or other Graphics.
-//  =========================================================================
+//  32bit precise gray scale RAW image processor for stdc++.
+//  ============================================================================
 //  (C)Copyright 2013~, Raphael Kim (rageworx@gmail.com)
 //
 //  * Processing read pixels to down-scaling, threshold cutting.
@@ -20,8 +20,8 @@
 class RAWUserScaleIF
 {
     public:
-        virtual bool processUserScale( std::vector<unsigned short> &src,
-                                       std::vector<unsigned char> *dst ) = 0;
+        virtual bool processUserScale( std::vector<float> &src,
+                                       std::vector<float> *dst ) = 0;
 };
 
 class RAWProcessor
@@ -58,23 +58,27 @@ class RAWProcessor
         #define TRANSFORM_PARAM_ROT_RC180   0x00004000
         #define TRANSFORM_PARAM_ROT_RC270   0x00008000
 
+        #define DATATYPE_BYTE               0x00000000
+        #define DATATYPE_USHORT             0x00000001
+        #define DATATYPE_FLOAT              0x00000002
+
     public:
         struct WeightAnalysisReport
         {
-            unsigned long       timestamp;
-            unsigned short      base_threshold_index;
-            unsigned short      threshold_wide_min;
-            unsigned short      threshold_wide_max;
-            unsigned int        threshold_max_amount;
+            unsigned long   timestamp;
+            float           base_threshold_index;
+            float           threshold_wide_min;
+            float           threshold_wide_max;
+            unsigned long   threshold_max_amount;
         };
 
         struct SimpleAnalysisInfo
         {
-            unsigned short      minLevel;
-            unsigned short      maxLevel;
-            double              average;
-            double              variance;
-            double              deviation;
+            float           minLevel;
+            float           maxLevel;
+            float           average;
+            float           variance;
+            float           deviation;
         };
 
     public:
@@ -88,20 +92,18 @@ class RAWProcessor
     public:
         bool Loaded()                   { return raw_loaded; }
         unsigned PixelCount()           { return datasize(); }
-        unsigned short MinimumLevel()   { return pixel_min_level; }
-        unsigned short MaximumLevel()   { return pixel_max_level; }
-        unsigned short MediumLevel()    { return pixel_med_level; }
+        float MinimumLevel()            { return pixel_min_level; }
+        float MaximumLevel()            { return pixel_max_level; }
+        float MediumLevel()             { return pixel_med_level; }
         unsigned Width()                { return img_width; }
         unsigned Height()               { return img_height; }
         unsigned WeightsCount()         { return pixel_weights_max; }
         unsigned char BPP()             { return pixel_bpp; }
-        bool Swapping()                 { return pixel_swaping; }
+        void RecalcLevels()             { calcWeights(); }
 
     public:
-        void Swapping( bool onoff )     { pixel_swaping = onoff; }
-        void RecalcLevels()             { calcWeights(); }
-        void CutoffLevels( unsigned short minv, unsigned short maxv );
-        void CutoffLevelsRanged( unsigned short minv, unsigned short maxv, unsigned short valmin = 0, unsigned short valmax = 65535 );
+        void CutoffLevels( float minv, float maxv );
+        void CutoffLevelsRanged( float minv, float maxv, float valmin = 0, float valmax = 1.f );
 
     public:
         // Get Versions in string or, integer array.
@@ -109,13 +111,13 @@ class RAWProcessor
         void Version( int* retverints ); /// put int[4] array.
 
         // Load from file.
-        bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, size_t height= 0, unsigned int dtype = DATATYPE_USHORT, bool byteswap = false );
 #ifdef WCHAR_SUPPORTED
-        bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, size_t height= 0, unsigned int dtype = DATATYPE_USHORT, bool byteswap = false );
 #endif // WCHAR_SUPPORTED
 
         // Load from memory.
-        bool LoadFromMemory( const char* buffer, unsigned long bufferlen, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool LoadFromMemory( void* buffer, size_t bufferlen, unsigned int trnsfm = TRANSFORM_NONE, size_t height = 0, unsigned int dtype = DATATYPE_FLOAT, bool byteswap = false );
 
         // Reload from file, actually same as like Load.
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
@@ -133,18 +135,22 @@ class RAWProcessor
         // recommended degrees : 0.0 ~ 359.99
         bool RotateFree( float degree );
         void ChangeHeight( unsigned h );
+        bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype, bool reversed );
+        bool Get16bitRawImage( std::vector<float>* word_arrays, bool reversed );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Invert( unsigned char maxbits = 16 );
         bool InvertAuto();
 
         // GetXXXX methods --
-        bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
-        bool Get16bitRawImage( std::vector<unsigned short>* word_arrays, bool reversed = false );
+        bool GetDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
+        bool GetRawImage( std::vector<float>* word_arrays, bool reversed = false );
+        bool GetRawImage( std::vector<float>* word_arrays );
         bool GetWeights( std::vector<unsigned int>* weight_arrays );
         bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
-        bool Get16bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned short>* word_arrays, bool reversed = false );
-        bool Get8bitThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
-        bool Get16bitPixel( unsigned x, unsigned y, unsigned short &px );
+        bool GetThresholdedImage( WeightAnalysisReport &report, std::vector<float>* word_arrays, bool reversed = false );
+        bool GetThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
+        bool GetThresholdedImage( WeightAnalysisReport &report, std::vector<float>* byte_arrays );
+        bool GetPixel( unsigned x, unsigned y, float &px );
 
     // Some additional tools here ...
     public:
@@ -155,17 +161,17 @@ class RAWProcessor
 
     public:
         // image may enlarged.
-        RAWProcessor* RotateFree( float degree, unsigned int background = 0 );
+        RAWProcessor* RotateFree( float degree, float background = 0 );
         RAWProcessor* Rescale( unsigned w, unsigned h, RescaleType st = RESCALE_NEAREST );
         RAWProcessor* Clone();
 
     public:
         typedef struct { unsigned x; unsigned y; } polygoncoord;
         // Weights == Histogram.
-        void GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, std::vector<unsigned short>* pixels );
-        void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<unsigned short>* pixels);
-        void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<unsigned short>* pixels);
-        void GetAnalysisFromPixels( std::vector<unsigned short>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info );
+        void GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, std::vector<float>* pixels );
+        void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<float>* pixels);
+        void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<float>* pixels);
+        void GetAnalysisFromPixels( std::vector<float>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info );
 
     public:
         typedef struct
@@ -204,13 +210,13 @@ class RAWProcessor
         bool ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, unsigned bins, float slope );
 
     public:
-        bool ApplyLowFrequency( unsigned filtersz = 3, unsigned repeat = 1);
+        bool ApplyLowFrequency( unsigned filtersz = 3, unsigned repeat = 1 );
         bool ApplyEdgeEnhance( unsigned fszh = 5, unsigned fszv = 5, unsigned edgesz = 3, unsigned margin = 0 );
         bool ApplyAnisotropicFilter( unsigned strength, unsigned param );
 
     public:
-        const unsigned long         datasize();
-        const unsigned short*       data();
+        const size_t datasize();
+        const float* data();
 
     protected:
         void analyse();
@@ -218,34 +224,29 @@ class RAWProcessor
         void calcWeights();
 
     protected:
-        void addpixelarray( std::vector<unsigned short>* outpixels, unsigned x, unsigned y );
+        void addpixelarray( std::vector<float>* outpixels, unsigned x, unsigned y );
         void reordercoords( std::vector<polygoncoord>* coords );
 
     protected:
-        bool                        bigendian;
-        bool                        raw_loaded;
-        bool                        pixel_swaping;
-        std::vector<unsigned short> pixel_arrays;
-        unsigned long               pixel_arrays_srcsz;
-        unsigned long               pixel_arrays_realsz;
-        unsigned int*               pixel_weights;
-        unsigned short              pixel_weights_max;
-        unsigned char               pixel_bpp;
-        unsigned short              pixel_min_level;
-        unsigned short              pixel_max_level;
-        unsigned short              pixel_med_level;
-        unsigned short              index_max_pixel;
-        unsigned int                current_transform;
+        bool               raw_loaded;
+        std::vector<float> pixel_arrays;
+        unsigned long      pixel_arrays_srcsz;
+        unsigned long      pixel_arrays_realsz;
+        std::vector<float> pixel_weights;
+        float              pixel_weights_max;
+        unsigned char      pixel_bpp;
+        float              pixel_min_level;
+        float              pixel_max_level;
+        float              pixel_med_level;
+        unsigned long      index_max_pixel;
+        unsigned int       current_transform;
 #ifdef WCHAR_SUPPORTED
-        std::wstring                raw_file_name;
+        std::wstring       raw_file_name;
 #else
-        std::string                 raw_file_name;
+        std::string        raw_file_name;
 #endif
-        unsigned                    img_height;
-        unsigned                    img_width;
-        RAWUserScaleIF*             userscaler;
-
+        unsigned           img_height;
+        unsigned           img_width;
+        RAWUserScaleIF*    userscaler;
 };
-
-
 #endif /// of __RAWPROCESSOR_H__

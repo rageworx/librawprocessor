@@ -19,9 +19,9 @@ namespace RAWImageFilterKit
     RAWProcessor::FilterConfig* GetPresetFilter( const char* name );
     void RemoveFilter( RAWProcessor::FilterConfig* fp );
 
-    bool ApplyLowFreqFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fsz, unsigned iter );
-    bool ApplyEdgeLowFreqFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fsz );
-    bool ApplyAnisotropicFilter( unsigned short* ptr, unsigned w, unsigned h, unsigned fstr, unsigned fparam );
+    bool ApplyLowFreqFilter( float* ptr, unsigned w, unsigned h, unsigned fsz, unsigned iter );
+    bool ApplyEdgeLowFreqFilter( float* ptr, unsigned w, unsigned h, unsigned fsz );
+    bool ApplyAnisotropicFilter( float* ptr, unsigned w, unsigned h, unsigned fstr, unsigned fparam );
 }
 
 #endif /// of __RAWFILTERS_H__
