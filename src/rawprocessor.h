@@ -136,7 +136,7 @@ class RAWProcessor
         bool RotateFree( float degree );
         void ChangeHeight( unsigned h );
         bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype, bool reversed );
-        bool Get16bitRawImage( std::vector<float>* word_arrays, bool reversed );
+        bool Get16bitRawImage( std::vector<unsigned short>& word_arrays, bool reversed );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Invert( unsigned char maxbits = 16 );
         bool InvertAuto();
@@ -145,11 +145,10 @@ class RAWProcessor
         bool GetDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool GetRawImage( std::vector<float>* word_arrays, bool reversed = false );
         bool GetRawImage( std::vector<float>* word_arrays );
-        bool GetWeights( std::vector<unsigned int>* weight_arrays );
-        bool GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero = false );
-        bool GetThresholdedImage( WeightAnalysisReport &report, std::vector<float>* word_arrays, bool reversed = false );
-        bool GetThresholdedImage( WeightAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
-        bool GetThresholdedImage( WeightAnalysisReport &report, std::vector<float>* byte_arrays );
+        bool GetAnalysisReport( WeightAnalysisReport& report, bool start_minlevel_zero = false );
+        bool GetThresholdedImage( WeightAnalysisReport& report, std::vector<float>* word_arrays, bool reversed = false );
+        bool GetThresholdedImage( WeightAnalysisReport& report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
+        bool GetThresholdedImage( WeightAnalysisReport& report, std::vector<float>* byte_arrays );
         bool GetPixel( unsigned x, unsigned y, float &px );
 
     // Some additional tools here ...
@@ -171,7 +170,7 @@ class RAWProcessor
         void GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, std::vector<float>* pixels );
         void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<float>* pixels);
         void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<float>* pixels);
-        void GetAnalysisFromPixels( std::vector<float>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info );
+        void GetAnalysisFromPixels( std::vector<float>& pixels, SimpleAnalysisInfo& info );
 
     public:
         typedef struct
@@ -222,6 +221,7 @@ class RAWProcessor
         void analyse();
         void resetWeights();
         void calcWeights();
+        void findWideness(float& minf, float& maxf );
 
     protected:
         void addpixelarray( std::vector<float>* outpixels, unsigned x, unsigned y );
@@ -232,7 +232,6 @@ class RAWProcessor
         std::vector<float> pixel_arrays;
         unsigned long      pixel_arrays_srcsz;
         unsigned long      pixel_arrays_realsz;
-        std::vector<float> pixel_weights;
         float              pixel_weights_max;
         unsigned char      pixel_bpp;
         float              pixel_min_level;

@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <climits>
 #include <string>
 #include <cstring>
 
@@ -147,7 +148,6 @@ inline void _bswap4( void* ptr )
 RAWProcessor::RAWProcessor()
  : raw_loaded(false),
    pixel_arrays_realsz(0),
-   pixel_weights(NULL),
    pixel_weights_max(0),
    pixel_bpp(32),
    pixel_min_level(0),
@@ -162,7 +162,6 @@ RAWProcessor::RAWProcessor()
 RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
-   pixel_weights( NULL ),
    pixel_weights_max( 0 ),
    pixel_bpp(10),
    pixel_min_level(0),
@@ -182,7 +181,6 @@ RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
 RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
-   pixel_weights( NULL ),
    pixel_weights_max( 0 ),
    pixel_bpp(10),
    pixel_min_level(0),
@@ -290,21 +288,22 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
         pixel_max_level = 0.f;
         img_height = height;
         size_t readsz = 1;
+        size_t arraysz = 0;
 
         switch( dtype )
         {
             case DATATYPE_BYTE:
-                pixel_arrays_srcsz = fsize;
+                arraysz = fsize;
                 break;
 
             case DATATYPE_USHORT:
                 readsz = sizeof( unsigned short );
-                pixel_arrays_srcsz = fsize / readsz;
+                arraysz = fsize / readsz;
                 break;
 
             case DATATYPE_FLOAT:
                 readsz = sizeof( float );
-                pixel_arrays_srcsz = fsize/ readsz;
+                arraysz = fsize/ readsz;
                 break;
 
             default:
@@ -313,21 +312,20 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
 
         unsigned blancsz = 0;
 
-        if (  pixel_arrays_srcsz > 0 )
+        if (  arraysz > 0 )
         {
             // set temporary width ...
-            img_width = pixel_arrays_realsz / img_height;
+            img_width = arraysz / img_height;
 
             // Check omit pixels ...
-            if ( pixel_arrays_srcsz < ( img_width * img_height ) )
+            if ( arraysz < ( img_width * img_height ) )
             {
-                blancsz = ( img_width * img_height ) - pixel_arrays_srcsz;
+                blancsz = ( img_width * img_height ) - arraysz;
             }
         }
-
-        pixel_arrays_realsz = pixel_arrays_srcsz + blancsz;
+   
+        pixel_arrays_realsz = pixel_arrays.size() + blancsz;
         pixel_arrays.clear();
-        pixel_arrays.reserve( pixel_arrays_realsz );
         pixel_arrays.resize( pixel_arrays_realsz );
 
         resetWeights();
@@ -415,46 +413,44 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
         pixel_max_level = 0;
         img_height = height;
         size_t readsz = 1;
+        size_t arraysz = 0;
 
         switch( dtype )
         {
             case DATATYPE_BYTE:
-                pixel_arrays_srcsz = bufferlen;
+                arraysz = bufferlen;
                 break;
 
             case DATATYPE_USHORT:
                 readsz = sizeof( unsigned short );
-                pixel_arrays_srcsz = bufferlen / readsz;
+                arraysz = bufferlen / readsz;
                 break;
 
             case DATATYPE_FLOAT:
                 readsz = sizeof( float );
-                pixel_arrays_srcsz = bufferlen/ readsz;
+                arraysz = bufferlen/ readsz;
                 break;
 
             default:
                 return false;
         }
 
-        pixel_arrays_srcsz = bufferlen / readsz;
         unsigned blancsz   = 0;
 
-        if (  pixel_arrays_srcsz > 0 )
+        if (  arraysz > 0 )
         {
             // set temporary width ...
-            img_width = pixel_arrays_srcsz / img_height;
+            img_width = arraysz / img_height;
 
             // Check omit pixels ...
-            if ( pixel_arrays_srcsz < ( img_width * img_height ) )
+            if ( arraysz < ( img_width * img_height ) )
             {
-                blancsz = ( img_width * img_height ) - pixel_arrays_srcsz;
+                blancsz = ( img_width * img_height ) - arraysz;
             }
         }
 
-        pixel_arrays_realsz = pixel_arrays_srcsz + blancsz;
-
+        pixel_arrays_realsz = arraysz + blancsz;
         pixel_arrays.clear();
-        pixel_arrays.reserve( pixel_arrays_realsz );
         pixel_arrays.resize( pixel_arrays_realsz );
 
         resetWeights();
@@ -474,7 +470,8 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
 
                 case DATATYPE_USHORT:
                     {
-                        unsigned short usdata = *(unsigned short*)pbuff[cnt*readsz];
+                        unsigned short* ptr = (unsigned short*)pbuff;
+                        unsigned short usdata = ptr[readsz];
 
                         if ( byteswap == false )
                         {
@@ -490,7 +487,8 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
 
                 case DATATYPE_FLOAT:
                     {
-                        convdata = *(float*)pbuff[cnt*readsz];
+                        float* ptr = (float*)pbuff;
+                        convdata = ptr[cnt];
 
                         if ( byteswap == true )
                         {
@@ -556,9 +554,7 @@ void RAWProcessor::Unload()
     }
 
     pixel_arrays.clear();
-    pixel_arrays.reserve( 0 );
     pixel_arrays.resize( 0 );
-
     pixel_arrays_realsz = 0;
 
     resetWeights();
@@ -751,7 +747,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( vector<float>* word_arrays, bool reversed )
+bool RAWProcessor::Get16bitRawImage( vector<unsigned short>& word_arrays, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
@@ -761,52 +757,34 @@ bool RAWProcessor::Get16bitRawImage( vector<float>* word_arrays, bool reversed )
     if ( arrsz == 0 )
         return false;
 
-    word_arrays->clear();
-    word_arrays->reserve( arrsz );
-    word_arrays->resize( arrsz );
+    word_arrays.clear();
+    word_arrays.resize( arrsz );
 
     float* ref_pixel_arrays = pixel_arrays.data();
 
     if ( reversed == true )
     {
+        #pragma omp parallel for
         for ( unsigned cnt=0; cnt<arrsz; cnt++ )
         {
-            word_arrays->at( cnt ) = DEF_PIXEL_WEIGHTS - ref_pixel_arrays[cnt];
+            word_arrays[cnt] = (unsigned short)( ( pixel_arrays[cnt] / pixel_max_level ) * 65535.f );
         }
     }
     else
     {
-        std::copy( pixel_arrays.begin(), pixel_arrays.end(), word_arrays->begin() );
+        #pragma omp parallel for
+        for ( unsigned cnt=0; cnt<arrsz; cnt++ )
+        {
+            unsigned short tmpwd = (unsigned short)( ( pixel_arrays[cnt] / pixel_max_level ) * 65535.f );
+            BYTE_SWAP_16( tmpwd );
+            word_arrays[cnt] = tmpwd;
+        }
     }
 
     return true;
 }
 
-bool RAWProcessor::GetWeights( std::vector<unsigned int>* weight_arrays )
-{
-    if ( raw_loaded == false )
-        return false;
-
-    int arrsz = pixel_weights_max;
-
-    if ( arrsz == 0 )
-        return false;
-
-    weight_arrays->clear();
-    weight_arrays->reserve( arrsz );
-    weight_arrays->resize( arrsz );
-
-    //weight_arrays.assign( pixel_weights.begin(), pixel_weights.end() );
-    //std::copy( pixel_weights.begin(), pixel_weights.end(), weight_arrays.begin() );
-    for( int cnt=0; cnt<arrsz; cnt++ )
-    {
-        weight_arrays->at( cnt ) = pixel_weights[cnt];
-    }
-
-    return true;
-}
-
-bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_minlevel_zero )
+bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport& report, bool start_minlevel_zero )
 {
     if ( pixel_weights_max == 0 )
         return false;
@@ -828,12 +806,21 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
 
     for( unsigned cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
     {
+        // find pixel (max-min)/2+min
+        float minf = 0.f;
+        float maxf = 0.f;
+        float thrsf = 0.f;
+        
+        findWideness( minf, maxf );
+        thrsf = ( ( maxf - minf ) / 2.f ) + minf;
+        /*
         if ( pixel_weights[ cnt ] > index_center_thld )
         {
             //report.base_threshold_index = pixel_weights[ cnt ];
             //index_center_thld = pixel_weights[ cnt ];
             index_center_thld = cnt;
         }
+        */
     }
 
     // # phase 03
@@ -848,84 +835,14 @@ bool RAWProcessor::GetAnalysisReport( WeightAnalysisReport &report, bool start_m
     unsigned min_q = 0;
     bool raised = false;
 
-    // Makes min-max pairs.
-    for( unsigned cnt=0; cnt<pixel_max_level; cnt++ )
-    {
-        avr_l += pixel_weights[ cnt ];
-        avr_l /= 2;
-
-        if ( ( avr_l > min_l ) && ( raised == false ) )
-        {
-            min_q = cnt;
-            raised = true;
-        }
-        else
-        if ( ( avr_l < min_l ) && ( raised == true ) )
-        {
-            minmaxpair ppair = {0,0};
-            ppair.min_v = min_q;
-            ppair.max_v = cnt;
-            mmpairs.push_back( ppair );
-            min_q = cnt;
-            raised = false;
-        }
-    }
-
-    // Find longest pairs.
-    int longest_idx = -1;
-    int next_idx = -1;
-    unsigned test_long = 0;
-    unsigned scnd_long = 0;
-
-    for( unsigned cnt=0; cnt<mmpairs.size(); cnt++ )
-    {
-        unsigned tmp_long = mmpairs[ cnt ].max_v - mmpairs[ cnt ].min_v;
-
-        if ( tmp_long > test_long )
-        {
-            scnd_long = test_long;
-            test_long = tmp_long;
-            longest_idx = cnt;
-        }
-        else
-        if ( tmp_long > scnd_long )
-        {
-            scnd_long = tmp_long;
-            next_idx = cnt;
-        }
-    }
-
-    bool retb = false;
-
-    if ( longest_idx >= 0 )
-    {
-        min_weight_wide = (float)mmpairs[ longest_idx ].min_v;
-
-        if ( ( next_idx >= 0 ) && ( next_idx > longest_idx ) )
-        {
-            max_weight_wide = (float)mmpairs[ next_idx ].max_v;
-        }
-        else
-        {
-            max_weight_wide = (float)mmpairs[ longest_idx ].max_v;
-        }
-
-        retb = true;
-    }
-    else
-    {
-        min_weight_wide = 0;
-        max_weight_wide = DEF_PIXEL_WEIGHTS;
-    }
-
-    mmpairs.clear();
+    // # need to make it again.
 
     // # phase 04
     // get wide count.
     report.threshold_wide_min = min_weight_wide;
     report.threshold_wide_max = max_weight_wide;
 
-    return retb;
+    return false;
 }
 
 bool RAWProcessor::GetThresholdedImage( WeightAnalysisReport &report,  vector<float>* word_arrays, bool reversed )
@@ -1131,7 +1048,7 @@ bool RAWProcessor::RotateFree( float degree )
 
         if ( rawimgtk::CropCenter( dst, dst_w, dst_h, &dstcrop, img_width, img_height ) == true )
         {
-            memcpy( src, dstcrop, pixel_arrays_srcsz * sizeof( float ) );
+            memcpy( src, dstcrop, pixel_arrays.size() * sizeof( float ) );
 
             retb = true;
 
@@ -1522,31 +1439,26 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
     }
 }
 
-void RAWProcessor::GetAnalysisFromPixels( std::vector<float>* pixels, std::vector<unsigned int>* weights, SimpleAnalysisInfo* info )
+void RAWProcessor::GetAnalysisFromPixels( vector<float>& pixels, SimpleAnalysisInfo& info )
 {
-    if ( ( pixels == NULL ) || ( weights == NULL ) || ( info == NULL ) )
-    {
-        return;
-    }
-
-    // Make weights ...
-    weights->resize( DEF_PIXEL_WEIGHTS + 1 );
-
+    /*
     for( unsigned cnt=0; cnt<(DEF_PIXEL_WEIGHTS + 1); cnt++ )
     {
-        weights->at( cnt ) = 0;
+        weights[cnt] = 0;
     }
-
-    unsigned       pxsz      = pixels->size();
+    */
     float max_level = 0;
     float min_level = DEF_PIXEL_WEIGHTS;
     double         summ      = 0.0;
 
-    for( unsigned cnt=0; cnt<pxsz; cnt++ )
+    /*
+    // --- need to make it again ---
+    
+    for( size_t cnt=0; cnt<pixels.size(); cnt++ )
     {
-        float apixel = pixels->at( cnt );
+        float apixel = pixels[cnt];
 
-        weights->at( apixel ) ++;
+        weights[apixel] ++;
 
         if ( apixel > max_level )
         {
@@ -1560,27 +1472,27 @@ void RAWProcessor::GetAnalysisFromPixels( std::vector<float>* pixels, std::vecto
 
         summ += (double)apixel;
     }
+    */
 
     // Make information report.
-    info->minLevel = min_level;
-    info->maxLevel = max_level;
-    info->average  = summ / pxsz;
+    info.minLevel = min_level;
+    info.maxLevel = max_level;
+    info.average  = summ / pixels.size();
 
-
-    info->variance = 0.0;
-    info->deviation = 0.0;
+    info.variance = 0.0;
+    info.deviation = 0.0;
 
     double sd = 0.0;
     // getting variance & deviation ...
-    for( unsigned cnt=0; cnt<pxsz; cnt++ )
+    for( size_t cnt=0; cnt<pixels.size(); cnt++ )
     {
         //info->deviation
-        double dpixel = (double)pixels->at( cnt );
-        sd += pow( dpixel - info->average , 2 );
+        double dpixel = (double)pixels[cnt];
+        sd += pow( dpixel - info.average , 2 );
     }
 
-    info->variance  = sd / (double)pxsz;
-    info->deviation = sqrt( info->variance );
+    info.variance  = sd / (double)pixels.size();
+    info.deviation = sqrt( info.variance );
 }
 
 bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
@@ -2000,15 +1912,15 @@ const float* RAWProcessor::data()
 void RAWProcessor::analyse()
 {
     //if ( pixel_arrays.size() == 0 )
-    if ( pixel_arrays_srcsz == 0 )
+    if ( pixel_arrays.size() == 0 )
         return;
 
     //int pixel_counts = pixel_arrays.size();
     //if ( pixel_counts > 0 )
-    if ( pixel_arrays_srcsz > 0 )
+    if ( pixel_arrays.size() > 0 )
     {
         //img_width = pixel_counts / img_height;
-        img_width = pixel_arrays_srcsz / img_height;
+        img_width = pixel_arrays.size() / img_height;
     }
 
     // measure Bits Per Pixel.
@@ -2032,6 +1944,7 @@ void RAWProcessor::analyse()
 
 void RAWProcessor::resetWeights()
 {
+    /*
     if ( pixel_weights.size() > 0 )
     {
         pixel_weights.clear();
@@ -2043,6 +1956,7 @@ void RAWProcessor::resetWeights()
     }
 
     pixel_weights_max = (float)pixel_arrays_realsz;
+    */
 }
 
 void RAWProcessor::calcWeights()
@@ -2051,7 +1965,7 @@ void RAWProcessor::calcWeights()
     pixel_max_level = 0.f;
     pixel_med_level = 0.5f;
 
-    for( size_t cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
         if ( pixel_arrays[cnt] > pixel_max_level )
         {
@@ -2070,6 +1984,11 @@ void RAWProcessor::calcWeights()
     printf( "calcWeights() result min,max,med = %.5f %.5f, %.5f\n",
             pixel_min_level, pixel_max_level, pixel_med_level );
 #endif // DEBUG
+}
+
+void RAWProcessor::findWideness(float& minf, float& maxf )
+{
+    
 }
 
 void RAWProcessor::addpixelarray( std::vector<float>* outpixels, unsigned x, unsigned y )
@@ -2168,7 +2087,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 void RAWProcessor::CutoffLevels( float minv, float maxv )
 {
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
         if ( pixel_arrays[cnt] > maxv )
         {
@@ -2185,7 +2104,7 @@ void RAWProcessor::CutoffLevels( float minv, float maxv )
 void RAWProcessor::CutoffLevelsRanged( float minv, float maxv, float valmin, float valmax )
 {
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<pixel_arrays_srcsz; cnt++ )
+    for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
         if ( pixel_arrays[cnt] > maxv )
         {
