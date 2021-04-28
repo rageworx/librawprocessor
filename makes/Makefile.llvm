@@ -1,15 +1,19 @@
-# Makefile for librawprocessor for Mac OS X.
-# (C)2016 Raphael Kim / rageworx@gmail.com
+# Makefile for librawprocessor for Mac OS.
+# (C)2016-2021 Raphael Kim / rageworx@gmail.com
 #
 
 #########################################################################
-# This Makefile for Mac OS X with LLVM-GCC/G++
+# This Makefile for Mac OS with LLVM-GCC/G++
 #########################################################################
 
 # Compiler configure.
 GCC = llvm-gcc
 GPP = llvm-g++
 AR  = ar
+RL  = ranlib
+
+# Checking architecture, if arm64, it enables universal library.
+ARCH = $(shell uname -m)
 
 # Sources and how it built
 # Optimization issue: recommend to build with using -ffast-math option.
@@ -19,13 +23,17 @@ OBJDIR        = ./obj/Release
 OUTBIN        = librawprocessor.a
 OUTDIR        = ./lib
 DEFINEOPT     = -DRAWPROCESSOR_USE_LOCALTCHAR -DUNICODE -D_UNICODE
-OPTIMIZEOPT   = -ffast-math -O2
-CPUARCHOPT    = -mtune=native
+OPTIMIZEOPT   = -ffast-math
+CPUARCHOPT    =
 
 ifeq (debug,$(firstword $(MAKECMDGOALS)))
 	OBJDIR = ./obj/Debug
 	DEFINEOPT += -DDEBUG
 	OUTBIN = librawprocessor_d.a
+endif
+
+ifeq ($(ARCH),arm64)
+	CPUARCHOPT += -arch x86_64 -arch arm64
 endif
 
 CFLAGS    = -I$(SOURCEDIR) $(DEFINEOPT) $(OPTIMIZEOPT) $(CPUARCHOPT) $(BITSOPT)
@@ -68,7 +76,8 @@ ${OUTDIR}/${OUTBIN}: ${OBJDIR}/rawscale.o \
 					 ${OBJDIR}/rawfilters.o \
 					 ${OBJDIR}/rawprocessor.o
 	@echo "Generating $@ ..."
-	@$(AR) -q $@ ${OBJDIR}/*.o
+	@$(AR) -cr $@ $^
+	@$(RL) $@
 	@cp -f ${SOURCEDIR}/rawprocessor.h ${OUTDIR}
 
 clean:
