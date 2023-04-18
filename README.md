@@ -1,9 +1,9 @@
-# librawprocessor (float32 version)#
+# librawprocessor (float32 version)
 * A library for processing gray scaled medical RAW images.
 * Supports multi-platforms: Windows, Linux and MacOS
 * Reading 8 to 32bit any type of gray scaled RAW image and make its downscale window size into 8bit another RAW image, or reverse.
 
-### This library supports these functions. ###
+### This library supports these functions
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
  1. Get weight informations to calculating window size.
  1. Windowing - threshold cut-off (for lose useless image datas, or make it easy to processing)
@@ -14,20 +14,20 @@
  1. Flip H/V and Rotate in 90,180,270 degrees.
  1. 2 different ways for tone mapping (known as H.D.R image)
 
-### Makefile rule ###
+### Makefile rule
  1. Refer to HOW2MAKE.
 
-### And still these functions are not embodied. ###
+### And still these functions are not embodied
  1. Nothing in now.
 
-### Reserved to be included ###
+### Reserved to be included
 * Nothing now, bug fix if found.
 
-### Latest update ###
+### Latest update
 * Version marked as 0.9.35.150.
 * Included byte swapping
 
-### Previous updates ###
+### Previous updates
 * Fixed some bugs in AdjustingXXX methods.
 * Enhanced CLAHE region divider, no failure at running, but result may affected.
 * Fixed getting version information.

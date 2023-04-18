@@ -1,3 +1,6 @@
+2023-04-18:
+     - Floating points, standard integer types.
+
 2017-05-30 :
      - Improved GetAnalysisReport().
 
@@ -10,11 +13,11 @@
 
 2017-01-20 :
 	 - Addded Tone mapping methods, Drago and Reinhard.
-	 
+
 2017-01-13 :
 	 - Supporting OpenMP, use preprocessing definition to enable openMP,
 	   USE_OMP ( -DUSE_OMP ).
-	 
+
 2016-12-19 :
      - Added some graphical help methods : AdjustGamma, AdjustBrightness,
                                            AdjustContrast, AdjustContrast,

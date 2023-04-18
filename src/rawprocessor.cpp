@@ -60,16 +60,17 @@ using namespace std;
     #define DEF_MEMORY_LOADED   "//MEMORY_LOAD//"
 #endif //// of UNICODE
 
-#define DEF_RAW_I_HEIGHT    1024
-#define DEF_PIXEL_WINDOW    65535
+#define DEF_RAW_I_HEIGHT    ( 1024 )
+#define DEF_PIXEL_WINDOW    ( 1.0f )
 
-#define DEF_PIXEL16_MAX     65536
-#define DEF_PIXEL8_MAX      256
+#define DEF_PIXEL32_MAX     ( 0xFFFFFFFFF )
+#define DEF_PIXEL16_MAX     ( 0xFFFF )
+#define DEF_PIXEL8_MAX      ( 256 )
 
-#define DEF_CALC_F_WMAX     65535.0f
-#define DEF_CALC_I_WMAX     65535
-#define DEF_CALC_F_BMAX     255.0f
-#define DEF_CALC_I_BMAX     255
+#define DEF_CALC_F_WMAX     ( 1.0f )
+#define DEF_CALC_I_WMAX     ( 0xFFFFFFFF )
+#define DEF_CALC_F_BMAX     ( 1.0f )
+#define DEF_CALC_I_BMAX     ( 0xFF )
 
 #define DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY     0,9,60,160
 
@@ -90,8 +91,8 @@ using namespace std;
 
 typedef struct
 {
-    unsigned min_v;
-    unsigned max_v;
+    uint32_t min_v;
+    uint32_t max_v;
 }minmaxpair;
 
 typedef struct
@@ -125,16 +126,16 @@ int RAWProcessor_fcompare (const void * a, const void * b)
 
 inline void _bswap2( void* ptr )
 {
-    unsigned char* pcast = (unsigned char*)ptr;
-    unsigned char  tmpstr[2] = { pcast[0], pcast[1] };
+    uint8_t* pcast = (uint8_t*)ptr;
+    uint8_t  tmpstr[2] = { pcast[0], pcast[1] };
     pcast[0] = tmpstr[1];
     pcast[1] = tmpstr[2];
 }
 
 inline void _bswap4( void* ptr )
 {
-    unsigned char* pcast = (unsigned char*)ptr;
-    unsigned char  tmpstr[4] = { pcast[0], pcast[1], pcast[2], pcast[3] };
+    uint8_t* pcast = (uint8_t*)ptr;
+    uint8_t  tmpstr[4] = { pcast[0], pcast[1], pcast[2], pcast[3] };
     pcast[0] = tmpstr[3];
     pcast[1] = tmpstr[2];
     pcast[2] = tmpstr[1];
@@ -159,7 +160,7 @@ RAWProcessor::RAWProcessor()
     resetWindow();
 }
 
-RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
+RAWProcessor::RAWProcessor( const char* raw_file, uint32_t height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
    pixel_window_max( 0 ),
@@ -178,7 +179,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, unsigned int height )
 }
 
 #ifdef WCHAR_SUPPORTED
-RAWProcessor::RAWProcessor( const wchar_t* raw_file, unsigned int height )
+RAWProcessor::RAWProcessor( const wchar_t* raw_file, uint32_t height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
    pixel_window_max( 0 ),
@@ -240,7 +241,7 @@ void RAWProcessor::Version( int* retverints )
 }
 
 #ifdef WCHAR_SUPPORTED
-bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, size_t height, unsigned int dtype, bool byteswap )
+bool RAWProcessor::Load( const wchar_t* raw_file, uint32_t trnsfm, size_t height, uint32_t dtype, bool byteswap )
 {
     if ( height <= 0 )
         return false;
@@ -258,7 +259,7 @@ bool RAWProcessor::Load( const wchar_t* raw_file, unsigned int trnsfm, size_t he
 }
 #endif // of WCHAR_SUPPORTED
 
-bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t height, unsigned int dtype, bool byteswap )
+bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, uint32_t dtype, bool byteswap )
 {
     if ( height == 0 )
         return false;
@@ -271,7 +272,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
     if ( rfstrm.is_open() == true )
     {
         rfstrm.seekg( 0, ios::end );
-        unsigned int fsize = rfstrm.tellg();
+        uint32_t fsize = rfstrm.tellg();
         rfstrm.seekg( 0, ios::beg );
         rfstrm.clear();
 
@@ -297,7 +298,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
                 break;
 
             case DATATYPE_USHORT:
-                readsz = sizeof( unsigned short );
+                readsz = sizeof( uint32_t short );
                 arraysz = fsize / readsz;
                 break;
 
@@ -310,7 +311,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
                 return false;
         }
 
-        unsigned blancsz = 0;
+        uint32_t blancsz = 0;
 
         if (  arraysz > 0 )
         {
@@ -331,7 +332,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
         resetWindow();
 
         // To save memory, it doesn't using direct load to memory.
-        for( unsigned cnt=0; cnt<fsize/readsz; cnt++)
+        for( uint32_t cnt=0; cnt<fsize/readsz; cnt++)
         {
             char  chardata[4] = {0};
             float convdata = 0.f;
@@ -347,7 +348,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
 
                 case DATATYPE_USHORT:
                     {
-                        unsigned short usdata = *(unsigned short*)chardata;
+                        uint32_t short usdata = *(uint32_t short*)chardata;
 
                         if ( byteswap == false )
                         {
@@ -400,7 +401,7 @@ bool RAWProcessor::Load( const char* raw_file, unsigned int trnsfm, size_t heigh
     return false;
 }
 
-bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int trnsfm, size_t height, unsigned int dtype, bool byteswap )
+bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trnsfm, size_t height, uint32_t dtype, bool byteswap )
 {
     if ( height <= 0 )
         return false;
@@ -422,7 +423,7 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
                 break;
 
             case DATATYPE_USHORT:
-                readsz = sizeof( unsigned short );
+                readsz = sizeof( uint32_t short );
                 arraysz = bufferlen / readsz;
                 break;
 
@@ -435,7 +436,7 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
                 return false;
         }
 
-        unsigned blancsz   = 0;
+        uint32_t blancsz   = 0;
 
         if (  arraysz > 0 )
         {
@@ -457,7 +458,7 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
 
         // To save memory, it doesn't using direct load to memory.
         #pragma omp parallel for
-        for( unsigned cnt=0; cnt<bufferlen / readsz; cnt++)
+        for( uint32_t cnt=0; cnt<bufferlen / readsz; cnt++)
         {
             char  chardata[4] = {0};
             float convdata = 0;
@@ -470,8 +471,8 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
 
                 case DATATYPE_USHORT:
                     {
-                        unsigned short* ptr = (unsigned short*)pbuff;
-                        unsigned short usdata = ptr[readsz];
+                        uint32_t short* ptr = (uint32_t short*)pbuff;
+                        uint32_t short usdata = ptr[readsz];
 
                         if ( byteswap == false )
                         {
@@ -523,13 +524,13 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, unsigned int 
 }
 
 #ifdef WCHAR_SUPPORTED
-bool RAWProcessor::Reload( const wchar_t* raw_file, unsigned int trnsfm, unsigned height )
+bool RAWProcessor::Reload( const wchar_t* raw_file, uint32_t trnsfm, uint32_t height )
 {
     return Load( raw_file, trnsfm, height );
 }
 #endif /// of WCHAR_SUPPORTED
 
-bool RAWProcessor::Reload( const char* raw_file, unsigned int trnsfm, unsigned height )
+bool RAWProcessor::Reload( const char* raw_file, uint32_t trnsfm, uint32_t height )
 {
     return Load( raw_file, trnsfm, height );
 }
@@ -560,7 +561,7 @@ void RAWProcessor::Unload()
     resetWindow();
 }
 
-bool RAWProcessor::ApplyTransform( unsigned int trnsfm )
+bool RAWProcessor::ApplyTransform( uint32_t trnsfm )
 {
     if ( ( raw_loaded == true ) && ( trnsfm > 0 ) )
     {
@@ -629,34 +630,20 @@ void RAWProcessor::SetUserScale( RAWUserScaleIF* ptr )
     userscaler = ptr;
 }
 
-bool RAWProcessor::Invert( unsigned char maxbits )
+bool RAWProcessor::Invert()
 {
-    if ( maxbits < 8 )
-        return false;
-
-    float maxval = pow( 2, maxbits );
-
-    unsigned dlen = pixel_arrays.size();
-
-    if ( dlen == 0 )
-        return false;
-
-    for( unsigned cnt=0; cnt<dlen; cnt++ )
-    {
-        pixel_arrays[ cnt ] = maxval - pixel_arrays[ cnt ];
-    }
-
-    return true;
+    return InvertAuto();
 }
 
 bool RAWProcessor::InvertAuto()
 {
-    unsigned dlen = pixel_arrays.size();
+    size_t dlen = pixel_arrays.size();
 
     if ( dlen == 0 )
         return false;
 
-    for( unsigned cnt=0; cnt<dlen; cnt++ )
+    #pragma omp parallel for
+    for( size_t cnt=0; cnt<dlen; cnt++ )
     {
         pixel_arrays[ cnt ] = pixel_max_level - pixel_arrays[ cnt ];
     }
@@ -664,7 +651,7 @@ bool RAWProcessor::InvertAuto()
     return true;
 }
 
-void RAWProcessor::ChangeHeight( unsigned h )
+void RAWProcessor::ChangeHeight( uint32_t h )
 {
     if ( raw_loaded == false )
         return;
@@ -676,12 +663,12 @@ void RAWProcessor::ChangeHeight( unsigned h )
     }
 }
 
-bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, DownscaleType dntype, bool reversed )
+bool RAWProcessor::Get8bitDownscaled( vector<uint8_t>* byte_arrays, DownscaleType dntype, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
 
-    unsigned arrsz = pixel_arrays.size();
+    uint32_t arrsz = pixel_arrays.size();
 
     if ( arrsz == 0 )
         return false;
@@ -697,12 +684,13 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
         float dscale_ratio = DEF_CALC_F_BMAX / float( pixel_max_level );
 
         #pragma omp parallel for
-        for( unsigned cnt=0; cnt<arrsz; cnt++ )
+        for( uint32_t cnt=0; cnt<arrsz; cnt++ )
         {
             float fdspixel = float(ref_pixel_arrays[cnt]) * dscale_ratio;
             if ( fdspixel > 255.f )
                 fdspixel = 255.f;
-            unsigned char dspixel = (unsigned char)fdspixel;
+
+            uint8_t dspixel = (uint8_t)fdspixel;
 
             if ( reversed == true )
             {
@@ -720,13 +708,13 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
         float dscale_ratio = DEF_CALC_F_BMAX / DEF_CALC_F_WMAX;
 
         #pragma omp parallel for
-        for( unsigned cnt=0; cnt<arrsz; cnt++ )
+        for( uint32_t cnt=0; cnt<arrsz; cnt++ )
         {
             float fuspixel = float(ref_pixel_arrays[cnt]) * uscale_ratio;
             float fdspixel = fuspixel * dscale_ratio;
             if ( fdspixel > 255.f )
                 fdspixel = 255.f;
-            unsigned char dspixel = (unsigned char)fdspixel;
+            uint8_t dspixel = (uint8_t)fdspixel;
 
             if ( reversed == true )
             {
@@ -747,12 +735,12 @@ bool RAWProcessor::Get8bitDownscaled( vector<unsigned char>* byte_arrays, Downsc
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( vector<unsigned short>& word_arrays, bool reversed )
+bool RAWProcessor::Get16bitRawImage( vector<uint16_t>& word_arrays, bool reversed )
 {
     if ( raw_loaded == false )
         return false;
 
-    unsigned arrsz = pixel_arrays.size();
+    uint32_t arrsz = pixel_arrays.size();
 
     if ( arrsz == 0 )
         return false;
@@ -765,17 +753,17 @@ bool RAWProcessor::Get16bitRawImage( vector<unsigned short>& word_arrays, bool r
     if ( reversed == true )
     {
         #pragma omp parallel for
-        for ( unsigned cnt=0; cnt<arrsz; cnt++ )
+        for ( size_t cnt=0; cnt<arrsz; cnt++ )
         {
-            word_arrays[cnt] = (unsigned short)( ( pixel_arrays[cnt] / pixel_max_level ) * 65535.f );
+            word_arrays[cnt] = (uint16_t)( ( pixel_arrays[cnt] / pixel_max_level ) * 65535.f );
         }
     }
     else
     {
         #pragma omp parallel for
-        for ( unsigned cnt=0; cnt<arrsz; cnt++ )
+        for ( size_t cnt=0; cnt<arrsz; cnt++ )
         {
-            unsigned short tmpwd = (unsigned short)( ( pixel_arrays[cnt] / pixel_max_level ) * 65535.f );
+            uint16_t tmpwd = (uint16_t)( ( pixel_arrays[cnt] / pixel_max_level ) * 65535.f );
             BYTE_SWAP_16( tmpwd );
             word_arrays[cnt] = tmpwd;
         }
@@ -792,19 +780,19 @@ bool RAWProcessor::GetAnalysisReport( WindowAnalysisReport& report, bool start_m
     // # phase 01
     // get current time stamp.
     time_t curtime;
-    report.timestamp = (unsigned long)time(&curtime);
+    report.timestamp = (uint32_t)time(&curtime);
 
     // # phase 02
     // find highest value in pixels ... ( 50% of maximum level )
-    unsigned identify_min_level = (unsigned)( float(pixel_max_level) * 0.2f );
+    float identify_min_level = pixel_max_level * 0.2f;
     if ( start_minlevel_zero == true )
     {
         identify_min_level = 0;
     }
 
-    unsigned index_center_thld  = 0;
+    uint32_t index_center_thld  = 0;
 
-    for( unsigned cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
+    for( uint32_t cnt=identify_min_level; cnt<pixel_max_level; cnt++ )
     {
         // find pixel (max-min)/2+min
         float minf = 0.f;
@@ -830,9 +818,9 @@ bool RAWProcessor::GetAnalysisReport( WindowAnalysisReport& report, bool start_m
 
     vector< minmaxpair > mmpairs;
 
-    unsigned avr_l = 0;
-    const unsigned min_l = 100;   /// Minimal amount of pixel counts.
-    unsigned min_q = 0;
+    uint32_t avr_l = 0;
+    const uint32_t min_l = 100;   /// Minimal amount of pixel counts.
+    uint32_t min_q = 0;
     bool raised = false;
 
     // # need to make it again.
@@ -897,7 +885,7 @@ bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report,  vector<fl
     return true;
 }
 
-bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vector<unsigned char>* byte_arrays, bool reversed )
+bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vector<uint8_t>* byte_arrays, bool reversed )
 {
     if ( report.timestamp == 0 )
         return false;
@@ -919,7 +907,7 @@ bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vecto
     {
         float apixel = pixel_arrays[cnt];
         float          fpixel = 0.0f;
-        unsigned char  bpixel = 0;
+        uint8_t        bpixel = 0;
 
         // cut off threhold pixel value.
         if ( apixel > thld_max )
@@ -946,7 +934,7 @@ bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vecto
         }
         else
         {
-            bpixel = (unsigned char)( fpixel );
+            bpixel = (uint8_t)( fpixel );
         }
 
         if ( reversed == true )
@@ -961,7 +949,7 @@ bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vecto
     return true;
 }
 
-bool RAWProcessor::GetPixel( unsigned x, unsigned y, float &px )
+bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
 {
     if ( pixel_arrays.size() == 0 )
         return false;
@@ -1035,8 +1023,8 @@ bool RAWProcessor::RotateFree( float degree )
     float* src = (float*)pixel_arrays.data();
     float* dst = NULL;
 
-    unsigned dst_w = img_width;
-    unsigned dst_h = img_height;
+    uint32_t dst_w = img_width;
+    uint32_t dst_h = img_height;
 
     float bgl = pixel_min_level;
 
@@ -1066,8 +1054,8 @@ RAWProcessor* RAWProcessor::RotateFree( float degree, float background )
     float* src = (float*)pixel_arrays.data();
     float* dst = NULL;
 
-    unsigned dst_w = img_width;
-    unsigned dst_h = img_height;
+    uint32_t dst_w = img_width;
+    uint32_t dst_h = img_height;
 
     float bgl = background;
 
@@ -1079,7 +1067,7 @@ RAWProcessor* RAWProcessor::RotateFree( float degree, float background )
         if ( newrp != NULL )
         {
             const char* ptr     = (const char*)dst;
-            unsigned long ptrsz =  dst_w * dst_h * sizeof(float);
+            uint32_t ptrsz =  dst_w * dst_h * sizeof(float);
 
             retb = newrp->LoadFromMemory( (void*)ptr, ptrsz, TRANSFORM_NONE, dst_h );
 
@@ -1097,7 +1085,7 @@ RAWProcessor* RAWProcessor::RotateFree( float degree, float background )
     return NULL;
 }
 
-RAWProcessor* RAWProcessor::Rescale( unsigned w, unsigned h, RescaleType st )
+RAWProcessor* RAWProcessor::Rescale( uint32_t w, uint32_t h, RescaleType st )
 {
     if ( ( pixel_arrays.size() > 0 ) && ( w > 0 ) && ( h > 0 ) )
     {
@@ -1180,7 +1168,7 @@ RAWProcessor* RAWProcessor::Clone()
     return NULL;
 }
 
-void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, vector<float>* pixels )
+void RAWProcessor::GetLinearPixels( uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, vector<float>* pixels )
 {
     if ( pixels == NULL )
     {
@@ -1323,15 +1311,15 @@ void RAWProcessor::GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsig
     }
 }
 
-void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, vector<float>* pixels)
+void RAWProcessor::GetRectPixels( uint32_t x, uint32_t y, uint32_t w, uint32_t h, vector<float>* pixels)
 {
     if ( pixels == NULL )
     {
         return;
     }
 
-    unsigned rw = w;
-    unsigned rh = h;
+    uint32_t rw = w;
+    uint32_t rh = h;
 
     if ( ( rw + x ) > img_width )
     {
@@ -1343,11 +1331,11 @@ void RAWProcessor::GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h
         rh = img_height - y;
     }
 
-    for( unsigned cnty=y; cnty<rh; cnty++ )
+    for( uint32_t cnty=y; cnty<rh; cnty++ )
     {
-        for( unsigned cntx=x;cntx<rw; cntx++ )
+        for( uint32_t cntx=x;cntx<rw; cntx++ )
         {
-            unsigned mpos = img_width * cnty + cntx;
+            uint32_t mpos = img_width * cnty + cntx;
 
             if ( pixel_arrays_realsz > mpos )
             {
@@ -1366,7 +1354,7 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
 
     reordercoords( coords );
 
-    unsigned ptsz = coords->size();
+    uint32_t ptsz = coords->size();
 
     if ( ptsz < 2 )
     {
@@ -1374,16 +1362,16 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
         return;
     }
 
-    const unsigned max_y = img_height;
-    const unsigned max_x = img_width;
+    const uint32_t max_y = img_height;
+    const uint32_t max_x = img_width;
 
     vector< double > node_x;
 
-    for( unsigned cur_y=0; cur_y<max_y; cur_y++ )
+    for( uint32_t cur_y=0; cur_y<max_y; cur_y++ )
     {
-        unsigned    rcnt        = ptsz - 1;
+        uint32_t    rcnt        = ptsz - 1;
 
-        for( unsigned cnt=0; cnt<ptsz; cnt++ )
+        for( uint32_t cnt=0; cnt<ptsz; cnt++ )
         {
             if ( ( ( (double)coords->at(cnt).y   < (double)cur_y ) &&
                    ( (double)coords->at(rcnt).y >= (double)cur_y ) ) ||
@@ -1401,7 +1389,7 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
             rcnt = cnt;
         }
 
-        unsigned node_x_sz = node_x.size();
+        uint32_t node_x_sz = node_x.size();
 
         // sort nodes ..
         if ( node_x_sz > 1 )
@@ -1411,7 +1399,7 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
                   RAWProcessor_sortcondition );
         }
 
-        for( unsigned dcnt=0; dcnt<node_x_sz; dcnt+=2 )
+        for( uint32_t dcnt=0; dcnt<node_x_sz; dcnt+=2 )
         {
             if ( node_x[dcnt] >= max_x )
                 break;
@@ -1442,7 +1430,7 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
 void RAWProcessor::GetAnalysisFromPixels( vector<float>& pixels, SimpleAnalysisInfo& info )
 {
     /*
-    for( unsigned cnt=0; cnt<(DEF_PIXEL_WINDOW + 1); cnt++ )
+    for( uint32_t cnt=0; cnt<(DEF_PIXEL_WINDOW + 1); cnt++ )
     {
         window[cnt] = 0;
     }
@@ -1512,23 +1500,23 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
             memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( float ) );
 
             #pragma omp parallel for
-            for( unsigned cntx=0; cntx<img_width; cntx++ )
+            for( uint32_t cntx=0; cntx<img_width; cntx++ )
             {
-                for( unsigned cnty=0; cnty<img_height; cnty++ )
+                for( uint32_t cnty=0; cnty<img_height; cnty++ )
                 {
                     double adjustedp = 0.0;
 
                     // -- applying matrix ---
-                    for( unsigned fcntx=0; fcntx<fconfig->width; fcntx++ )
+                    for( uint32_t fcntx=0; fcntx<fconfig->width; fcntx++ )
                     {
-                        for( unsigned fcnty=0; fcnty<fconfig->height; fcnty++ )
+                        for( uint32_t fcnty=0; fcnty<fconfig->height; fcnty++ )
                         {
-                            unsigned posX = ( cntx - fconfig->width / 2 + fcntx + img_width )
+                            uint32_t posX = ( cntx - fconfig->width / 2 + fcntx + img_width )
                                             % img_width;
-                            unsigned posY = ( cnty - fconfig->height / 2 + fcnty + img_height )
+                            uint32_t posY = ( cnty - fconfig->height / 2 + fcnty + img_height )
                                             % img_height;
 
-                            unsigned posM = posY * img_width + posX;
+                            uint32_t posM = posY * img_width + posX;
 
                             if ( posM < pixel_arrays_realsz )
                             {
@@ -1573,24 +1561,24 @@ bool RAWProcessor::ApplyMedianFilter()
         memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( float ) );
 
         #pragma omp parallel for
-        for( unsigned cntx=0; cntx<img_width; cntx++ )
+        for( uint32_t cntx=0; cntx<img_width; cntx++ )
         {
-            for( unsigned cnty=0; cnty<img_height; cnty++ )
+            for( uint32_t cnty=0; cnty<img_height; cnty++ )
             {
-                float medimatrix[9] = {0};
-                unsigned char  medimatrixsz  = 0;
+                float  medimatrix[9] = {0};
+                size_t medimatrixsz  = 0;
 
                 // -- applying matrix ---
-                for( unsigned fcntx=0; fcntx<3; fcntx++ )
+                for( uint32_t fcntx=0; fcntx<3; fcntx++ )
                 {
-                    for( unsigned fcnty=0; fcnty<3; fcnty++ )
+                    for( uint32_t fcnty=0; fcnty<3; fcnty++ )
                     {
-                        unsigned posX = ( cntx - 3 / 2 + fcntx + img_width )
+                        uint32_t posX = ( cntx - 3 / 2 + fcntx + img_width )
                                         % img_width;
-                        unsigned posY = ( cnty - 3 / 2 + fcnty + img_height )
+                        uint32_t posY = ( cnty - 3 / 2 + fcnty + img_height )
                                         % img_height;
 
-                        unsigned posM = posY * img_width + posX;
+                        uint32_t posM = posY * img_width + posX;
 
                         if ( posM < pixel_arrays_realsz )
                         {
@@ -1637,7 +1625,7 @@ RAWProcessor* RAWProcessor::CloneWithFilter( FilterConfig* fconfig )
     return NULL;
 }
 
-RAWProcessor::FilterConfig* RAWProcessor::GetPresetFilter( unsigned fnum )
+RAWProcessor::FilterConfig* RAWProcessor::GetPresetFilter( uint32_t fnum )
 {
     FilterConfig* retfp = NULL;
 
@@ -1704,9 +1692,8 @@ bool RAWProcessor::AdjustContrast( float percent )
     return false;
 }
 
-bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float p3, float p4 )
+bool RAWProcessor::AdjustToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 )
 {
-    /*
     if ( pixel_arrays_realsz > 0 )
     {
         switch ( ttype )
@@ -1745,17 +1732,16 @@ bool RAWProcessor::AdjustToneMapping( unsigned ttype, float p1, float p2, float 
 
         }
     }
-    */
 
     return false;
 }
 
-bool RAWProcessor::ApplyCLAHE( WindowAnalysisReport &report, unsigned applysz, unsigned bins, float slope )
+bool RAWProcessor::ApplyCLAHE( WindowAnalysisReport &report, uint32_t applysz, uint32_t bins, float slope )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        unsigned minv = report.threshold_wide_min;
-        unsigned maxv = report.threshold_wide_max;
+        uint32_t minv = report.threshold_wide_min;
+        uint32_t maxv = report.threshold_wide_max;
         float* ptr = pixel_arrays.data();
 
         return rawimgtk::ApplyCLAHE( ptr, img_width, img_height, minv, maxv,
@@ -1765,7 +1751,7 @@ bool RAWProcessor::ApplyCLAHE( WindowAnalysisReport &report, unsigned applysz, u
     return false;
 }
 
-bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
+bool RAWProcessor::ApplyLowFrequency( uint32_t filtersz, uint32_t repeat )
 {
     if ( pixel_arrays_realsz > 0 )
     {
@@ -1779,20 +1765,17 @@ bool RAWProcessor::ApplyLowFrequency( unsigned filtersz, unsigned repeat )
     return false;
 }
 
-bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edgesz, unsigned margin )
+bool RAWProcessor::ApplyEdgeEnhance( uint32_t fszh, uint32_t fszv, uint32_t edgesz, uint32_t margin )
 {
     if ( pixel_arrays_realsz > 0 )
     {
-        float* ptr = pixel_arrays.data();
-        unsigned        imgsz = pixel_arrays.size();
-
+        float* ptr    = pixel_arrays.data();
+        size_t imgsz  = pixel_arrays.size();
         float* imgEH1 = new float[ imgsz ];
-
         if ( imgEH1 == NULL )
             return false;
 
         float* imgEH2 = new float[ imgsz ];
-
         if ( imgEH2 == NULL )
         {
             delete[] imgEH1;
@@ -1840,12 +1823,12 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edge
             margin = 0;
         }
 
-        unsigned cnth = 0;
-        unsigned cntw = 0;
-        unsigned mgnx = margin;
-        unsigned mgny = margin;
-        unsigned mgnw = img_width - (margin * 2);
-        unsigned mgnh = img_height - (margin * 2);
+        uint32_t cnth = 0;
+        uint32_t cntw = 0;
+        uint32_t mgnx = margin;
+        uint32_t mgny = margin;
+        uint32_t mgnw = img_width - (margin * 2);
+        uint32_t mgnh = img_height - (margin * 2);
 
         float fedgev = (float)edgesz / 8.0f;
 
@@ -1854,7 +1837,7 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edge
         {
             for( cntw=mgnx; cntw<mgnw; cntw++ )
             {
-                unsigned pos = cnth * img_width + cntw;
+                uint32_t pos = cnth * img_width + cntw;
                 double pixelv = abs( (float)ptr[pos] + (float)imgEH1[pos] + (float)imgEH2[pos] )
                                 / fedgev;
                 if ( pixelv < 0.0 )
@@ -1880,7 +1863,7 @@ bool RAWProcessor::ApplyEdgeEnhance( unsigned fszh, unsigned fszv, unsigned edge
     return false;
 }
 
-bool RAWProcessor::ApplyAnisotropicFilter( unsigned strength, unsigned param )
+bool RAWProcessor::ApplyAnisotropicFilter( uint32_t strength, uint32_t param )
 {
     if ( pixel_arrays_realsz > 0 )
     {
@@ -1923,48 +1906,23 @@ void RAWProcessor::analyse()
         img_width = pixel_arrays.size() / img_height;
     }
 
-    // measure Bits Per Pixel.
-    // it starts from 10 bits.
-    pixel_bpp = 10;
-    if ( pixel_max_level > 0x07FF )
-    {
-        pixel_bpp = 12;
-
-        if ( pixel_max_level > 0x1FFF )
-        {
-            pixel_bpp = 14;
-
-            if ( pixel_max_level > 0x4FFF )
-            {
-                pixel_bpp = 16;
-            }
-        }
-    }
+    // floating point version don't calculating bits width .
+    // always 32bit.
+    pixel_bpp = 32;
 }
 
 void RAWProcessor::resetWindow()
 {
-    /*
-    if ( pixel_window.size() > 0 )
-    {
-        pixel_window.clear();
-    }
-
-    if ( pixel_arrays_realsz > 0 )
-    {
-        pixel_window.resize( pixel_arrays_realsz );
-    }
-
     pixel_window_max = (float)pixel_arrays_realsz;
-    */
 }
 
 void RAWProcessor::calcWindow()
 {
-    pixel_min_level = 1.f;
-    pixel_max_level = 0.f;
-    pixel_med_level = 0.5f;
+    pixel_min_level = _MAX_F_;
+    pixel_max_level = _MIN_F_;
+    pixel_med_level = 0.0f;
 
+    #pragma omp for reduction(+:pixel_max_level) reduction(-:pixel_min_level) nowait
     for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
         if ( pixel_arrays[cnt] > pixel_max_level )
@@ -1988,10 +1946,11 @@ void RAWProcessor::calcWindow()
 
 void RAWProcessor::findWideness(float& minf, float& maxf )
 {
-
+    minf = pixel_min_level;
+    maxf = pixel_max_level;
 }
 
-void RAWProcessor::addpixelarray( std::vector<float>* outpixels, unsigned x, unsigned y )
+void RAWProcessor::addpixelarray( std::vector<float>* outpixels, uint32_t x, uint32_t y )
 {
     if ( outpixels == NULL )
     {
@@ -2000,7 +1959,7 @@ void RAWProcessor::addpixelarray( std::vector<float>* outpixels, unsigned x, uns
 
     if ( ( x < img_width ) && ( y < img_height ) )
     {
-        unsigned mpos = img_width * y + x;
+        uint32_t mpos = img_width * y + x;
         if ( pixel_arrays_realsz > mpos )
         {
             outpixels->push_back( pixel_arrays[ mpos ] );
@@ -2015,15 +1974,15 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
         return;
     }
 
-    unsigned ptsz = coords->size();
+    size_t ptsz = coords->size();
 
     if ( ptsz > 2 )
     {
-        unsigned idxFirst = -1;
-        unsigned minX = img_width;
-        unsigned minY = img_height;
+        size_t idxFirst = -1;
+        size_t minX = img_width;
+        size_t minY = img_height;
 
-        for( unsigned cnt=0; cnt<(ptsz - 1); cnt++ )
+        for( size_t cnt=0; cnt<(ptsz - 1); cnt++ )
         {
             if ( coords->at(cnt).y < minY )
             {
@@ -2034,7 +1993,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
         }
 
         // X is next.
-        for( unsigned cnt=0; cnt<(ptsz - 1); cnt++ )
+        for( size_t cnt=0; cnt<(ptsz - 1); cnt++ )
         {
             if ( ( coords->at(cnt).x < minX ) && ( coords->at(cnt).y < minY ) )
             {
@@ -2050,16 +2009,16 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
             copydummy.resize( ptsz );
 
             // copy all to dummy.
-            for( unsigned cpcnt=0; cpcnt<ptsz-1; cpcnt++ )
+            for( size_t cpcnt=0; cpcnt<ptsz-1; cpcnt++ )
             {
                 copydummy[cpcnt].x = coords->at(cpcnt).x;
                 copydummy[cpcnt].y = coords->at(cpcnt).y;
             }
 
-            unsigned lastQ = 0;
+            size_t lastQ = 0;
 
             // copy back all except last coordination
-            for( unsigned cnt=idxFirst; cnt<(ptsz - 1); cnt++ )
+            for( size_t cnt=idxFirst; cnt<(ptsz - 1); cnt++ )
             {
                 coords->at(cnt-idxFirst).x = copydummy[cnt].x;
                 coords->at(cnt-idxFirst).y = copydummy[cnt].y;
@@ -2069,7 +2028,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 
             // Last end point will be re-assign for new vector's first.
 
-            for( unsigned cnt=0; cnt<idxFirst; cnt++ )
+            for( size_t cnt=0; cnt<idxFirst; cnt++ )
             {
                 coords->at( cnt + lastQ + 1 ).x = copydummy[ cnt ].x;
                 coords->at( cnt + lastQ + 1 ).y = copydummy[ cnt ].y;
@@ -2087,7 +2046,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 void RAWProcessor::CutoffLevels( float minv, float maxv )
 {
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
         if ( pixel_arrays[cnt] > maxv )
         {
@@ -2104,7 +2063,7 @@ void RAWProcessor::CutoffLevels( float minv, float maxv )
 void RAWProcessor::CutoffLevelsRanged( float minv, float maxv, float valmin, float valmax )
 {
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<pixel_arrays.size(); cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
         if ( pixel_arrays[cnt] > maxv )
         {

@@ -2,9 +2,9 @@
 #define __RAWPROCESSOR_H__
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  32bit precise gray scale RAW image processor for stdc++.
+//  32bit floating point precise gray scale RAW image processor for stdc++.
 //  ============================================================================
-//  (C)Copyright 2013~, Raphael Kim (rageworx@gmail.com)
+//  (C)Copyright 2013-2023, Raphael Kim (rageworx@gmail.com)
 //
 //  * Processing read pixels to down-scaling, threshold cutting.
 //
@@ -84,22 +84,22 @@ class RAWProcessor
 
     public:
         RAWProcessor();
-        RAWProcessor( const char* raw_file, unsigned int height = 0 );
+        RAWProcessor( const char* raw_file, uint32_t height = 0 );
 #ifdef WCHAR_SUPPORTED
-        RAWProcessor( const wchar_t* raw_file, unsigned int height = 0 );
+        RAWProcessor( const wchar_t* raw_file, uint32_t height = 0 );
 #endif // WCHAR_SUPPORTED
         virtual~RAWProcessor();
 
     public:
         bool Loaded()                   { return raw_loaded; }
-        unsigned PixelCount()           { return datasize(); }
+        size_t PixelCount()             { return datasize(); }
         float MinimumLevel()            { return pixel_min_level; }
         float MaximumLevel()            { return pixel_max_level; }
         float MediumLevel()             { return pixel_med_level; }
-        unsigned Width()                { return img_width; }
-        unsigned Height()               { return img_height; }
-        unsigned WindowCount()          { return pixel_window_max; }
-        unsigned char BPP()             { return pixel_bpp; }
+        uint32_t Width()                { return img_width; }
+        uint32_t Height()               { return img_height; }
+        uint32_t WindowCount()          { return pixel_window_max; }
+        uint32_t BPP()                  { return pixel_bpp; }
         void RecalcLevels()             { calcWindow(); }
 
     public:
@@ -112,18 +112,18 @@ class RAWProcessor
         void Version( int* retverints ); /// put int[4] array.
 
         // Load from file.
-        bool Load( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, size_t height= 0, unsigned int dtype = DATATYPE_USHORT, bool byteswap = false );
+        bool Load( const char* raw_file, uint32_t trnsfm = TRANSFORM_NONE, size_t height= 0, uint32_t dtype = DATATYPE_USHORT, bool byteswap = false );
 #ifdef WCHAR_SUPPORTED
-        bool Load( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, size_t height= 0, unsigned int dtype = DATATYPE_USHORT, bool byteswap = false );
+        bool Load( const wchar_t* raw_file, uint32_t trnsfm = TRANSFORM_NONE, size_t height= 0, uint32_t dtype = DATATYPE_USHORT, bool byteswap = false );
 #endif // WCHAR_SUPPORTED
 
         // Load from memory.
-        bool LoadFromMemory( void* buffer, size_t bufferlen, unsigned int trnsfm = TRANSFORM_NONE, size_t height = 0, unsigned int dtype = DATATYPE_FLOAT, bool byteswap = false );
+        bool LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trnsfm = TRANSFORM_NONE, size_t height = 0, uint32_t dtype = DATATYPE_FLOAT, bool byteswap = false );
 
         // Reload from file, actually same as like Load.
-        bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Reload( const char* raw_file, uint32_t trnsfm = TRANSFORM_NONE, uint32_t height = 0 );
 #ifdef WCHAR_SUPPORTED
-        bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Reload( const wchar_t* raw_file, uint32_t trnsfm = TRANSFORM_NONE, uint32_t height = 0 );
 #endif // WCHAR_SUPPORTED
         bool Reload();
 
@@ -131,26 +131,26 @@ class RAWProcessor
         void Unload();
 
         // Transform related...
-        bool ApplyTransform( unsigned int trnsfm = TRANSFORM_NONE );
+        bool ApplyTransform( uint32_t trnsfm = TRANSFORM_NONE );
         // rotated image may cropped to same size of previous in center.
         // recommended degrees : 0.0 ~ 359.99
         bool RotateFree( float degree );
-        void ChangeHeight( unsigned h );
-        bool Get8bitDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype, bool reversed );
-        bool Get16bitRawImage( std::vector<unsigned short>& word_arrays, bool reversed );
+        void ChangeHeight( uint32_t h );
+        bool Get8bitDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype, bool reversed );
+        bool Get16bitRawImage( std::vector<uint16_t>& word_arrays, bool reversed );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
-        bool Invert( unsigned char maxbits = 16 );
+        bool Invert(); /// same as InvertAuto() in float version.
         bool InvertAuto();
 
         // GetXXXX methods --
-        bool GetDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
+        bool GetDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool GetRawImage( std::vector<float>* word_arrays, bool reversed = false );
         bool GetRawImage( std::vector<float>* word_arrays );
         bool GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero = false );
         bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<float>* word_arrays, bool reversed = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint8_t>* byte_arrays, bool reversed = false );
         bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<float>* byte_arrays );
-        bool GetPixel( unsigned x, unsigned y, float &px );
+        bool GetPixel( uint32_t x, uint32_t y, float &px );
 
     // Some additional tools here ...
     public:
@@ -162,24 +162,23 @@ class RAWProcessor
     public:
         // image may enlarged.
         RAWProcessor* RotateFree( float degree, float background = 0 );
-        RAWProcessor* Rescale( unsigned w, unsigned h, RescaleType st = RESCALE_NEAREST );
+        RAWProcessor* Rescale( uint32_t w, uint32_t h, RescaleType st = RESCALE_NEAREST );
         RAWProcessor* Clone();
 
     public:
-        typedef struct { unsigned x; unsigned y; } polygoncoord;
-        // Window == Histogram.
-        void GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, std::vector<float>* pixels );
-        void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<float>* pixels);
+        typedef struct { uint32_t x; uint32_t y; } polygoncoord;
+        void GetLinearPixels( uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, std::vector<float>* pixels );
+        void GetRectPixels( uint32_t x, uint32_t y, uint32_t w, uint32_t h, std::vector<float>* pixels);
         void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<float>* pixels);
         void GetAnalysisFromPixels( std::vector<float>& pixels, SimpleAnalysisInfo& info );
 
     public:
         typedef struct
         {
-            unsigned char   width;
-            unsigned char   height;
-            float           factor;
-            float           bias;
+            uint32_t width;
+            uint32_t height;
+            float    factor;
+            float    bias;
             std::vector< float > matrix;
         }FilterConfig;
 
@@ -193,7 +192,7 @@ class RAWProcessor
         RAWProcessor* CloneWithFilter( FilterConfig* fconfig );
         bool          ApplyMedianFilter();
 
-        FilterConfig* GetPresetFilter( unsigned fnum );
+        FilterConfig* GetPresetFilter( uint32_t fnum );
         void          DiscardFilter( FilterConfig* fp );
 
     public:
@@ -203,16 +202,16 @@ class RAWProcessor
         bool AdjustGamma( float gamma );
         bool AdjustBrightness( float percent );
         bool AdjustContrast( float percent );
-        bool AdjustToneMapping( unsigned ttype, float p1, float p2, float p3, float p4 );
+        bool AdjustToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 );
 
     public:
         // CLAHE ( Contrast Limited Adaptive Histogram Equalization )
-        bool ApplyCLAHE( WindowAnalysisReport &report, unsigned applysz, unsigned bins, float slope );
+        bool ApplyCLAHE( WindowAnalysisReport &report, uint32_t applysz, uint32_t bins, float slope );
 
     public:
-        bool ApplyLowFrequency( unsigned filtersz = 3, unsigned repeat = 1 );
-        bool ApplyEdgeEnhance( unsigned fszh = 5, unsigned fszv = 5, unsigned edgesz = 3, unsigned margin = 0 );
-        bool ApplyAnisotropicFilter( unsigned strength, unsigned param );
+        bool ApplyLowFrequency( uint32_t filtersz = 3, uint32_t repeat = 1 );
+        bool ApplyEdgeEnhance( uint32_t fszh = 5, uint32_t fszv = 5, uint32_t edgesz = 3, uint32_t margin = 0 );
+        bool ApplyAnisotropicFilter( uint32_t strength, uint32_t param );
 
     public:
         const size_t datasize();
@@ -225,28 +224,28 @@ class RAWProcessor
         void findWideness(float& minf, float& maxf );
 
     protected:
-        void addpixelarray( std::vector<float>* outpixels, unsigned x, unsigned y );
+        void addpixelarray( std::vector<float>* outpixels, uint32_t x, uint32_t y );
         void reordercoords( std::vector<polygoncoord>* coords );
 
     protected:
         bool               raw_loaded;
         std::vector<float> pixel_arrays;
-        unsigned long      pixel_arrays_srcsz;
-        unsigned long      pixel_arrays_realsz;
+        size_t             pixel_arrays_srcsz;
+        size_t             pixel_arrays_realsz;
         float              pixel_window_max;
-        unsigned char      pixel_bpp;
+        uint32_t           pixel_bpp;
         float              pixel_min_level;
         float              pixel_max_level;
         float              pixel_med_level;
-        unsigned long      index_max_pixel;
-        unsigned int       current_transform;
+        size_t             index_max_pixel;
+        uint32_t           current_transform;
 #ifdef WCHAR_SUPPORTED
         std::wstring       raw_file_name;
 #else
         std::string        raw_file_name;
 #endif
-        unsigned           img_height;
-        unsigned           img_width;
+        uint32_t           img_height;
+        uint32_t           img_width;
         RAWUserScaleIF*    userscaler;
 };
 #endif /// of __RAWPROCESSOR_H__
