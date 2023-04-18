@@ -31,9 +31,9 @@ namespace RAWImageToolKit
     *  - adaptation Adaptation in range [0:1] : default to 1
     *  - color_correction Color correction in range [0:1] : default to 0
     ***/
-    bool tmoReinhard2005( unsigned short* src, unsigned srcsz,
-                          float maxf, float normalf,
-                          float intensity, float contrast, float adaptation,
+    bool tmoReinhard2005( float* src, size_t srcsz,                          \
+                          float maxf, float normalf,                         \
+                          float intensity, float contrast, float adaptation, \
                           float colorcorrection );
 };
 

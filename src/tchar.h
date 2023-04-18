@@ -19,19 +19,19 @@
  *
  */
 
-#ifndef	_TCHAR_H_
+#ifndef _TCHAR_H_
 #define _TCHAR_H_
 
 /* All the headers include this file. */
 #ifdef __MINGW__
-	#include <_mingw.h>
+    #include <_mingw.h>
 #endif
 
 /*
  * NOTE: This tests _UNICODE, which is different from the UNICODE define
  *       used to differentiate Win32 API calls.
  */
-#ifdef	_UNICODE
+#ifdef  _UNICODE
 
 /*
  * Include <wchar.h> for wchar_t and WEOF if _UNICODE.
@@ -44,9 +44,9 @@
  */
 #ifndef _TCHAR_DEFINED
 #ifndef RC_INVOKED
-typedef	wchar_t	TCHAR;
+typedef wchar_t TCHAR;
 typedef wchar_t _TCHAR;
-#endif	/* Not RC_INVOKED */
+#endif  /* Not RC_INVOKED */
 #define _TCHAR_DEFINED
 #endif
 
@@ -62,7 +62,7 @@ typedef wchar_t _TCHAR;
  * macro within your programs.  It's name and function could change without
  * notice.
  */
-#define	__TEXT(q)	L##q
+#define __TEXT(q)   L##q
 
 /*  for porting from other Windows compilers */
 #if 0  /* no  wide startup module */
@@ -75,78 +75,78 @@ typedef wchar_t _TCHAR;
 /*
  * Unicode functions
  */
-#define	_tprintf	wprintf
-#define	_ftprintf	fwprintf
-#define	_stprintf	swprintf
-#define	_sntprintf	_snwprintf
-#define	_vtprintf	vwprintf
-#define	_vftprintf	vfwprintf
-#define _vstprintf	vswprintf
-#define	_vsntprintf	_vsnwprintf
-#define	_vsctprintf	_vscwprintf
-#define	_tscanf		wscanf
-#define	_ftscanf	fwscanf
-#define	_stscanf	swscanf
-#define	_fgettc		fgetwc
-#define	_fgettchar	_fgetwchar
-#define	_fgetts		fgetws
-#define	_fputtc		fputwc
-#define	_fputtchar	_fputwchar
-#define	_fputts		fputws
-#define	_gettc		getwc
-#define	_getts		_getws
-#define	_puttc		putwc
+#define _tprintf    wprintf
+#define _ftprintf   fwprintf
+#define _stprintf   swprintf
+#define _sntprintf  _snwprintf
+#define _vtprintf   vwprintf
+#define _vftprintf  vfwprintf
+#define _vstprintf  vswprintf
+#define _vsntprintf _vsnwprintf
+#define _vsctprintf _vscwprintf
+#define _tscanf     wscanf
+#define _ftscanf    fwscanf
+#define _stscanf    swscanf
+#define _fgettc     fgetwc
+#define _fgettchar  _fgetwchar
+#define _fgetts     fgetws
+#define _fputtc     fputwc
+#define _fputtchar  _fputwchar
+#define _fputts     fputws
+#define _gettc      getwc
+#define _getts      _getws
+#define _puttc      putwc
 #define _puttchar       putwchar
-#define	_putts		_putws
-#define	_ungettc	ungetwc
-#define	_tcstod		wcstod
-#define	_tcstol		wcstol
-#define _tcstoul	wcstoul
-#define	_itot		_itow
-#define	_ltot		_ltow
-#define	_ultot		_ultow
-#define	_ttoi		_wtoi
-#define	_ttol		_wtol
-#define	_tcscat		wcscat
-#define _tcschr		wcschr
-#define _tcscmp		wcscmp
-#define _tcscpy		wcscpy
-#define _tcscspn	wcscspn
-#define	_tcslen		wcslen
-#define	_tcsncat	wcsncat
-#define	_tcsncmp	wcsncmp
-#define	_tcsncpy	wcsncpy
-#define	_tcspbrk	wcspbrk
-#define	_tcsrchr	wcsrchr
-#define _tcsspn		wcsspn
-#define	_tcsstr		wcsstr
-#define _tcstok		wcstok
-#define	_tcsdup		_wcsdup
-#define	_tcsicmp	_wcsicmp
-#define	_tcsnicmp	_wcsnicmp
-#define	_tcsnset	_wcsnset
-#define	_tcsrev		_wcsrev
-#define _tcsset		_wcsset
-#define	_tcslwr		_wcslwr
-#define	_tcsupr		_wcsupr
-#define	_tcsxfrm	wcsxfrm
-#define	_tcscoll	wcscoll
-#define	_tcsicoll	_wcsicoll
-#define	_istalpha	iswalpha
-#define	_istupper	iswupper
-#define	_istlower	iswlower
-#define	_istdigit	iswdigit
-#define	_istxdigit	iswxdigit
-#define	_istspace	iswspace
-#define	_istpunct	iswpunct
-#define	_istalnum	iswalnum
-#define	_istprint	iswprint
-#define	_istgraph	iswgraph
-#define	_istcntrl	iswcntrl
-#define	_istascii	iswascii
-#define _totupper	towupper
-#define	_totlower	towlower
-#define _tcsftime	wcsftime
+#define _putts      _putws
+#define _ungettc    ungetwc
+#define _tcstod     wcstod
+#define _tcstol     wcstol
+#define _tcstoul    wcstoul
+#define _itot       _itow
+#define _ltot       _ltow
+#define _ultot      _ultow
+#define _ttoi       _wtoi
+#define _ttol       _wtol
+#define _tcscat     wcscat
+#define _tcschr     wcschr
+#define _tcscmp     wcscmp
+#define _tcscpy     wcscpy
+#define _tcscspn    wcscspn
+#define _tcslen     wcslen
+#define _tcsncat    wcsncat
+#define _tcsncmp    wcsncmp
+#define _tcsncpy    wcsncpy
+#define _tcspbrk    wcspbrk
+#define _tcsrchr    wcsrchr
+#define _tcsspn     wcsspn
+#define _tcsstr     wcsstr
+#define _tcstok     wcstok
+#define _tcsdup     _wcsdup
+#define _tcsicmp    _wcsicmp
+#define _tcsnicmp   _wcsnicmp
+#define _tcsnset    _wcsnset
+#define _tcsrev     _wcsrev
+#define _tcsset     _wcsset
+#define _tcslwr     _wcslwr
+#define _tcsupr     _wcsupr
+#define _tcsxfrm    wcsxfrm
+#define _tcscoll    wcscoll
+#define _tcsicoll   _wcsicoll
+#define _istalpha   iswalpha
+#define _istupper   iswupper
+#define _istlower   iswlower
+#define _istdigit   iswdigit
+#define _istxdigit  iswxdigit
+#define _istspace   iswspace
+#define _istpunct   iswpunct
+#define _istalnum   iswalnum
+#define _istprint   iswprint
+#define _istgraph   iswgraph
+#define _istcntrl   iswcntrl
+#define _istascii   iswascii
+#define _totupper   towupper
+#define _totlower   towlower
+#define _tcsftime   wcsftime
 /* Macro functions */
 #define _tcsdec     _wcsdec
 #define _tcsinc     _wcsinc
@@ -170,18 +170,18 @@ typedef wchar_t _TCHAR;
 #define _ttoi64     _wtoi64
 #define _i64tot     _i64tow
 #define _ui64tot    _ui64tow
-#define	_tasctime	_wasctime
-#define	_tctime		_wctime
+#define _tasctime   _wasctime
+#define _tctime     _wctime
 #if __MSVCRT_VERSION__ >= 0x0800
-#define	_tctime32	_wctime32
-#define	_tctime64	_wctime64
+#define _tctime32   _wctime32
+#define _tctime64   _wctime64
 #endif /* __MSVCRT_VERSION__ >= 0x0800 */
-#define	_tstrdate	_wstrdate
-#define	_tstrtime	_wstrtime
-#define	_tutime		_wutime
+#define _tstrdate   _wstrdate
+#define _tstrtime   _wstrtime
+#define _tutime     _wutime
 #if __MSVCRT_VERSION__ >= 0x0800
-#define	_tutime64	_wutime64
-#define	_tutime32	_wutime32
+#define _tutime64   _wutime64
+#define _tutime32   _wutime32
 #endif /* __MSVCRT_VERSION__ > 0x0800 */
 #define _tcsnccoll  _wcsncoll
 #define _tcsncoll   _wcsncoll
@@ -232,40 +232,40 @@ typedef wchar_t _TCHAR;
 #define _tfindnext32i64   _wfindnext32i64
 #define _tfindnext64i32   _wfindnext64i32
 #endif /* __MSVCRT_VERSION__ > 0x0800 */
-#define _tchdir		_wchdir
-#define _tgetcwd	_wgetcwd
-#define _tgetdcwd	_wgetdcwd
-#define _tmkdir		_wmkdir
-#define _trmdir		_wrmdir
-#define _tstat		_wstat
-#define _tstati64	_wstati64
-#define _tstat64	_wstat64
+#define _tchdir     _wchdir
+#define _tgetcwd    _wgetcwd
+#define _tgetdcwd   _wgetdcwd
+#define _tmkdir     _wmkdir
+#define _trmdir     _wrmdir
+#define _tstat      _wstat
+#define _tstati64   _wstati64
+#define _tstat64    _wstat64
 #if __MSVCRT_VERSION__ >= 0x0800
-#define _tstat32	_wstat32
-#define _tstat32i64	_wstat32i64
-#define _tstat64i32	_wstat64i32
+#define _tstat32    _wstat32
+#define _tstat32i64 _wstat32i64
+#define _tstat64i32 _wstat64i32
 #endif /* __MSVCRT_VERSION__ > 0x0800 */
 #endif  /* __MSVCRT__ */
 
 /* dirent structures and functions */
-#define _tdirent	_wdirent
-#define _TDIR 		_WDIR
-#define _topendir	_wopendir
-#define _tclosedir	_wclosedir
-#define _treaddir	_wreaddir
-#define _trewinddir	_wrewinddir
-#define _ttelldir	_wtelldir
-#define _tseekdir	_wseekdir
+#define _tdirent    _wdirent
+#define _TDIR       _WDIR
+#define _topendir   _wopendir
+#define _tclosedir  _wclosedir
+#define _treaddir   _wreaddir
+#define _trewinddir _wrewinddir
+#define _ttelldir   _wtelldir
+#define _tseekdir   _wseekdir
 
-#else	/* Not _UNICODE */
+#else   /* Not _UNICODE */
 
 /*
  * TCHAR, the type you should use instead of char.
  */
 #ifndef _TCHAR_DEFINED
 #ifndef RC_INVOKED
-typedef char	TCHAR;
-typedef char	_TCHAR;
+typedef char    TCHAR;
+typedef char    _TCHAR;
 #endif
 #define _TCHAR_DEFINED
 #endif
@@ -281,7 +281,7 @@ typedef char	_TCHAR;
  * macro within your programs.  It's name and function could change without
  * notice.
  */
-#define	__TEXT(q)	q
+#define __TEXT(q)   q
 
 /*  for porting from other Windows compilers */
 #define _tmain      main
@@ -293,102 +293,102 @@ typedef char	_TCHAR;
  * Non-unicode (standard) functions
  */
 
-#define	_tprintf	printf
-#define _ftprintf	fprintf
-#define	_stprintf	sprintf
-#define	_sntprintf	_snprintf
-#define	_vtprintf	vprintf
-#define	_vftprintf	vfprintf
-#define _vstprintf	vsprintf
-#define	_vsntprintf	_vsnprintf
-#define	_vsctprintf	_vscprintf
-#define	_tscanf		scanf
-#define	_ftscanf	fscanf
-#define	_stscanf	sscanf
-#define	_fgettc		fgetc
-#define	_fgettchar	_fgetchar
-#define	_fgetts		fgets
-#define	_fputtc		fputc
-#define	_fputtchar	_fputchar
-#define	_fputts		fputs
-#define _tfdopen	_fdopen
-#define	_tfopen		fopen
-#define _tfreopen	freopen
-#define	_tfsopen	_fsopen
-#define	_tgetenv	getenv
-#define	_tputenv	_putenv
-#define	_tsearchenv	_searchenv
+#define _tprintf    printf
+#define _ftprintf   fprintf
+#define _stprintf   sprintf
+#define _sntprintf  _snprintf
+#define _vtprintf   vprintf
+#define _vftprintf  vfprintf
+#define _vstprintf  vsprintf
+#define _vsntprintf _vsnprintf
+#define _vsctprintf _vscprintf
+#define _tscanf     scanf
+#define _ftscanf    fscanf
+#define _stscanf    sscanf
+#define _fgettc     fgetc
+#define _fgettchar  _fgetchar
+#define _fgetts     fgets
+#define _fputtc     fputc
+#define _fputtchar  _fputchar
+#define _fputts     fputs
+#define _tfdopen    _fdopen
+#define _tfopen     fopen
+#define _tfreopen   freopen
+#define _tfsopen    _fsopen
+#define _tgetenv    getenv
+#define _tputenv    _putenv
+#define _tsearchenv _searchenv
 #define  _tsystem       system
-#define	_tmakepath	_makepath
-#define	_tsplitpath	_splitpath
-#define	_tfullpath	_fullpath
-#define	_gettc		getc
-#define	_getts		gets
-#define	_puttc		putc
+#define _tmakepath  _makepath
+#define _tsplitpath _splitpath
+#define _tfullpath  _fullpath
+#define _gettc      getc
+#define _getts      gets
+#define _puttc      putc
 #define _puttchar       putchar
-#define	_putts		puts
-#define	_ungettc	ungetc
-#define	_tcstod		strtod
-#define	_tcstol		strtol
-#define _tcstoul	strtoul
-#define	_itot		_itoa
-#define	_ltot		_ltoa
-#define	_ultot		_ultoa
-#define	_ttoi		atoi
-#define	_ttol		atol
-#define	_tcscat		strcat
-#define _tcschr		strchr
-#define _tcscmp		strcmp
-#define _tcscpy		strcpy
-#define _tcscspn	strcspn
-#define	_tcslen		strlen
-#define	_tcsncat	strncat
-#define	_tcsncmp	strncmp
-#define	_tcsncpy	strncpy
-#define	_tcspbrk	strpbrk
-#define	_tcsrchr	strrchr
-#define _tcsspn		strspn
-#define	_tcsstr		strstr
-#define _tcstok		strtok
-#define	_tcsdup		_strdup
-#define	_tcsicmp	_stricmp
-#define	_tcsnicmp	_strnicmp
-#define	_tcsnset	_strnset
-#define	_tcsrev		_strrev
-#define _tcsset		_strset
-#define	_tcslwr		_strlwr
-#define	_tcsupr		_strupr
-#define	_tcsxfrm	strxfrm
-#define	_tcscoll	strcoll
-#define	_tcsicoll	_stricoll
-#define	_istalpha	isalpha
-#define	_istupper	isupper
-#define	_istlower	islower
-#define	_istdigit	isdigit
-#define	_istxdigit	isxdigit
-#define	_istspace	isspace
-#define	_istpunct	ispunct
-#define	_istalnum	isalnum
-#define	_istprint	isprint
-#define	_istgraph	isgraph
-#define	_istcntrl	iscntrl
-#define	_istascii	isascii
-#define _totupper	toupper
-#define	_totlower	tolower
-#define	_tasctime	asctime
-#define	_tctime		ctime
+#define _putts      puts
+#define _ungettc    ungetc
+#define _tcstod     strtod
+#define _tcstol     strtol
+#define _tcstoul    strtoul
+#define _itot       _itoa
+#define _ltot       _ltoa
+#define _ultot      _ultoa
+#define _ttoi       atoi
+#define _ttol       atol
+#define _tcscat     strcat
+#define _tcschr     strchr
+#define _tcscmp     strcmp
+#define _tcscpy     strcpy
+#define _tcscspn    strcspn
+#define _tcslen     strlen
+#define _tcsncat    strncat
+#define _tcsncmp    strncmp
+#define _tcsncpy    strncpy
+#define _tcspbrk    strpbrk
+#define _tcsrchr    strrchr
+#define _tcsspn     strspn
+#define _tcsstr     strstr
+#define _tcstok     strtok
+#define _tcsdup     _strdup
+#define _tcsicmp    _stricmp
+#define _tcsnicmp   _strnicmp
+#define _tcsnset    _strnset
+#define _tcsrev     _strrev
+#define _tcsset     _strset
+#define _tcslwr     _strlwr
+#define _tcsupr     _strupr
+#define _tcsxfrm    strxfrm
+#define _tcscoll    strcoll
+#define _tcsicoll   _stricoll
+#define _istalpha   isalpha
+#define _istupper   isupper
+#define _istlower   islower
+#define _istdigit   isdigit
+#define _istxdigit  isxdigit
+#define _istspace   isspace
+#define _istpunct   ispunct
+#define _istalnum   isalnum
+#define _istprint   isprint
+#define _istgraph   isgraph
+#define _istcntrl   iscntrl
+#define _istascii   isascii
+#define _totupper   toupper
+#define _totlower   tolower
+#define _tasctime   asctime
+#define _tctime     ctime
 #if __MSVCRT_VERSION__ >= 0x0800
-#define	_tctime32	_ctime32
-#define	_tctime64	_ctime64
+#define _tctime32   _ctime32
+#define _tctime64   _ctime64
 #endif /* __MSVCRT_VERSION__ >= 0x0800 */
-#define	_tstrdate	_strdate
-#define	_tstrtime	_strtime
-#define	_tutime		_utime
+#define _tstrdate   _strdate
+#define _tstrtime   _strtime
+#define _tutime     _utime
 #if __MSVCRT_VERSION__ >= 0x0800
-#define	_tutime64	_utime64
-#define	_tutime32	_utime32
+#define _tutime64   _utime64
+#define _tutime32   _utime32
 #endif /* __MSVCRT_VERSION__ > 0x0800 */
-#define _tcsftime	strftime
+#define _tcsftime   strftime
 /* Macro functions */
 #define _tcsdec     _strdec
 #define _tcsinc     _strinc
@@ -423,11 +423,11 @@ typedef char	_TCHAR;
 #define _tsetlocale setlocale
 #define _tunlink    _unlink
 #define _tfinddata_t    _finddata_t
-#define _tchdir	    _chdir
+#define _tchdir     _chdir
 #define _tgetcwd    _getcwd
 #define _tgetdcwd   _getdcwd
-#define _tmkdir	    _mkdir
-#define _trmdir	    _rmdir
+#define _tmkdir     _mkdir
+#define _trmdir     _rmdir
 #define _tstat      _stat
 
 #if 1  /* defined __MSVCRT__ */
@@ -457,29 +457,29 @@ typedef char	_TCHAR;
 #define _tstati64   _stati64
 #define _tstat64    _stat64
 #if __MSVCRT_VERSION__ >= 0x0800
-#define _tstat32	_stat32
-#define _tstat32i64	_stat32i64
-#define _tstat64i32	_stat64i32
+#define _tstat32    _stat32
+#define _tstat32i64 _stat32i64
+#define _tstat64i32 _stat64i32
 #endif /* __MSVCRT_VERSION__ > 0x0800 */
 #endif  /* __MSVCRT__ */
 
 /* dirent structures and functions */
-#define _tdirent	dirent
-#define _TDIR 		DIR
-#define _topendir	opendir
-#define _tclosedir	closedir
-#define _treaddir	readdir
-#define _trewinddir	rewinddir
-#define _ttelldir	telldir
-#define _tseekdir	seekdir
+#define _tdirent    dirent
+#define _TDIR       DIR
+#define _topendir   opendir
+#define _tclosedir  closedir
+#define _treaddir   readdir
+#define _trewinddir rewinddir
+#define _ttelldir   telldir
+#define _tseekdir   seekdir
 
-#endif	/* Not _UNICODE */
+#endif  /* Not _UNICODE */
 
 /*
  * UNICODE a constant string when _UNICODE is defined else returns the string
  * unmodified.  Also defined in w32api/winnt.h.
  */
-#define _TEXT(x)	__TEXT(x)
-#define	_T(x)		__TEXT(x)
+#define _TEXT(x)    __TEXT(x)
+#define _T(x)       __TEXT(x)
 
-#endif	/* Not _TCHAR_H_ */
+#endif  /* Not _TCHAR_H_ */

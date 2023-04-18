@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 
 class RAWUserScaleIF
 {
@@ -44,41 +45,41 @@ class RAWProcessor
             RESCALE_LANZCOS3
         }RescaleType;
 
-        #define TRANSFORM_NONE              0x00000000
+        #define TRANSFORM_NONE              ( 0x00000000 )
 
-        #define TRANSFORM_SWAP              0x00000010
-        #define TRANSFORM_PARAM_SWAP_H      0x00000002
-        #define TRANSFORM_PARAM_SWAP_V      0x00000004
+        #define TRANSFORM_SWAP              ( 0x00000010 )
+        #define TRANSFORM_PARAM_SWAP_H      ( 0x00000002 )
+        #define TRANSFORM_PARAM_SWAP_V      ( 0x00000004 )
 
-        #define TRANSFORM_ROTATE            0x00010000
-        #define TRANSFORM_PARAM_ROT_C90     0x00000200
-        #define TRANSFORM_PARAM_ROT_C180    0x00000400
-        #define TRANSFORM_PARAM_ROT_C270    0x00000800
-        #define TRANSFORM_PARAM_ROT_RC90    0x00002000
-        #define TRANSFORM_PARAM_ROT_RC180   0x00004000
-        #define TRANSFORM_PARAM_ROT_RC270   0x00008000
+        #define TRANSFORM_ROTATE            ( 0x00010000 )
+        #define TRANSFORM_PARAM_ROT_C90     ( 0x00000200 )
+        #define TRANSFORM_PARAM_ROT_C180    ( 0x00000400 )
+        #define TRANSFORM_PARAM_ROT_C270    ( 0x00000800 )
+        #define TRANSFORM_PARAM_ROT_RC90    ( 0x00002000 )
+        #define TRANSFORM_PARAM_ROT_RC180   ( 0x00004000 )
+        #define TRANSFORM_PARAM_ROT_RC270   ( 0x00008000 )
 
-        #define DATATYPE_BYTE               0x00000000
-        #define DATATYPE_USHORT             0x00000001
-        #define DATATYPE_FLOAT              0x00000002
+        #define DATATYPE_BYTE               ( 0x00000000 )
+        #define DATATYPE_USHORT             ( 0x00000001 )
+        #define DATATYPE_FLOAT              ( 0x00000002 )
 
     public:
-        struct WeightAnalysisReport
+        struct WindowAnalysisReport
         {
-            unsigned long   timestamp;
-            float           base_threshold_index;
-            float           threshold_wide_min;
-            float           threshold_wide_max;
-            unsigned long   threshold_max_amount;
+            uint32_t    timestamp;
+            float       base_threshold_index;
+            float       threshold_wide_min;
+            float       threshold_wide_max;
+            uint32_t    threshold_max_amount;
         };
 
         struct SimpleAnalysisInfo
         {
-            float           minLevel;
-            float           maxLevel;
-            float           average;
-            float           variance;
-            float           deviation;
+            float   minLevel;
+            float   maxLevel;
+            float   average;
+            float   variance;
+            float   deviation;
         };
 
     public:
@@ -97,9 +98,9 @@ class RAWProcessor
         float MediumLevel()             { return pixel_med_level; }
         unsigned Width()                { return img_width; }
         unsigned Height()               { return img_height; }
-        unsigned WeightsCount()         { return pixel_weights_max; }
+        unsigned WindowCount()          { return pixel_window_max; }
         unsigned char BPP()             { return pixel_bpp; }
-        void RecalcLevels()             { calcWeights(); }
+        void RecalcLevels()             { calcWindow(); }
 
     public:
         void CutoffLevels( float minv, float maxv );
@@ -122,11 +123,11 @@ class RAWProcessor
         // Reload from file, actually same as like Load.
         bool Reload( const char* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #ifdef WCHAR_SUPPORTED
-		bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
+        bool Reload( const wchar_t* raw_file, unsigned int trnsfm = TRANSFORM_NONE, unsigned height = 0 );
 #endif // WCHAR_SUPPORTED
-		bool Reload();
+        bool Reload();
 
-		// Unload clears internal memory.
+        // Unload clears internal memory.
         void Unload();
 
         // Transform related...
@@ -145,10 +146,10 @@ class RAWProcessor
         bool GetDownscaled( std::vector<unsigned char>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
         bool GetRawImage( std::vector<float>* word_arrays, bool reversed = false );
         bool GetRawImage( std::vector<float>* word_arrays );
-        bool GetAnalysisReport( WeightAnalysisReport& report, bool start_minlevel_zero = false );
-        bool GetThresholdedImage( WeightAnalysisReport& report, std::vector<float>* word_arrays, bool reversed = false );
-        bool GetThresholdedImage( WeightAnalysisReport& report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
-        bool GetThresholdedImage( WeightAnalysisReport& report, std::vector<float>* byte_arrays );
+        bool GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero = false );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<float>* word_arrays, bool reversed = false );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<unsigned char>* byte_arrays, bool reversed = false );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<float>* byte_arrays );
         bool GetPixel( unsigned x, unsigned y, float &px );
 
     // Some additional tools here ...
@@ -166,7 +167,7 @@ class RAWProcessor
 
     public:
         typedef struct { unsigned x; unsigned y; } polygoncoord;
-        // Weights == Histogram.
+        // Window == Histogram.
         void GetLinearPixels( unsigned x1, unsigned y1, unsigned x2, unsigned y2, std::vector<float>* pixels );
         void GetRectPixels( unsigned x, unsigned y, unsigned w, unsigned h, std::vector<float>* pixels);
         void GetPolygonPixels( std::vector<polygoncoord>* coords, std::vector<float>* pixels);
@@ -206,7 +207,7 @@ class RAWProcessor
 
     public:
         // CLAHE ( Contrast Limited Adaptive Histogram Equalization )
-        bool ApplyCLAHE( WeightAnalysisReport &report, unsigned applysz, unsigned bins, float slope );
+        bool ApplyCLAHE( WindowAnalysisReport &report, unsigned applysz, unsigned bins, float slope );
 
     public:
         bool ApplyLowFrequency( unsigned filtersz = 3, unsigned repeat = 1 );
@@ -219,8 +220,8 @@ class RAWProcessor
 
     protected:
         void analyse();
-        void resetWeights();
-        void calcWeights();
+        void resetWindow();
+        void calcWindow();
         void findWideness(float& minf, float& maxf );
 
     protected:
@@ -232,7 +233,7 @@ class RAWProcessor
         std::vector<float> pixel_arrays;
         unsigned long      pixel_arrays_srcsz;
         unsigned long      pixel_arrays_realsz;
-        float              pixel_weights_max;
+        float              pixel_window_max;
         unsigned char      pixel_bpp;
         float              pixel_min_level;
         float              pixel_max_level;

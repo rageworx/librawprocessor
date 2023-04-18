@@ -21,24 +21,24 @@
 #define CLAHE_MAX_REG_W             16
 #define CLAHE_MAX_REG_H             16
 
-#define RAWImageToolKitSwapUS( _a_, _b_ )   float t=_a_; _a_=_b_; _b_=t;
+#define  RAWImageToolKitSwapF( _a_, _b_ )   float t=_a_; _a_=_b_; _b_=t;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool RAWImageToolKit::FlipHorizontal( float* ptr, unsigned w, unsigned h )
+bool RAWImageToolKit::FlipHorizontal( float* ptr, uint32_t w, uint32_t h )
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
-        unsigned hcenter = h/2;
-        unsigned cnth = 0;
-        unsigned cntw = 0;
+        uint32_t hcenter = h/2;
+        uint32_t cnth = 0;
+        uint32_t cntw = 0;
 
         #pragma omp parallel for private(cntw)
         for( cnth=0; cnth<hcenter; cnth++ )
         {
             for( cntw=0; cntw<w; cntw++ )
             {
-                RAWImageToolKitSwapUS( ptr[ w * ( h - 1 - cnth ) + cntw ],
+                 RAWImageToolKitSwapF( ptr[ w * ( h - 1 - cnth ) + cntw ],
                                        ptr[ w * cnth + cntw ] );
             }
         }
@@ -49,20 +49,20 @@ bool RAWImageToolKit::FlipHorizontal( float* ptr, unsigned w, unsigned h )
     return false;
 }
 
-bool RAWImageToolKit::FlipVertical( float* ptr, unsigned w, unsigned h )
+bool RAWImageToolKit::FlipVertical( float* ptr, uint32_t w, uint32_t h )
 {
     if ( ( w > 0 ) && ( h > 0 ) )
     {
-        unsigned wcenter = w/2;
-        unsigned cntw = 0;
-        unsigned cnth = 0;
+        uint32_t wcenter = w/2;
+        uint32_t cntw = 0;
+        uint32_t cnth = 0;
 
         #pragma omp parallel for private(cnth)
         for( cntw=0; cntw<wcenter; cntw++ )
         {
             for( cnth=0; cnth<h; cnth++ )
             {
-                RAWImageToolKitSwapUS( ptr[ w * cnth + ( w - cntw ) ],
+                 RAWImageToolKitSwapF( ptr[ w * cnth + ( w - cntw ) ],
                                        ptr[ w * cnth + cntw ] );
             }
         }
@@ -73,17 +73,17 @@ bool RAWImageToolKit::FlipVertical( float* ptr, unsigned w, unsigned h )
     return false;
 }
 
-bool RAWImageToolKit::Rotate90( float* ptr, unsigned* w, unsigned* h )
+bool RAWImageToolKit::Rotate90( float* ptr, uint32_t* w, uint32_t* h )
 {
-    unsigned cur_w = *w;
-    unsigned cur_h = *h;
+    uint32_t cur_w = *w;
+    uint32_t cur_h = *h;
 
     if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
     {
-        unsigned src_x = 0;
-        unsigned src_y = 0;
-        unsigned new_w = cur_h;
-        unsigned new_h = cur_w;
+        uint32_t src_x = 0;
+        uint32_t src_y = 0;
+        uint32_t new_w = cur_h;
+        uint32_t new_h = cur_w;
 
         float* tempbuff = new float[ new_w * new_h ];
 
@@ -92,8 +92,8 @@ bool RAWImageToolKit::Rotate90( float* ptr, unsigned* w, unsigned* h )
 
         memset( tempbuff, 0, new_w * new_h * sizeof( float ) );
 
-        unsigned cntw = 0;
-        unsigned cnth = 0;
+        uint32_t cntw = 0;
+        uint32_t cnth = 0;
 
 
         #pragma omp parallel for private(cnth)
@@ -101,79 +101,8 @@ bool RAWImageToolKit::Rotate90( float* ptr, unsigned* w, unsigned* h )
         {
             for( cnth=0; cnth<new_h; cnth++ )
             {
-                unsigned pos1 = new_w * cnth + cntw;
-                unsigned pos2 = cur_w * ( new_w - cntw - 1 ) + cnth;
-
-				tempbuff[ pos1 ] = ptr[ pos2 ];
-            }
-        }
-
-        memcpy( ptr, tempbuff,  new_w * new_h * sizeof( float ) );
-
-        delete[] tempbuff;
-
-        *w = new_w;
-        *h = new_h;
-
-        return true;
-    }
-
-    return false;
-}
-
-bool RAWImageToolKit::Rotate180( float* ptr, unsigned* w, unsigned* h )
-{
-    unsigned cur_w = *w;
-    unsigned cur_h = *h;
-
-    if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
-    {
-        unsigned cntw = 0;
-        unsigned cnth = 0;
-		unsigned imgmax = *w * *h;
-		unsigned cntmax = imgmax / 2;
-
-        #pragma omp parallel for
-        for( unsigned cnt=0; cnt<cntmax; cnt++ )
-        {
-			RAWImageToolKitSwapUS( ptr[ cnt ], ptr[ imgmax - cnt ] );
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-bool RAWImageToolKit::Rotate270( float* ptr, unsigned* w, unsigned* h )
-{
-    unsigned cur_w = *w;
-    unsigned cur_h = *h;
-
-    if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
-    {
-        unsigned src_x = 0;
-        unsigned src_y = 0;
-        unsigned new_w = cur_h;
-        unsigned new_h = cur_w;
-
-        float* tempbuff = new float[ new_w * new_h ];
-
-        if ( tempbuff == NULL )
-            return false;
-
-        memset( tempbuff, 0,  new_w * new_h * sizeof( float ) );
-
-        unsigned cntw = 0;
-        unsigned cnth = 0;
-
-        #pragma omp parallel for private(cnth)
-        for( cntw=0; cntw<new_w; cntw++ )
-        {
-            for( cnth=new_h-1; cnth>0; cnth-- )
-            {
-                unsigned pos1 = new_w * cnth + cntw;
-                unsigned pos2 = cur_w * cntw + new_h - cnth;
+                uint32_t pos1 = new_w * cnth + cntw;
+                uint32_t pos2 = cur_w * ( new_w - cntw - 1 ) + cnth;
 
                 tempbuff[ pos1 ] = ptr[ pos2 ];
             }
@@ -192,7 +121,78 @@ bool RAWImageToolKit::Rotate270( float* ptr, unsigned* w, unsigned* h )
     return false;
 }
 
-float ritk_min4(float a, float b, float c, float d)
+bool RAWImageToolKit::Rotate180( float* ptr, uint32_t* w, uint32_t* h )
+{
+    uint32_t cur_w = *w;
+    uint32_t cur_h = *h;
+
+    if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
+    {
+        uint32_t cntw = 0;
+        uint32_t cnth = 0;
+        uint32_t imgmax = *w * *h;
+        uint32_t cntmax = imgmax / 2;
+
+        #pragma omp parallel for
+        for( size_t cnt=0; cnt<cntmax; cnt++ )
+        {
+             RAWImageToolKitSwapF( ptr[ cnt ], ptr[ imgmax - cnt ] );
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool RAWImageToolKit::Rotate270( float* ptr, uint32_t* w, uint32_t* h )
+{
+    uint32_t cur_w = *w;
+    uint32_t cur_h = *h;
+
+    if ( ( cur_w > 0 ) && ( cur_h > 0 ) )
+    {
+        uint32_t src_x = 0;
+        uint32_t src_y = 0;
+        uint32_t new_w = cur_h;
+        uint32_t new_h = cur_w;
+
+        float* tempbuff = new float[ new_w * new_h ];
+
+        if ( tempbuff == NULL )
+            return false;
+
+        memset( tempbuff, 0,  new_w * new_h * sizeof( float ) );
+
+        uint32_t cntw = 0;
+        uint32_t cnth = 0;
+
+        #pragma omp parallel for private(cnth)
+        for( cntw=0; cntw<new_w; cntw++ )
+        {
+            for( cnth=new_h-1; cnth>0; cnth-- )
+            {
+                uint32_t pos1 = new_w * cnth + cntw;
+                uint32_t pos2 = cur_w * cntw + new_h - cnth;
+
+                tempbuff[ pos1 ] = ptr[ pos2 ];
+            }
+        }
+
+        memcpy( ptr, tempbuff,  new_w * new_h * sizeof( float ) );
+
+        delete[] tempbuff;
+
+        *w = new_w;
+        *h = new_h;
+
+        return true;
+    }
+
+    return false;
+}
+
+inline float ritk_min4(float a, float b, float c, float d)
 {
    float mn = a;
    if(mn > b) mn = b;
@@ -201,7 +201,7 @@ float ritk_min4(float a, float b, float c, float d)
    return mn;
 }
 
-float ritk_max4(float a, float b, float c, float d)
+inline float ritk_max4(float a, float b, float c, float d)
 {
    float mx = a;
    if(mx < b) mx = b;
@@ -210,7 +210,7 @@ float ritk_max4(float a, float b, float c, float d)
    return mx;
 }
 
-bool RAWImageToolKit::RotateFree( float* ptr, unsigned* w, unsigned* h, float** newptr, float degree, float background )
+bool RAWImageToolKit::RotateFree( float* ptr, uint32_t* w, uint32_t* h, float** newptr, float degree, float background )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
         return false;
@@ -220,27 +220,27 @@ bool RAWImageToolKit::RotateFree( float* ptr, unsigned* w, unsigned* h, float** 
     int img_w = *w;
     int img_h = *h;
 
-	float CtX = ( (float) img_w ) / 2.0f;
-	float CtY = ( (float) img_h ) / 2.0f;
+    float CtX = ( (float) img_w ) / 2.0f;
+    float CtY = ( (float) img_h ) / 2.0f;
 
-	float cA = (float)cos( fdeg );
-	float sA = (float)sin( fdeg );
+    float cA = (float)cos( fdeg );
+    float sA = (float)sin( fdeg );
 
-	float x1 = CtX + (-CtX) * cA - (-CtY) * sA;
-	float x2 = CtX + (img_w - CtX) * cA - (-CtY) * sA;
-	float x3 = CtX + (img_w - CtX) * cA - (img_h - CtY) * sA;
-	float x4 = CtX + (-CtX) * cA - (img_h - CtY) * sA;
+    float x1 = CtX + (-CtX) * cA - (-CtY) * sA;
+    float x2 = CtX + (img_w - CtX) * cA - (-CtY) * sA;
+    float x3 = CtX + (img_w - CtX) * cA - (img_h - CtY) * sA;
+    float x4 = CtX + (-CtX) * cA - (img_h - CtY) * sA;
 
-	float y1 = CtY + (-CtY) * cA + (-CtX) * sA;
-	float y2 = CtY + (img_h - CtY) * cA + (-CtX) * sA;
-	float y3 = CtY + (img_h - CtY) * cA + (img_w - CtX) * sA;
-	float y4 = CtY + (-CtY) * cA + (img_w - CtX) * sA;
+    float y1 = CtY + (-CtY) * cA + (-CtX) * sA;
+    float y2 = CtY + (img_h - CtY) * cA + (-CtX) * sA;
+    float y3 = CtY + (img_h - CtY) * cA + (img_w - CtX) * sA;
+    float y4 = CtY + (-CtY) * cA + (img_w - CtX) * sA;
 
-	int OfX = ((int)floor(ritk_min4(x1, x2, x3, x4)));
-	int OfY = ((int)floor(ritk_min4(y1, y2, y3, y4)));
+    int OfX = ((int)floor(ritk_min4(x1, x2, x3, x4)));
+    int OfY = ((int)floor(ritk_min4(y1, y2, y3, y4)));
 
-	int dstW = ((int)ceil(ritk_max4(x1, x2, x3, x4))) - OfX;
-	int dstH = ((int)ceil(ritk_max4(y1, y2, y3, y4))) - OfY;
+    int dstW = ((int)ceil(ritk_max4(x1, x2, x3, x4))) - OfX;
+    int dstH = ((int)ceil(ritk_max4(y1, y2, y3, y4))) - OfY;
 
     // Now new image !
     float* obuff = new float[ dstW * dstH ];
@@ -260,19 +260,19 @@ bool RAWImageToolKit::RotateFree( float* ptr, unsigned* w, unsigned* h, float** 
     // pointer to destination.
     float* dst = obuff;
 
-	#pragma omp parellel for private( stepX )
-	for ( stepY = 0; stepY<dstH; stepY++ )
-	{
-		for ( stepX = 0; stepX<dstW; stepX++ )
-		{
+    #pragma omp parellel for private( stepX )
+    for ( stepY = 0; stepY<dstH; stepY++ )
+    {
+        for ( stepX = 0; stepX<dstW; stepX++ )
+        {
             float CtX2 = CtX - OfX;
             float CtY2 = CtY - OfY;
 
             float orgX = ( cA*(stepX-CtX2) + sA*(stepY-CtY2)) + CtX;
             float orgY = (-sA*(stepX-CtX2) + cA*(stepY-CtY2)) + CtY;
 
-			int iorgX  = (int) orgX;
-			int iorgY  = (int) orgY;
+            int iorgX  = (int) orgX;
+            int iorgY  = (int) orgY;
 
             float diffX = (orgX - iorgX);
             float diffY = (orgY - iorgY);
@@ -298,19 +298,19 @@ bool RAWImageToolKit::RotateFree( float* ptr, unsigned* w, unsigned* h, float** 
 
                 *pd = (float)pf;
             }
-		}
+        }
 
-		dst += dstW;
-	}
+        dst += dstW;
+    }
 
-	*newptr = obuff;
-	*w      = dstW;
-	*h      = dstH;
+    *newptr = obuff;
+    *w      = dstW;
+    *h      = dstH;
 
-	return true;
+    return true;
 }
 
-bool RAWImageToolKit::Crop( float* ptr, unsigned w, unsigned h, float** newptr, unsigned cx, unsigned cy, unsigned cw, unsigned ch )
+bool RAWImageToolKit::Crop( float* ptr, uint32_t w, uint32_t h, float** newptr, uint32_t cx, uint32_t cy, uint32_t cw, uint32_t ch )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) )
         return false;
@@ -319,10 +319,10 @@ bool RAWImageToolKit::Crop( float* ptr, unsigned w, unsigned h, float** newptr, 
          ( cy == 0 ) || ( cy > h ) || ( ch > h ) )
     return false;
 
-    unsigned rsx = cx;
-    unsigned rsy = cy;
-    unsigned rw  = cw;
-    unsigned rh  = ch;
+    uint32_t rsx = cx;
+    uint32_t rsy = cy;
+    uint32_t rw  = cw;
+    uint32_t rh  = ch;
 
     if ( w < ( rw + rsx ) )
     {
@@ -338,11 +338,11 @@ bool RAWImageToolKit::Crop( float* ptr, unsigned w, unsigned h, float** newptr, 
 
     if ( obuff != NULL )
     {
-        unsigned srcw = w;
-        unsigned srch = h;
-        unsigned dsth = srch - rsy;
-        unsigned cnty;
-        unsigned cntx;
+        uint32_t srcw = w;
+        uint32_t srch = h;
+        uint32_t dsth = srch - rsy;
+        uint32_t cnty;
+        uint32_t cntx;
 
         #pragma omp parellel for private( cntx )
         for( cnty=rsy; cnty<srch; cnty++ )
@@ -361,93 +361,72 @@ bool RAWImageToolKit::Crop( float* ptr, unsigned w, unsigned h, float** newptr, 
     return false;
 }
 
-bool RAWImageToolKit::CropCenter( float* ptr, unsigned w, unsigned h, float** newptr, unsigned cw, unsigned ch )
+bool RAWImageToolKit::CropCenter( float* ptr, uint32_t w, uint32_t h, float** newptr, uint32_t cw, uint32_t ch )
 {
     if ( ( ptr == NULL ) || ( w == 0 ) || ( h == 0 ) ||
          ( cw == 0 ) || ( cw > w ) || ( ch == 0 ) || ( ch > h ) )
         return false;
 
-    unsigned c_l = ( w - cw ) / 2;
-    unsigned c_t = ( h - ch ) / 2;
+    uint32_t c_l = ( w - cw ) / 2;
+    uint32_t c_t = ( h - ch ) / 2;
 
     return Crop( ptr, w, h, newptr, c_l, c_t, cw, ch );
 }
 
-bool RAWImageToolKit::AdjustGamma( float* ptr, unsigned arraysz, double gamma )
+bool RAWImageToolKit::AdjustGamma( float* ptr, size_t arraysz, float gamma )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    float LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
     double expn     = 1.0 / gamma;
     double newv     = RAWIMGTK_MAX_F_VAL * (double)pow( (double)RAWIMGTK_MAX_F_VAL, -expn );
-    double newlvl   = 0.0;
 
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
+    for( size_t cnt=0; cnt<arraysz; cnt++ )
     {
-        newlvl = (double)pow((double)cnt, expn) * newv;
-        if( newlvl > RAWIMGTK_MAX_F_VAL )
+        ptr[cnt] = (double)pow((double)ptr[cnt], expn) * newv;
+        if( ptr[cnt] > RAWIMGTK_MAX_F_VAL )
         {
-            newlvl = RAWIMGTK_MAX_F_VAL;
+            ptr[cnt] = RAWIMGTK_MAX_F_VAL;
         }
-        LUT[ cnt ] = (float)floor( newlvl + 0.5 );
     }
 
-    return AdjustCurve( ptr, arraysz, LUT );
+    return true;
 }
 
-bool RAWImageToolKit::AdjustBrightness( float* ptr, unsigned arraysz, double perc )
+bool RAWImageToolKit::AdjustBrightness( float* ptr, size_t arraysz, float perc )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    float LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
     const \
     double bscaled  = ( 100.0 + perc ) / 100.0;
     double bval     = 0.0;
 
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
+    for( size_t cnt=0; cnt<arraysz; cnt++ )
     {
-        bval = (double)cnt * bscaled;
-        bval = MAX( 0.0, MIN( bval, RAWIMGTK_MAX_F_VAL ) );
-        LUT[ cnt ] = (float)floor( bval + 0.5 );
+        ptr[cnt] = (double)ptr[cnt] * bscaled;
+        ptr[cnt] = MAX( 0.0, MIN( ptr[cnt], RAWIMGTK_MAX_F_VAL ) );
     }
 
-    return AdjustCurve( ptr, arraysz, LUT );
+    return true;
 }
 
-bool RAWImageToolKit::AdjustContrast( float* ptr, unsigned arraysz, double perc )
+bool RAWImageToolKit::AdjustContrast( float* ptr, size_t arraysz, float perc )
 {
     if ( ( ptr == NULL ) || ( arraysz == 0 ) )
         return false;
 
-    float LUT[RAWIMGTK_MAX_D_ARRAY_SZ] = {0};
     const \
     double bscaled  = ( 100.0 + perc ) / 100.0;
     double bval     = 0.0;
 
     #pragma omp parallel for
-    for( unsigned cnt=0; cnt<RAWIMGTK_MAX_D_ARRAY_SZ; cnt++ )
+    for( size_t cnt=0; cnt<arraysz; cnt++ )
     {
-        bval = (double)RAWIMGTK_HALF_F_VAL + ( (double)cnt - RAWIMGTK_HALF_F_VAL ) * bscaled;
-        bval = MAX( 0.0, MIN( bval, RAWIMGTK_MAX_F_VAL ) );
-        LUT[ cnt ] = (float)floor( bval + 0.5 );
-    }
-
-    return AdjustCurve( ptr, arraysz, LUT );
-}
-
-bool RAWImageToolKit::AdjustCurve( float* ptr, unsigned arraysz, float* LUT )
-{
-    if ( ( ptr == NULL ) || ( arraysz == 0 ) || ( LUT == NULL ) )
-        return false;
-
-    #pragma omp parallel for
-    for( unsigned cnt=0; cnt<arraysz; cnt++ )
-    {
-        //ptr[ cnt ] = LUT[ ptr[ cnt ] ];
+        ptr[cnt] = (double)RAWIMGTK_HALF_F_VAL + ( (double)ptr[cnt] - RAWIMGTK_HALF_F_VAL ) * bscaled;
+        ptr[cnt] = MAX( 0.0, MIN( ptr[cnt], RAWIMGTK_MAX_F_VAL ) );
     }
 
     return true;
@@ -462,86 +441,86 @@ bool RAWImageToolKit::AdjustCurve( float* ptr, unsigned arraysz, float* LUT )
  * the excess pixels are equally redistributed across the whole histogram (providing
  * the bin count is smaller than the cliplimit).
  */
-void CLAHE_ClipHistogram( unsigned long* pHisto, unsigned int greyLvl, unsigned long clipLimit )
+void CLAHE_ClipHistogram( uint32_t* pHisto, uint32_t greyLvl,  uint32_t clipLimit )
 {
-    unsigned long* pRangePtr = pHisto;
-	unsigned long* pEndPtr = NULL;
-	unsigned long* pHistPtr = NULL;
+     uint32_t* pRangePtr = pHisto;
+     uint32_t* pEndPtr = NULL;
+     uint32_t* pHistPtr = NULL;
 
-    unsigned long excessSz = 0;
-	unsigned long upperSz;
-	unsigned long rangeInc;
-	unsigned long stepsz;
-	unsigned long cnt;
+     uint32_t excessSz = 0;
+     uint32_t upperSz;
+     uint32_t rangeInc;
+     uint32_t stepsz;
+     uint32_t cnt;
 
     long lBinExcess;
 
-	/* calculate total number of excess pixels */
+    /* calculate total number of excess pixels */
     for ( cnt = 0; cnt < greyLvl; cnt++)
-	{
-		lBinExcess = (long) pRangePtr[cnt] - (long) clipLimit;
+    {
+        lBinExcess = (long) pRangePtr[cnt] - (long) clipLimit;
 
-		/* excess in current bin */
-		if ( lBinExcess > 0 )
-		{
-			excessSz += lBinExcess;
-		}
+        /* excess in current bin */
+        if ( lBinExcess > 0 )
+        {
+            excessSz += lBinExcess;
+        }
     }
 
     /* Second part: clip histogram and redistribute excess pixels in each bin */
-    rangeInc = excessSz / greyLvl;		 /// average binincrement
-    upperSz  = clipLimit - rangeInc;	 /// Bins larger than upperSz set to cliplimit
+    rangeInc = excessSz / greyLvl;       /// average binincrement
+    upperSz  = clipLimit - rangeInc;     /// Bins larger than upperSz set to cliplimit
 
     for ( cnt=0; cnt<greyLvl; cnt++ )
-	{
-		if (pHisto[cnt] > clipLimit)
-		{
-			pHisto[cnt] = clipLimit;    /// clip bin
-		}
-		else
-		{
-			if (pHisto[cnt] > upperSz)
-			{	/* high bin count */
-				excessSz    -= pHisto[cnt] - upperSz;
-				pHisto[cnt]  = clipLimit;
-			}
-			else
-			{	/* low bin count */
-				excessSz    -= rangeInc;
-				pHisto[cnt] += rangeInc;
-			}
-		}
+    {
+        if (pHisto[cnt] > clipLimit)
+        {
+            pHisto[cnt] = clipLimit;    /// clip bin
+        }
+        else
+        {
+            if (pHisto[cnt] > upperSz)
+            {   /* high bin count */
+                excessSz    -= pHisto[cnt] - upperSz;
+                pHisto[cnt]  = clipLimit;
+            }
+            else
+            {   /* low bin count */
+                excessSz    -= rangeInc;
+                pHisto[cnt] += rangeInc;
+            }
+        }
     }
 
     while ( excessSz > 0 )
-	{   /* Redistribute remaining excess  */
-		pEndPtr = &pHisto[greyLvl]; pHistPtr = pHisto;
+    {   /* Redistribute remaining excess  */
+        pEndPtr = &pHisto[greyLvl]; pHistPtr = pHisto;
 
-		while ( ( excessSz > 0 ) && ( pHistPtr < pEndPtr )  )
-		{
-			stepsz = greyLvl / excessSz;
+        while ( ( excessSz > 0 ) && ( pHistPtr < pEndPtr )  )
+        {
+            stepsz = greyLvl / excessSz;
 
-			if ( stepsz < 1 )
-			{
-				/* stepsize at least 1 */
-				stepsz = 1;
-			}
+            if ( stepsz < 1 )
+            {
+                /* stepsize at least 1 */
+                stepsz = 1;
+            }
 
-			for ( pRangePtr=pHistPtr;
-			      pRangePtr < pEndPtr && excessSz;
-				  pRangePtr += stepsz)
-			{
-				if (*pRangePtr < clipLimit)
-				{
-					/* reduce excess */
-					(*pRangePtr)++;
-					excessSz--;
-				}
-			}
+            for ( pRangePtr=pHistPtr;
+                  pRangePtr < pEndPtr && excessSz;
+                  pRangePtr += stepsz)
+            {
+                if (*pRangePtr < clipLimit)
+                {
+                    /* reduce excess */
+                    (*pRangePtr)++;
+                    excessSz--;
+                }
+            }
 
-			/* restart redistributing on other bin location */
-			pHistPtr++;
-		}
+            /* restart redistributing on other bin location */
+            pHistPtr++;
+        }
     }
 }
 
@@ -552,31 +531,31 @@ void CLAHE_ClipHistogram( unsigned long* pHisto, unsigned int greyLvl, unsigned 
  * the corresponding bin in the histogram (usually containing only 128 bins).
  */
 void CLAHE_MakeHistogram ( float* pImage,
-                           unsigned int imgWidth,
-                           unsigned int rgnszW, unsigned int rgnszH,
-                           unsigned long* pHisto,
-                           unsigned int greyLvl, float* pLUT )
+                           uint32_t imgWidth,
+                           uint32_t rgnszW, uint32_t rgnszH,
+                           uint32_t* pHisto,
+                           uint32_t greyLvl, float* pLUT )
 {
     float* pImgPtr = NULL;
-    unsigned int cnt;
+    uint32_t cnt = 0;
 
-	/* clear histogram */
+    /* clear histogram */
     for ( cnt=0; cnt<greyLvl; cnt++ )
-	{
-		pHisto[cnt] = 0L;
-	}
+    {
+        pHisto[cnt] = 0L;
+    }
 
     for ( cnt=0; cnt< rgnszH; cnt++ )
-	{
-		pImgPtr = &pImage[rgnszW];
+    {
+        pImgPtr = &pImage[rgnszW];
 
-		while ( pImage < pImgPtr )
-		{
-			//pHisto[ pLUT[ (float)*pImage++ ] ]++;
-		}
+        while ( pImage < pImgPtr )
+        {
+            //pHisto[ pLUT[ (float)*pImage++ ] ]++;
+        }
 
-		pImgPtr += imgWidth;
-		pImage = &pImgPtr[-(long long)rgnszW];
+        pImgPtr += imgWidth;
+        pImage = &pImgPtr[-(long long)rgnszW];
     }
 }
 
@@ -584,25 +563,25 @@ void CLAHE_MakeHistogram ( float* pImage,
  * This function calculates the equalized lookup table (mapping) by
  * cumulating the input histogram. Note: lookup table is rescaled in range [Min..Max].
  */
-void CLAHE_MapHistogram ( unsigned long* pHisto,
+void CLAHE_MapHistogram (  uint32_t* pHisto,
                           float Min, float Max,
-                          unsigned int greyLvl, unsigned long pixelsz )
+                          uint32_t greyLvl,  uint32_t pixelsz )
 {
-    unsigned int  cnt = 0;
-	unsigned long sum = 0;
+    uint32_t  cnt = 0;
+    uint32_t sum = 0;
 
-    const float         fScale = ( (float)(Max - Min) ) / pixelsz;
-    const unsigned long ulMin  = (unsigned long) Min;
+    const float    fScale = ( (float)(Max - Min) ) / pixelsz;
+    const uint32_t ulMin  = ( uint32_t) Min;
 
     for ( cnt=0; cnt<greyLvl; cnt++)
-	{
-		sum += pHisto[cnt];
-		pHisto[cnt] = (unsigned long)( ulMin + sum * fScale );
+    {
+        sum += pHisto[cnt];
+        pHisto[cnt] = ( uint32_t)( ulMin + sum * fScale );
 
-		if ( pHisto[cnt] > Max )
-		{
-			pHisto[cnt] = Max;
-		}
+        if ( pHisto[cnt] > Max )
+        {
+            pHisto[cnt] = Max;
+        }
     }
 }
 
@@ -610,7 +589,7 @@ void CLAHE_MapHistogram ( unsigned long* pHisto,
  * To speed up histogram clipping, the input image [Min,Max] is scaled down to
  * [0,uiNrBins-1]. This function calculates the LUT.
  */
-void CLAHE_MakeLut( float * pLUT, float Min, float Max, unsigned int ranges )
+void CLAHE_MakeLut( float * pLUT, float Min, float Max, uint32_t ranges )
 {
     const float BinSize = (float) (1 + (Max - Min) / ranges);
 
@@ -626,7 +605,7 @@ void CLAHE_MakeLut( float * pLUT, float Min, float Max, unsigned int ranges )
  * pMap*     - mappings of greylevels from histograms
  * subszW     - subszW of image submatrix
  * subszH     - subszH of image submatrix
- * pLUT	       - lookup table containing mapping greyvalues to bins
+ * pLUT        - lookup table containing mapping greyvalues to bins
  * This function calculates the new greylevel assignments of pixels within a submatrix
  * of the image with size subszW and subszH. This is done by a bilinear interpolation
  * between four different mappings in order to eliminate boundary artifacts.
@@ -634,75 +613,75 @@ void CLAHE_MakeLut( float * pLUT, float Min, float Max, unsigned int ranges )
  * perform a logical shift instead when feasible.
  */
 void CLAHE_Interpolate( float * pImage,
-                        int imgWidth, unsigned skipWidth,
-                        unsigned long * pMapLU, unsigned long * pMapRU, unsigned long * pMapLB,  unsigned long * pMapRB,
-                        unsigned int subszW, unsigned int subszH, float * pLUT)
+                        int imgWidth, uint32_t skipWidth,
+                         uint32_t * pMapLU,  uint32_t * pMapRU,  uint32_t * pMapLB,   uint32_t * pMapRB,
+                        uint32_t subszW, uint32_t subszH, float * pLUT)
 {
-    const unsigned int incSz = imgWidth-subszW; /* Pointer increment after processing row */
+    const uint32_t incSz = imgWidth-subszW; /* Pointer increment after processing row */
     float GreyValue;
-	unsigned int normFactor = subszW * subszH; /* Normalization factor */
+    uint32_t normFactor = subszW * subszH; /* Normalization factor */
 
-    unsigned int coefW = 0;
-	unsigned int coefH = 0;
-	unsigned int invcoefW = 0;
-	unsigned int invcoefH = 0;
-	unsigned int shifts = 0;
+    uint32_t coefW = 0;
+    uint32_t coefH = 0;
+    uint32_t invcoefW = 0;
+    uint32_t invcoefH = 0;
+    uint32_t shifts = 0;
 
-	/* If normFactor is not a power of two, use division */
+    /* If normFactor is not a power of two, use division */
     if ( normFactor & (normFactor - 1) )
-	{
-		for ( coefH=0, invcoefH = subszH;
-		      coefH < subszH;
-		      coefH++, invcoefH--,pImage+=incSz )
-		{
-			for ( coefW=0, invcoefW = subszW;
-			      coefW < subszW;
-			      coefW++, invcoefW--)
-			{
-				/* get histogram bin value */
-				/*
-				GreyValue = pLUT[*pImage];
+    {
+        for ( coefH=0, invcoefH = subszH;
+              coefH < subszH;
+              coefH++, invcoefH--,pImage+=incSz )
+        {
+            for ( coefW=0, invcoefW = subszW;
+                  coefW < subszW;
+                  coefW++, invcoefW--)
+            {
+                /* get histogram bin value */
+                /*
+                GreyValue = pLUT[*pImage];
 
-				*pImage++ = (float )( ( invcoefH *
-												 ( invcoefW*pMapLU[GreyValue] +  coefW * pMapRU[GreyValue] ) +
-						                         coefH * (invcoefW * pMapLB[GreyValue] +
-												 coefW * pMapRB[GreyValue]) )
+                *pImage++ = (float )( ( invcoefH *
+                                                 ( invcoefW*pMapLU[GreyValue] +  coefW * pMapRU[GreyValue] ) +
+                                                 coefH * (invcoefW * pMapLB[GreyValue] +
+                                                 coefW * pMapRB[GreyValue]) )
                                                / normFactor );
 
                 pImage += skipWidth;
                 */
-			}
-		}
-	}
+            }
+        }
+    }
     else
-	{	/* avoid the division and use a right shift instead */
-		while ( normFactor >>= 1 )
-		{
-			/* Calculate 2log of normFactor */
-			shifts++;
-		}
+    {   /* avoid the division and use a right shift instead */
+        while ( normFactor >>= 1 )
+        {
+            /* Calculate 2log of normFactor */
+            shifts++;
+        }
 
-		for ( coefH = 0, invcoefH = subszH;
-		      coefH < subszH;
-			  coefH++, invcoefH--, pImage+=incSz )
-		{
-			 for ( coefW = 0, invcoefW = subszW;
-			       coefW < subszW;
-			       coefW++, invcoefW-- )
-			{
-				/* get histogram bin value */
-				/*
-				GreyValue = pLUT[*pImage];
+        for ( coefH = 0, invcoefH = subszH;
+              coefH < subszH;
+              coefH++, invcoefH--, pImage+=incSz )
+        {
+             for ( coefW = 0, invcoefW = subszW;
+                   coefW < subszW;
+                   coefW++, invcoefW-- )
+            {
+                /* get histogram bin value */
+                /*
+                GreyValue = pLUT[*pImage];
 
-				*pImage++ = (float)( ( invcoefH *
-				                                ( invcoefW * pMapLU[GreyValue] + coefW * pMapRU[GreyValue] ) +
-												coefH * (invcoefW * pMapLB[GreyValue] +
-												coefW * pMapRB[GreyValue]) )
+                *pImage++ = (float)( ( invcoefH *
+                                                ( invcoefW * pMapLU[GreyValue] + coefW * pMapRU[GreyValue] ) +
+                                                coefH * (invcoefW * pMapLB[GreyValue] +
+                                                coefW * pMapRB[GreyValue]) )
                                               >> shifts );
                 pImage += skipWidth;
                 */
-			}
-		}
+            }
+        }
     }
 }
 
@@ -725,31 +704,31 @@ void CLAHE_Interpolate( float * pImage,
  */
 
 bool RAWImageToolKit::ApplyCLAHE( float* pImage,
-                                  unsigned int imgWidth, unsigned int imgHeight,
+                                  uint32_t imgWidth, uint32_t imgHeight,
                                   float Min, float Max,
-                                  unsigned int rgnWidth, unsigned int rgnHeight,
-                                  unsigned int ranges, float fCliplimit )
+                                  uint32_t rgnWidth, uint32_t rgnHeight,
+                                  uint32_t ranges, float fCliplimit )
 {
     /* counters */
-    unsigned int cnt_x;
-    unsigned int cnt_y;
+    uint32_t cnt_x;
+    uint32_t cnt_y;
 
     /* size of context. reg. and subimages */
-    unsigned int subszW = 0;
-    unsigned int subszH = 0;
-    unsigned int subImgW = 0;
-    unsigned int subImgH = 0;
-    unsigned int skipW = 0;
+    uint32_t subszW = 0;
+    uint32_t subszH = 0;
+    uint32_t subImgW = 0;
+    uint32_t subImgH = 0;
+    uint32_t skipW = 0;
 
     /* auxiliary variables interpolation routine */
-    unsigned int cnt_xL = 0;
-    unsigned int cnt_xR = 0;
-    unsigned int cnt_yU = 0;
-    unsigned int cnt_yB = 0;
+    uint32_t cnt_xL = 0;
+    uint32_t cnt_xR = 0;
+    uint32_t cnt_yU = 0;
+    uint32_t cnt_yB = 0;
 
     /* clip limit and region pixel count */
-    unsigned long clipLimit = 0;
-    unsigned long pixelCnts = 0;
+     uint32_t clipLimit = 0;
+     uint32_t pixelCnts = 0;
 
     /* pointer to image */
     float* pImgPtr = NULL;
@@ -758,37 +737,37 @@ bool RAWImageToolKit::ApplyCLAHE( float* pImage,
     float aLUT[ RAWIMGTK_MAX_D_ARRAY_SZ ] = {0};
 
     /* pointer to histogram and mappings*/
-    unsigned long* pulHist = NULL;
-    unsigned long* pMapArray = NULL;
+     uint32_t* pulHist = NULL;
+     uint32_t* pMapArray = NULL;
 
     /* auxiliary pointers interpolation */
-    unsigned long* pulLU = NULL;
-    unsigned long* pulLB = NULL;
-    unsigned long* pulRU = NULL;
-    unsigned long* pulRB = NULL;
+     uint32_t* pulLU = NULL;
+     uint32_t* pulLB = NULL;
+     uint32_t* pulRU = NULL;
+     uint32_t* pulRB = NULL;
 
     if ( rgnWidth > CLAHE_MAX_REG_W )
-		rgnWidth = CLAHE_MAX_REG_W;
+        rgnWidth = CLAHE_MAX_REG_W;
 
     if ( rgnHeight > CLAHE_MAX_REG_H )
-		rgnHeight = CLAHE_MAX_REG_H;
+        rgnHeight = CLAHE_MAX_REG_H;
 
     /*
     if ( imgWidth % rgnWidth )
-		return false;       /// x-resolution no multiple of rgnWidth
+        return false;       /// x-resolution no multiple of rgnWidth
 
     if ( imgHeight % rgnHeight )
-		return false;       /// y-resolution no multiple of rgnHeight
+        return false;       /// y-resolution no multiple of rgnHeight
     */
 
     if ( Min >= Max )
-		return false;       /// minimum equal or larger than maximum
+        return false;       /// minimum equal or larger than maximum
 
     if ( rgnWidth < 2 )
         rgnWidth = 2;
 
     if ( rgnHeight < 2 )
-		rgnHeight = 2;
+        rgnHeight = 2;
 
     // Make it skip when image size not divided done by zero.
     skipW = imgWidth % rgnWidth;
@@ -798,7 +777,7 @@ bool RAWImageToolKit::ApplyCLAHE( float* pImage,
     }
 
     if ( fCliplimit == 1.0f )
-		return true;	    /// is OK, immediately returns original image.
+        return true;        /// is OK, immediately returns original image.
 
     if ( fCliplimit < 1.0f )
         return false;
@@ -807,117 +786,117 @@ bool RAWImageToolKit::ApplyCLAHE( float* pImage,
         fCliplimit = 2.1f;
 
     if ( ranges == 0 )
-		ranges = 65536;	    /// default value when not specified
+        ranges = 65536;     /// default value when not specified
 
-    pMapArray = new unsigned long[ rgnWidth * rgnHeight * ( ranges + 1 ) ];
+    pMapArray = new  uint32_t[ rgnWidth * rgnHeight * ( ranges + 1 ) ];
 
     if ( pMapArray == NULL )
-		return false;
+        return false;
 
     subszW    = imgWidth/rgnWidth; subszH = imgHeight/rgnHeight;  /* Actual size of contextual regions */
-    pixelCnts = (unsigned long)subszW * (unsigned long)subszH;
+    pixelCnts = ( uint32_t)subszW * ( uint32_t)subszH;
 
     if(fCliplimit > 0.0)
-	{
-		/* Calculate actual cliplimit	 */
-		clipLimit = (unsigned long) (fCliplimit * (subszW * subszH) / ranges);
+    {
+        /* Calculate actual cliplimit    */
+        clipLimit = ( uint32_t) (fCliplimit * (subszW * subszH) / ranges);
         clipLimit = (clipLimit < 1UL) ? 1UL : clipLimit;
     }
     else
-	{
-		/* Large value, do not clip (AHE) */
-		clipLimit = 1UL<<14;
-	}
+    {
+        /* Large value, do not clip (AHE) */
+        clipLimit = 1UL<<14;
+    }
 
-    CLAHE_MakeLut(aLUT, Min, Max, ranges);	  /* Make lookup table for mapping of greyvalues */
+    CLAHE_MakeLut(aLUT, Min, Max, ranges);    /* Make lookup table for mapping of greyvalues */
 
     /* Calculate greylevel mappings for each contextual region */
     for ( cnt_y=0, pImgPtr=pImage; cnt_y<rgnHeight; cnt_y++ )
-	{
-		for ( cnt_x=0; cnt_x<rgnWidth; cnt_x++, pImgPtr+=subszW )
-		{
-			pulHist = &pMapArray[ranges * (cnt_y * rgnWidth + cnt_x)];
+    {
+        for ( cnt_x=0; cnt_x<rgnWidth; cnt_x++, pImgPtr+=subszW )
+        {
+            pulHist = &pMapArray[ranges * (cnt_y * rgnWidth + cnt_x)];
 
-			CLAHE_MakeHistogram( pImgPtr,
+            CLAHE_MakeHistogram( pImgPtr,
                                  imgWidth, subszW, subszH,
                                  pulHist, ranges, aLUT );
-			CLAHE_ClipHistogram( pulHist, ranges, clipLimit);
-			CLAHE_MapHistogram( pulHist, Min, Max, ranges, pixelCnts);
-		}
+            CLAHE_ClipHistogram( pulHist, ranges, clipLimit);
+            CLAHE_MapHistogram( pulHist, Min, Max, ranges, pixelCnts);
+        }
 
-		/* skip lines, set pointer */
-		pImgPtr += (subszH - 1) * imgWidth + skipW;
+        /* skip lines, set pointer */
+        pImgPtr += (subszH - 1) * imgWidth + skipW;
     }
 
     /* Interpolate greylevel mappings to get CLAHE image */
     for (pImgPtr = pImage, cnt_y = 0; cnt_y <= rgnHeight; cnt_y++)
-	{
-		if (cnt_y == 0)
-		{
-		    /* special case: top row */
-			subImgH = subszH >> 1;
-			cnt_yU = 0;
-			cnt_yB = 0;
-		}
-		else
-		{
-			if (cnt_y == rgnHeight)
-			{
-			    /* special case: bottom row */
-				subImgH = subszH >> 1;
-				cnt_yU = rgnHeight-1;
-				cnt_yB = cnt_yU;
-			}
-			else
-			{
-			    /* default values */
-				subImgH = subszH;
-				cnt_yU = cnt_y - 1;
-				cnt_yB = cnt_yU + 1;
-			}
-		}
-		for (cnt_x = 0; cnt_x <= rgnWidth; cnt_x++)
-		{
-			if (cnt_x == 0)
-			{
-			    /* special case: left column */
-				subImgW = subszW >> 1;
-				cnt_xL = 0;
-				cnt_xR = 0;
-			}
-			else
-			{
-				if (cnt_x == rgnWidth)
-				{
-				    /* special case: right column */
-					subImgW = subszW >> 1;
-					cnt_xL = rgnWidth - 1;
-					cnt_xR = cnt_xL;
-				}
-				else
-				{
-				    /* default values */
-					subImgW = subszW;
-					cnt_xL = cnt_x - 1;
-					cnt_xR = cnt_xL + 1;
-				}
-			}
+    {
+        if (cnt_y == 0)
+        {
+            /* special case: top row */
+            subImgH = subszH >> 1;
+            cnt_yU = 0;
+            cnt_yB = 0;
+        }
+        else
+        {
+            if (cnt_y == rgnHeight)
+            {
+                /* special case: bottom row */
+                subImgH = subszH >> 1;
+                cnt_yU = rgnHeight-1;
+                cnt_yB = cnt_yU;
+            }
+            else
+            {
+                /* default values */
+                subImgH = subszH;
+                cnt_yU = cnt_y - 1;
+                cnt_yB = cnt_yU + 1;
+            }
+        }
+        for (cnt_x = 0; cnt_x <= rgnWidth; cnt_x++)
+        {
+            if (cnt_x == 0)
+            {
+                /* special case: left column */
+                subImgW = subszW >> 1;
+                cnt_xL = 0;
+                cnt_xR = 0;
+            }
+            else
+            {
+                if (cnt_x == rgnWidth)
+                {
+                    /* special case: right column */
+                    subImgW = subszW >> 1;
+                    cnt_xL = rgnWidth - 1;
+                    cnt_xR = cnt_xL;
+                }
+                else
+                {
+                    /* default values */
+                    subImgW = subszW;
+                    cnt_xL = cnt_x - 1;
+                    cnt_xR = cnt_xL + 1;
+                }
+            }
 
-			pulLU = &pMapArray[ranges * (cnt_yU * rgnWidth + cnt_xL)];
-			pulRU = &pMapArray[ranges * (cnt_yU * rgnWidth + cnt_xR)];
-			pulLB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xL)];
-			pulRB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xR)];
+            pulLU = &pMapArray[ranges * (cnt_yU * rgnWidth + cnt_xL)];
+            pulRU = &pMapArray[ranges * (cnt_yU * rgnWidth + cnt_xR)];
+            pulLB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xL)];
+            pulRB = &pMapArray[ranges * (cnt_yB * rgnWidth + cnt_xR)];
 
-			CLAHE_Interpolate( pImgPtr,
+            CLAHE_Interpolate( pImgPtr,
                                imgWidth, 0,
                                pulLU, pulRU, pulLB, pulRB,
                                subImgW, subImgH, aLUT );
 
-			/* set pointer on next matrix */
-			pImgPtr += subImgW;
-		}
+            /* set pointer on next matrix */
+            pImgPtr += subImgW;
+        }
 
-		if ( skipW > 0 )
+        if ( skipW > 0 )
         {
             pImgPtr += (subImgH - 1) * imgWidth + skipW - 1;
         }
@@ -930,6 +909,5 @@ bool RAWImageToolKit::ApplyCLAHE( float* pImage,
 
     delete[] pMapArray;
 
-	return true;
+    return true;
 }
-
