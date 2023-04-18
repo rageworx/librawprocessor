@@ -1,7 +1,7 @@
-# librawprocessor #
-* A library for processing 16bit gray scaled medical RAW images.
-* Supports multi-platforms: Windows, Linux and MacOSX.
-* Reading 8 to 16bit gray scaled RAW image and make its downscale window size into 8bit another RAW image, or reverse.
+# librawprocessor (float32 version)#
+* A library for processing gray scaled medical RAW images.
+* Supports multi-platforms: Windows, Linux and MacOS
+* Reading 8 to 32bit any type of gray scaled RAW image and make its downscale window size into 8bit another RAW image, or reverse.
 
 ### This library supports these functions. ###
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
@@ -52,7 +52,7 @@
 * Supports Gamma, Brightness, Contrast with these methods:
   1. bool AdjustGamma( float gamma );
   2. bool AdjustBrightness( float percent );
-  3. bool AdjustContrast( float percent ); 
+  3. bool AdjustContrast( float percent );
 * Now supporting Pixel filterings with :
   1. ApplyFilter();
   2. CloneWithFilter();
