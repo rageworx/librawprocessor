@@ -136,21 +136,22 @@ class RAWProcessor
         // recommended degrees : 0.0 ~ 359.99
         bool RotateFree( float degree );
         void ChangeHeight( uint32_t h );
-        bool Get8bitDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype, bool reversed );
-        bool Get16bitRawImage( std::vector<uint16_t>& word_arrays, bool reversed );
         void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Invert(); /// same as InvertAuto() in float version.
         bool InvertAuto();
 
         // GetXXXX methods --
+        bool Get8bitDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype, bool reversed );
+        bool Get16bitRawImage( std::vector<uint16_t>& word_arrays, bool reversed );
         bool GetDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
-        bool GetRawImage( std::vector<float>* word_arrays, bool reversed = false );
-        bool GetRawImage( std::vector<float>* word_arrays );
+        bool GetRawImage( std::vector<float>* f_arrays, bool reversed = false );
+        bool GetRawImage( std::vector<float>* f_arrays );
         bool GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<float>* word_arrays, bool reversed = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint8_t>* byte_arrays, bool reversed = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<float>* byte_arrays );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint32_t>* d_arrays, bool reversed = false );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint16_t>* w_arrays, bool reversed = false );
+        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint8_t>* b_arrays, bool reversed = false );
         bool GetPixel( uint32_t x, uint32_t y, float &px );
+        bool GetHistography( std::vector<float>* f_histo );
 
     // Some additional tools here ...
     public:
@@ -226,6 +227,8 @@ class RAWProcessor
     protected:
         void addpixelarray( std::vector<float>* outpixels, uint32_t x, uint32_t y );
         void reordercoords( std::vector<polygoncoord>* coords );
+        bool f2dthldexport( uint8_t tp = 0, void* pd = NULL, bool rvs = false, WindowAnalysisReport* report = NULL );
+        bool f2dexport( uint8_t tp = 0, void* pd = NULL, bool rvs = false );
 
     protected:
         bool               raw_loaded;

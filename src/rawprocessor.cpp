@@ -833,120 +833,21 @@ bool RAWProcessor::GetAnalysisReport( WindowAnalysisReport& report, bool start_m
     return false;
 }
 
-bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report,  vector<float>* word_arrays, bool reversed )
+// floating point doesn't have trhesholding method, just make uint16_t type image.
+
+bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint32_t>* d_arrays, bool reversed )
 {
-    if ( report.timestamp == 0 )
-        return false;
-
-    float thld_min = (float)report.threshold_wide_min;
-    float thld_max = (float)report.threshold_wide_max;
-    float maxbf    = thld_max - thld_min;
-    float normf    = maxbf / maxbf;
-
-    word_arrays->clear();
-
-    int array_max = pixel_arrays.size();
-
-    word_arrays->reserve( array_max );
-    word_arrays->resize( array_max );
-
-    #pragma omp parallel for
-    for( int cnt=0; cnt<array_max; cnt++ )
-    {
-        //float apixel = pixel_arrays[cnt] - thld_min - 1;
-        float apixel = pixel_arrays[cnt];
-        float          fpixel = 0.0f;
-
-        // cut off threhold pixel value.
-        if ( apixel > thld_max )
-        {
-            apixel = thld_max;
-        }
-        else
-        if ( apixel < thld_min )
-        {
-            apixel = thld_min;
-        }
-
-        apixel -= thld_min;
-
-        // Rescaling pixel  !
-        fpixel = (float)(apixel) * normf;
-        apixel = (float)( fpixel );
-
-        if ( reversed == true )
-        {
-            apixel = DEF_PIXEL16_MAX - apixel - 1;
-        }
-
-        word_arrays->at(cnt) = apixel;
-    }
-
-    return true;
+    return f2dthldexport( 32, d_arrays, reversed, &report );
 }
 
-bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vector<uint8_t>* byte_arrays, bool reversed )
+bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report,  vector<uint16_t>* w_arrays, bool reversed )
 {
-    if ( report.timestamp == 0 )
-        return false;
+    return f2dthldexport( 16, w_arrays, reversed, &report );
+}
 
-    float thld_min = report.threshold_wide_min;
-    float thld_max = (float)report.threshold_wide_max;
-    float normfbpp = thld_max - thld_min;
-    float normf    = DEF_CALC_F_BMAX / normfbpp;
-
-    byte_arrays->clear();
-
-    int array_max = pixel_arrays.size();
-
-    byte_arrays->reserve( array_max );
-    byte_arrays->resize( array_max );
-
-    #pragma omp parallel for
-    for( int cnt=0; cnt<array_max; cnt++ )
-    {
-        float apixel = pixel_arrays[cnt];
-        float          fpixel = 0.0f;
-        uint8_t        bpixel = 0;
-
-        // cut off threhold pixel value.
-        if ( apixel > thld_max )
-        {
-            //apixel = DEF_CALC_F_WMAX;
-            apixel = thld_max;
-        }
-        else
-        if ( apixel < thld_min )
-        {
-            apixel = thld_min;
-        }
-
-        apixel -= thld_min;
-
-        // Rescaling pixel  !
-        fpixel = (float)(apixel) * normf;
-
-        // over flow check.
-        if ( fpixel >= DEF_CALC_F_BMAX )
-        {
-            // if it overflows , set to 255.0f
-            bpixel = DEF_PIXEL8_MAX - 1;
-        }
-        else
-        {
-            bpixel = (uint8_t)( fpixel );
-        }
-
-        if ( reversed == true )
-        {
-            bpixel = DEF_PIXEL8_MAX - bpixel - 1;
-        }
-
-        //byte_arrays.push_back( bpixel );
-        byte_arrays->at( cnt ) = bpixel;
-    }
-
-    return true;
+bool RAWProcessor::GetThresholdedImage( WindowAnalysisReport &report, std::vector<uint8_t>* b_arrays, bool reversed )
+{
+    return f2dthldexport( 8, b_arrays, reversed, &report );
 }
 
 bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
@@ -962,6 +863,14 @@ bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
     px = pixel_arrays[ pixpos ];
 
     return true;
+}
+
+bool RAWProcessor::GetHistography( std::vector<float>* f_histo )
+{
+    if ( pixel_arrays.size() == 0 )
+        return false;
+
+    return false;
 }
 
 bool RAWProcessor::SaveToFile( const char* path )
@@ -2041,6 +1950,196 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
             copydummy.clear();
         }
     }
+}
+
+bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysisReport* report )
+{
+    if ( report == NULL )
+        return false;
+
+    if ( report->timestamp == 0 )
+        return false;
+
+    size_t array_sz = pixel_arrays.size();
+
+    if ( array_sz == 0 )
+        return false;
+
+    vector< uint8_t >*  pvt8  = NULL;
+    vector< uint16_t >* pvt16 = NULL;
+    vector< uint32_t >* pvt32 = NULL;
+    uint8_t* pdt_src = NULL;
+    size_t   pdt_sz = 0;
+    size_t   pdt_elem_sz = 0;
+
+    switch( tp )
+    {
+        case 8: /// == uint8_t
+            pvt8 = (vector< uint8_t >*)pd;
+            pvt8->reserve( array_sz );
+            pvt8->resize( array_sz );
+            pdt_src = (uint8_t*)pvt8->data();
+            pdt_sz  = pvt8->size();
+            pdt_elem_sz = 1;
+            break;
+
+        case 10: /// == uint16_t
+        case 12: /// == uint16_t
+        case 16: /// == uint16_t
+            pvt16 = (vector< uint16_t >*)pd;
+            pvt16->reserve( array_sz );
+            pvt16->resize( array_sz );
+            pdt_src = (uint8_t*)pvt16->data();
+            pdt_sz  = pvt16->size();
+            pdt_elem_sz = 2;
+            break;
+
+        case 24: /// == uint32_t
+        case 32: /// == uint32_t
+            pvt32 = (vector< uint32_t >*)pd;
+            pvt32->reserve( array_sz );
+            pvt32->resize( array_sz );
+            pdt_src = (uint8_t*)pvt32->data();
+            pdt_sz  = pvt32->size();
+            pdt_elem_sz = 4;
+            break;
+
+        default: /// unsupported.
+            return false;
+    }
+
+    if ( pdt_sz == 0 )
+        return false;
+
+    float thld_min = report->threshold_wide_min;
+    float thld_max = report->threshold_wide_max;
+    float maxbf    = thld_max - thld_min;
+    float normf    = maxbf / maxbf;
+    float multf    = (float)tp * 8.f;
+
+    #pragma omp parallel for
+    for( size_t cnt=0; cnt<array_sz; cnt++ )
+    {
+        //float apixel = pixel_arrays[cnt] - thld_min - 1;
+        float apixel = pixel_arrays[cnt];
+
+        // cut off threhold pixel value.
+        if ( apixel > thld_max )
+        {
+            apixel = thld_max;
+        }
+        else
+        if ( apixel < thld_min )
+        {
+            apixel = thld_min;
+        }
+
+        apixel -= thld_min;
+        apixel *= normf;
+
+        if ( rvs == true )
+        {
+            apixel = multf - apixel - 1.f;
+        }
+
+        if ( apixel < 0.f )
+            apixel = 0.f;
+
+        memcpy( pdt_src, &apixel, pdt_elem_sz );
+        pdt_src += pdt_elem_sz;
+    }
+
+    return true;
+}
+
+bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
+{
+    size_t array_sz = pixel_arrays.size();
+
+    if ( array_sz == 0 )
+        return false;
+
+    vector< uint8_t >*  pvt8  = NULL;
+    vector< uint16_t >* pvt16 = NULL;
+    vector< uint32_t >* pvt32 = NULL;
+    uint8_t* pdt_src = NULL;
+    size_t   pdt_sz = 0;
+    size_t   pdt_elem_sz = 0;
+
+    switch( tp )
+    {
+        case 8: /// == uint8_t
+            pvt8 = (vector< uint8_t >*)pd;
+            pvt8->reserve( array_sz );
+            pvt8->resize( array_sz );
+            pdt_src = (uint8_t*)pvt8->data();
+            pdt_sz  = pvt8->size();
+            pdt_elem_sz = 1;
+            break;
+
+        case 10: /// == uint16_t
+        case 12: /// == uint16_t
+        case 16: /// == uint16_t
+            pvt16 = (vector< uint16_t >*)pd;
+            pvt16->reserve( array_sz );
+            pvt16->resize( array_sz );
+            pdt_src = (uint8_t*)pvt16->data();
+            pdt_sz  = pvt16->size();
+            pdt_elem_sz = 2;
+            break;
+
+        case 24: /// == uint32_t
+        case 32: /// == uint32_t
+            pvt32 = (vector< uint32_t >*)pd;
+            pvt32->reserve( array_sz );
+            pvt32->resize( array_sz );
+            pdt_src = (uint8_t*)pvt32->data();
+            pdt_sz  = pvt32->size();
+            pdt_elem_sz = 4;
+            break;
+
+        default: /// unsupported.
+            return false;
+    }
+
+    if ( pdt_sz == 0 )
+        return false;
+
+    float multf    = (float)tp * 8.f;
+
+    #pragma omp parallel for
+    for( size_t cnt=0; cnt<array_sz; cnt++ )
+    {
+        //float apixel = pixel_arrays[cnt] - thld_min - 1;
+        float apixel = pixel_arrays[cnt];
+
+        // cut off threhold pixel value.
+        if ( apixel > thld_max )
+        {
+            apixel = thld_max;
+        }
+        else
+        if ( apixel < thld_min )
+        {
+            apixel = thld_min;
+        }
+
+        apixel -= thld_min;
+        apixel *= normf;
+
+        if ( rvs == true )
+        {
+            apixel = multf - apixel - 1.f;
+        }
+
+        if ( apixel < 0.f )
+            apixel = 0.f;
+
+        memcpy( pdt_src, &apixel, pdt_elem_sz );
+        pdt_src += pdt_elem_sz;
+    }
+
+    return true;
 }
 
 void RAWProcessor::CutoffLevels( float minv, float maxv )
