@@ -141,17 +141,15 @@ class RAWProcessor
         bool InvertAuto();
 
         // GetXXXX methods --
-        bool Get8bitDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype, bool reversed );
+        bool Get8bitDownscaled( std::vector<uint8_t>& byte_arrays, DownscaleType dntype, bool reversed );
         bool Get16bitRawImage( std::vector<uint16_t>& word_arrays, bool reversed );
-        bool GetDownscaled( std::vector<uint8_t>* byte_arrays, DownscaleType dntype = DNSCALE_NORMAL, bool reversed = false );
-        bool GetRawImage( std::vector<float>* f_arrays, bool reversed = false );
-        bool GetRawImage( std::vector<float>* f_arrays );
+        bool GetRawImage( std::vector<float>& f_arrays, bool reversed = false );
         bool GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint32_t>* d_arrays, bool reversed = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint16_t>* w_arrays, bool reversed = false );
-        bool GetThresholdedImage( WindowAnalysisReport& report, std::vector<uint8_t>* b_arrays, bool reversed = false );
-        bool GetPixel( uint32_t x, uint32_t y, float &px );
-        bool GetHistography( std::vector<float>* f_histo );
+        bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint32_t>& d_arrays, bool reversed = false );
+        bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint16_t>& w_arrays, bool reversed = false );
+        bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint8_t>& b_arrays, bool reversed = false );
+        bool GetPixel( uint32_t x, uint32_t y, float& px );
+        bool GetHistography( std::vector<uint32_t>& d_histo, uint32_t scale = 256 );
 
     // Some additional tools here ...
     public:
@@ -240,7 +238,6 @@ class RAWProcessor
         float              pixel_min_level;
         float              pixel_max_level;
         float              pixel_med_level;
-        size_t             index_max_pixel;
         uint32_t           current_transform;
 #ifdef WCHAR_SUPPORTED
         std::wstring       raw_file_name;
@@ -251,4 +248,8 @@ class RAWProcessor
         uint32_t           img_width;
         RAWUserScaleIF*    userscaler;
 };
+
+// for compatible issue for older project ---
+#define GetThresholdedImage     GetWindowedImage
+
 #endif /// of __RAWPROCESSOR_H__
