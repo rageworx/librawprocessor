@@ -156,8 +156,7 @@ RAWProcessor::RAWProcessor()
    pixel_min_level(0),
    pixel_max_level(0),
    img_height(0),
-   img_width(0),
-   userscaler(NULL)
+   img_width(0)
 {
     resetWindow();
 }
@@ -593,15 +592,6 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
         }
 
 #ifdef DEBUG
-        FILE* fp = fopen( "raw_read_dump_.bin", "wb" );
-        if ( fp != NULL )
-        {
-            fwrite( &pixel_arrays[0], 1, pixel_arrays.size() * sizeof( float ), fp );
-            fclose( fp );
-        }
-#endif /// of DEBUG
-
-#ifdef DEBUG
         printf( "load from memory #1\n" );
         fflush( stdout );
 #endif
@@ -735,11 +725,6 @@ bool RAWProcessor::ApplyTransform( uint32_t trnsfm )
     return false;
 }
 
-void RAWProcessor::SetUserScale( RAWUserScaleIF* ptr )
-{
-    userscaler = ptr;
-}
-
 bool RAWProcessor::Invert()
 {
     return InvertAuto();
@@ -850,13 +835,6 @@ bool RAWProcessor::Get8bitDownscaled( vector<uint8_t>& b_arrays, DownscaleType d
             b_arrays[cnt] = dspixel;
         }
     }
-    /*
-    else
-    if ( userscaler != NULL )
-    {
-        return userscaler->processUserScale( pixel_arrays, byte_arrays );
-    }
-    */
 
     return true;
 }
@@ -950,7 +928,6 @@ bool RAWProcessor::GetAnalysisReport( WindowAnalysisReport& report, bool start_m
 }
 
 // floating point doesn't have trhesholding method, just make uint16_t type image.
-
 bool RAWProcessor::GetWindowedImage( WindowAnalysisReport& report, std::vector<uint32_t>& d_arrays, bool reversed )
 {
     return f2dthldexport( 32, &d_arrays, reversed, &report );
@@ -974,14 +951,14 @@ bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
     if ( ( x > img_width ) || ( y > img_height ) )
         return false;
 
-    int pixpos = ( y * img_height ) + x;
+    size_t pixpos = ( y * img_height ) + x;
 
     px = pixel_arrays[ pixpos ];
 
     return true;
 }
 
-bool RAWProcessor::GetHistography( std::vector<uint32_t> &d_histo, uint32_t scale )
+bool RAWProcessor::GetHistogram( std::vector<uint32_t> &d_histo, uint32_t scale )
 {
     if ( pixel_arrays.size() == 0 )
         return false;
@@ -2152,13 +2129,14 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
     float thld_min = report->wide_min;
     float thld_max = report->wide_max;
     float maxbf    = thld_max - thld_min;
-    float multf    = (float)pow(2, tp);
+    float normf    = 1.f / maxbf;
+    float multf    = (float)pow(2, tp) - 1.f;
 
 #ifdef DEBUG
     printf( "[debug]f2dthldexport()\n"
             "thld_min, thld_max = %f, %f\n"
-            "maxbf = %f, multf = %f\n",
-            thld_min, thld_max, maxbf, multf );
+            "maxbf = %f, normf = %f, multf = %f\n",
+            thld_min, thld_max, maxbf, normf, multf );
     fflush( stdout );
 #endif /// of DEBUG
 
@@ -2178,6 +2156,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
         {
             apixel = thld_min;
         }
+        // ------------------------------
 
         apixel -= thld_min;
 
@@ -2194,7 +2173,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
             case 8: /// == uint8_t
                 {
                     uint8_t* cast8 = &pdt_src[pdt_elem_sz * cnt];
-                    *cast8 = (uint8_t)(apixel * multf);
+                    *cast8 = (uint8_t)(apixel * multf * normf);
                 }
                 break;
 
@@ -2203,7 +2182,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
             case 16: /// == uint16_t
                 {
                     uint16_t* cast16 = (uint16_t*)&pdt_src[pdt_elem_sz * cnt];
-                    *cast16 = (uint16_t)(apixel * multf);
+                    *cast16 = (uint16_t)(apixel * multf * normf );
                 }
                 break;
 
@@ -2211,7 +2190,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
             case 32: /// == uint32_t
                 {
                     uint32_t* cast32 = (uint32_t*)&pdt_src[pdt_elem_sz * cnt];
-                    *cast32 = (uint32_t)(apixel * multf);
+                    *cast32 = (uint32_t)(apixel * multf * normf );
                 }
                 break;
         }

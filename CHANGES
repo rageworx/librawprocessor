@@ -1,3 +1,7 @@
+2023-04-24:
+     - Downscaling to unsigned bits implemented.
+     - Removed user scaler.
+
 2023-04-18:
      - Floating points, standard integer types.
 

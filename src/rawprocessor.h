@@ -18,13 +18,6 @@
 #include <string>
 #include <cstdint>
 
-class RAWUserScaleIF
-{
-    public:
-        virtual bool processUserScale( std::vector<float> &src,
-                                       std::vector<float> *dst ) = 0;
-};
-
 class RAWProcessor
 {
     public:
@@ -141,7 +134,6 @@ class RAWProcessor
         // recommended degrees : 0.0 ~ 359.99
         bool RotateFree( float degree );
         void ChangeHeight( uint32_t h );
-        void SetUserScale( RAWUserScaleIF* ptr = NULL );
         bool Invert(); /// same as InvertAuto() in float version.
         bool InvertAuto();
 
@@ -154,7 +146,7 @@ class RAWProcessor
         bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint16_t>& w_arrays, bool reversed = false );
         bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint8_t>& b_arrays, bool reversed = false );
         bool GetPixel( uint32_t x, uint32_t y, float& px );
-        bool GetHistography( std::vector<uint32_t>& d_histo, uint32_t scale = 256 );
+        bool GetHistogram( std::vector<uint32_t>& d_histo, uint32_t scale = 256 );
 
     // Some additional tools here ...
     public:
@@ -252,7 +244,6 @@ class RAWProcessor
 #endif
         uint32_t           img_height;
         uint32_t           img_width;
-        RAWUserScaleIF*    userscaler;
 };
 
 // for compatible issue for older project ---
