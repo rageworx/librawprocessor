@@ -59,18 +59,23 @@ class RAWProcessor
         #define TRANSFORM_PARAM_ROT_RC180   ( 0x00004000 )
         #define TRANSFORM_PARAM_ROT_RC270   ( 0x00008000 )
 
-        #define DATATYPE_BYTE               ( 0x00000000 )
-        #define DATATYPE_USHORT             ( 0x00000001 )
-        #define DATATYPE_FLOAT              ( 0x00000002 )
+        #define DATATYPE_UINT8              ( 0x00000000 )
+        #define DATATYPE_UINT16             ( 0x00000001 )
+        #define DATATYPE_UINT32             ( 0x00000002 )
+        #define DATATYPE_FLOAT              ( 0x00000004 )
+        #define DATATYPE_BYTE               DATATYPE_UINT8
+        #define DATATYPE_USHORT             DATATYPE_UINT16
+        #define DATATYPE_WORD               DATATYPE_UINT16
+        #define DATAYYPE_DWORD              DATATYPE_UINT32
 
     public:
         struct WindowAnalysisReport
         {
             uint32_t    timestamp;
-            float       base_threshold_index;
-            float       threshold_wide_min;
-            float       threshold_wide_max;
-            uint32_t    threshold_max_amount;
+            float       base_index;
+            float       wide_min;
+            float       wide_max;
+            uint32_t    wide_ax_amount;
         };
 
         struct SimpleAnalysisInfo
@@ -227,6 +232,7 @@ class RAWProcessor
         void reordercoords( std::vector<polygoncoord>* coords );
         bool f2dthldexport( uint8_t tp = 0, void* pd = NULL, bool rvs = false, WindowAnalysisReport* report = NULL );
         bool f2dexport( uint8_t tp = 0, void* pd = NULL, bool rvs = false );
+        void noramlize();
 
     protected:
         bool               raw_loaded;
