@@ -308,7 +308,7 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
     if ( rfstrm.is_open() == true )
     {
         rfstrm.seekg( 0, ios::end );
-        uint32_t fsize = rfstrm.tellg();
+        size_t fsize = rfstrm.tellg();
         rfstrm.seekg( 0, ios::beg );
         rfstrm.clear();
 
@@ -352,7 +352,7 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
                 return false;
         }
 
-        uint32_t blancsz = 0;
+        size_t blancsz = 0;
 
         if (  arraysz > 0 )
         {
@@ -373,9 +373,9 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
         resetWindow();
 
         // To save memory, it doesn't using direct load to memory.
-        for( uint32_t cnt=0; cnt<fsize/readsz; cnt++)
+        for( size_t cnt=0; cnt<fsize/readsz; cnt++)
         {
-            char  chardata[4] = {0};
+            char  chardata[4] = {0,0,0,0};
             float convdata = 0.f;
 
             rfstrm.read( chardata, readsz );
@@ -503,7 +503,7 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
         fflush( stdout );
 #endif /// of DEBUG
 
-        uint32_t blancsz   = 0;
+        size_t blancsz   = 0;
 
         if (  arraysz > 0 )
         {
@@ -524,10 +524,9 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
         resetWindow();
 
         // To save memory, it doesn't using direct load to memory.
-        #pragma omp parallel for
+        //#pragma omp parallel for private(pixel_window_max)
         for( size_t cnt=0; cnt<arraysz; cnt++)
         {
-            char  chardata[4] = {0};
             float convdata = 0;
 
             switch( dtype )
