@@ -1,30 +1,36 @@
 # librawprocessor (float32 version)
-* A library for processing gray scaled medical RAW images.
+* A library for processing gray scaled medical RAW images based on OpneMP
+* multi-core processing.
 * Supports multi-platforms: Windows, Linux and MacOS
 * Reading 8 to 32bit any type of gray scaled RAW image and make its downscale window size into 8bit another RAW image, or reverse.
+* Easily port codes with [libtinydicom](https://github.com/rageworx/libtinydicom)
 
-### This library supports these functions
+## Uncompatible with older version
+* By code modernizing, many things been changed.
+* Some names like threshold - been changed to window.
+* Some unclear words changed to right.
+
+## This library supports these functions
  1. RAW read by image size of height, width automatically calculated and padded with Zero.
  1. Get weight informations to calculating window size.
- 1. Windowing - threshold cut-off (for lose useless image datas, or make it easy to processing)
+ 1. Windowing - threshold width cut-off (for lose useless image datas, or make it easy to processing)
  1. CLAHE( Contrast Limited Adaptive Histogram Equalization )
- 1. Export to 8bit pixel array(vector array)
- 1. Export to 16bit pixel array(vector array)
+ 1. Export to 8 to 32bit pixel arrays (vector array), even float-point.
  1. Reverse all pixels ( black to white, or white to black )
- 1. Flip H/V and Rotate in 90,180,270 degrees.
- 1. 2 different ways for tone mapping (known as H.D.R image)
+ 1. Flip H/V and Rotate in 90,180,270 degrees, with free degree.
+ 1. 2 different ways for tone mappings (HDR imaging)
 
 ### Makefile rule
  1. Refer to HOW2MAKE.
 
-### And still these functions are not embodied
- 1. Nothing in now.
+### And still these functions are not implemented.
+ 1. Specially eCLAHE is still in conversion for floating point.
 
 ### Reserved to be included
 * Nothing now, bug fix if found.
 
 ### Latest update
-* Version marked as 0.9.35.150.
+* Version marked as 0.9.60.160.
 * Included byte swapping
 
 ### Previous updates
