@@ -61,7 +61,7 @@ using namespace std;
 #endif //// of WCHAR_SUPPORTED
 
 #define DEF_RAW_I_HEIGHT    ( 1024 )
-#define DEF_PIXEL_WINDOW    ( 1.0f )
+#define DEF_window    ( 1.0f )
 
 #define DEF_PIXEL32_MAX     ( 0xFFFFFFFFF )
 #define DEF_PIXEL16_MAX     ( 0xFFFF )
@@ -151,7 +151,7 @@ inline void _bswap4( void* ptr )
 RAWProcessor::RAWProcessor()
  : raw_loaded(false),
    pixel_arrays_realsz(0),
-   pixel_window_max(0),
+   window_max(0),
    pixel_bpp(32),
    pixel_min_level(0),
    pixel_max_level(0),
@@ -164,7 +164,7 @@ RAWProcessor::RAWProcessor()
 RAWProcessor::RAWProcessor( const char* raw_file, uint32_t height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
-   pixel_window_max( 0 ),
+   window_max( 0 ),
    pixel_bpp(10),
    pixel_min_level(0),
    pixel_max_level(0),
@@ -183,7 +183,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, uint32_t height )
 RAWProcessor::RAWProcessor( const wchar_t* raw_file, uint32_t height )
  : raw_loaded(false),
    pixel_arrays_realsz(0),
-   pixel_window_max( 0 ),
+   window_max( 0 ),
    pixel_bpp(10),
    pixel_min_level(0),
    pixel_max_level(0),
@@ -433,9 +433,9 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
 
             pixel_arrays[ cnt ] = convdata;
 
-            if ( pixel_window_max < convdata )
+            if ( window_max < convdata )
             {
-                pixel_window_max = convdata;
+                window_max = convdata;
             }
         }
 
@@ -445,7 +445,6 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
         rfstrm.close();
 
         calcWindow();
-        noramlize();
         analyse();
 
         raw_loaded = true;
@@ -524,7 +523,7 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
         resetWindow();
 
         // To save memory, it doesn't using direct load to memory.
-        //#pragma omp parallel for private(pixel_window_max)
+        //#pragma omp parallel for private(window_max)
         for( size_t cnt=0; cnt<arraysz; cnt++)
         {
             float convdata = 0;
@@ -584,9 +583,9 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
 
             pixel_arrays[ cnt ] = convdata;
 
-            if ( pixel_window_max < convdata )
+            if ( window_max < convdata )
             {
-                pixel_window_max = convdata;
+                window_max = convdata;
             }
         }
 
@@ -595,7 +594,6 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
         fflush( stdout );
 #endif
         calcWindow();
-        noramlize();
         analyse();
 
 #ifdef DEBUG
@@ -913,15 +911,22 @@ bool RAWProcessor::GetRawImage( std::vector<float>& f_arrays, bool reversed )
 
 bool RAWProcessor::GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero )
 {
-    if ( pixel_window_max == 0 )
+    if ( ( window_max == 0 ) || ( pixel_arrays.size() == 0 ) )
         return false;
 
     // # phase 01
     // get current time stamp.
     time_t curtime;
     report.timestamp = (uint32_t)time(&curtime);
-    report.wide_min = pixel_min_level;
-    report.wide_max = pixel_max_level;
+    report.wide_min = window_min;
+    report.wide_max = window_max;
+    report.wide_max_amount = window_wide;
+
+    if ( start_minlevel_zero == true )
+    {
+        report.wide_min = 0;
+        report.wide_max_amount += window_min;
+    }
 
     return true;
 }
@@ -957,25 +962,24 @@ bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
     return true;
 }
 
-bool RAWProcessor::GetHistogram( std::vector<uint32_t> &d_histo, uint32_t scale )
+bool RAWProcessor::GetHistogram( std::vector<size_t> &d_histo, size_t& max_lvl )
 {
     if ( pixel_arrays.size() == 0 )
         return false;
 
-    // count pixel difference pixel amounts to d_histo size ...
+    // histogram amounts always follow window_max; 0 to window_max
     d_histo.clear();
-    d_histo.reserve( scale );
-    d_histo.resize( scale );
+    d_histo.resize( window_max );
 
     size_t kinds_amount = 0;
-    float  cast_f = pixel_max_level;
+    max_lvl = window_max;
 
     #pragma omp parallel for
     for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
-        uint32_t pos32 = ( pixel_arrays[cnt] * cast_f ) * scale;
-        if ( pos32 > scale ) pos32 = scale;
-        d_histo[pos32]++;
+        size_t pos32 = pixel_arrays[cnt] * window_max;
+        if ( pos32 < window_max )
+            d_histo[pos32]++;
     }
 
     return true;
@@ -1446,55 +1450,85 @@ void RAWProcessor::GetPolygonPixels( vector<polygoncoord>* coords, vector<float>
 
 void RAWProcessor::GetAnalysisFromPixels( vector<float>& pixels, SimpleAnalysisInfo& info )
 {
-    /*
-    for( uint32_t cnt=0; cnt<(DEF_PIXEL_WINDOW + 1); cnt++ )
-    {
-        window[cnt] = 0;
-    }
-    */
-    float max_level = 0;
-    float min_level = DEF_PIXEL_WINDOW;
-    double         summ      = 0.0;
-
-    /*
-    // --- need to make it again ---
-
-    for( size_t cnt=0; cnt<pixels.size(); cnt++ )
-    {
-        float apixel = pixels[cnt];
-
-        window[apixel] ++;
-
-        if ( apixel > max_level )
-        {
-            max_level = apixel;
-        }
-        else
-        if ( apixel < min_level )
-        {
-            min_level = apixel;
-        }
-
-        summ += (double)apixel;
-    }
-    */
-
-    // Make information report.
-    info.minLevel = min_level;
-    info.maxLevel = max_level;
-    info.average  = summ / pixels.size();
+    float local_p_min_l = _MAX_F_;
+    float local_p_max_l = _MIN_F_;
+    float local_p_med_l = 0.0f;
+    size_t local_w_w = 0;
 
     info.variance = 0.0;
     info.deviation = 0.0;
-
     double sd = 0.0;
-    // getting variance & deviation ...
+
+    // find min/max pixel level ...
+    #pragma omp for reduction(+:local_p_max_l) reduction(-:local_p_min_l) private(sd)
     for( size_t cnt=0; cnt<pixels.size(); cnt++ )
     {
-        //info->deviation
+        float pixelf = pixels[cnt];
+
+        if ( ( pixelf > 0.f ) && ( local_w_w == 0 ) )
+        {
+            local_w_w = cnt;
+        }
+
+        if ( pixelf > pixel_max_level )
+        {
+            local_p_max_l = pixels[cnt];
+        }
+        else
+        if ( pixelf < pixel_min_level )
+        {
+            local_p_min_l = pixels[cnt];
+        }
+
         double dpixel = (double)pixels[cnt];
         sd += pow( dpixel - info.average , 2 );
     }
+
+    // build historgram amounts as compressed into pixel counts.
+    const float compressf = (float)pixels.size();
+    vector< size_t > bHist;
+    bHist.resize( (size_t)compressf  );
+
+    #pragma omp parallel for
+    for( size_t cnt=0; cnt<pixels.size(); cnt++ )
+    {
+        size_t castpos = pixels[cnt] * compressf;
+        if ( castpos < bHist.size() )
+            bHist[castpos]++;
+    }
+
+    size_t local_w_min = 0;
+    size_t local_w_max = 0;
+    window_max = pixel_arrays.size() - 1;
+
+    // find zero amounts of bHist.
+    for ( size_t cnt=0; bHist.size(); cnt++ )
+    {
+        if ( bHist[cnt] > 0 )
+        {
+            local_w_min = cnt;
+            break;
+        }
+    }
+
+    for( size_t cnt=bHist.size()-1; cnt!=0; cnt-- )
+    {
+        if ( bHist[cnt] > 0 )
+        {
+            local_w_max = cnt;
+            break;
+        }
+    }
+
+    bHist.clear();
+
+    local_p_med_l = ( pixel_max_level + pixel_min_level ) / 2.f;
+    local_w_w = local_w_max - local_w_min;
+
+    // Make information report.
+    info.minLevel = local_p_min_l;
+    info.maxLevel = local_p_max_l;
+    info.average  = ( local_p_max_l - local_p_min_l ) / 2;
 
     info.variance  = sd / (double)pixels.size();
     info.deviation = sqrt( info.variance );
@@ -1544,10 +1578,8 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
                     }
                     // -- applying matrix ---
 
-                    float rpixel = MIN( \
-                                                MAX( fconfig->factor * adjustedp + fconfig->bias \
-                                                    , 0) \
-                                            , 65535 );
+                    float rpixel = MIN( MAX( fconfig->factor * adjustedp + fconfig->bias, 0) \
+                                        , 65535 );
 
                     copy_arrays[ cnty * img_width + cntx ] = rpixel;
                 }
@@ -1709,7 +1741,7 @@ bool RAWProcessor::AdjustContrast( float percent )
     return false;
 }
 
-bool RAWProcessor::AdjustToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 )
+bool RAWProcessor::ApplyToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 )
 {
     if ( pixel_arrays_realsz > 0 )
     {
@@ -1911,11 +1943,6 @@ const float* RAWProcessor::data()
 
 void RAWProcessor::analyse()
 {
-    //if ( pixel_arrays.size() == 0 )
-    if ( pixel_arrays.size() == 0 )
-        return;
-
-    //int pixel_counts = pixel_arrays.size();
     //if ( pixel_counts > 0 )
     if ( pixel_arrays.size() > 0 )
     {
@@ -1930,7 +1957,8 @@ void RAWProcessor::analyse()
 
 void RAWProcessor::resetWindow()
 {
-    pixel_window_max = (float)pixel_arrays_realsz;
+    window_min = 0;
+    window_max = pixel_arrays_realsz;
 }
 
 void RAWProcessor::calcWindow()
@@ -1939,45 +1967,97 @@ void RAWProcessor::calcWindow()
     pixel_max_level = _MIN_F_;
     pixel_med_level = 0.0f;
 
-    //#pragma omp for reduction(+:pixel_max_level) reduction(-:pixel_min_level) nowait
+    resetWindow();
+
+    // find min/max pixel level ...
     #pragma omp for reduction(+:pixel_max_level) reduction(-:pixel_min_level)
     for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
     {
-        if ( pixel_arrays[cnt] > pixel_max_level )
+        float pixelf = pixel_arrays[cnt];
+
+        if ( ( pixelf > 0.f ) && ( window_min == 0 ) )
+        {
+            window_min = cnt;
+        }
+
+        if ( pixelf > pixel_max_level )
         {
             pixel_max_level = pixel_arrays[cnt];
         }
         else
-        if ( pixel_arrays[cnt] < pixel_min_level )
+        if ( pixelf < pixel_min_level )
         {
             pixel_min_level = pixel_arrays[cnt];
         }
     }
 
+    // build historgram amounts as compressed into pixel counts.
+    const float compressf = (float)pixel_arrays.size();
+    vector< size_t > bHist;
+    bHist.resize( (size_t)compressf  );
+
+    #pragma omp parallel for
+    for( size_t cnt=0; cnt<pixel_arrays.size(); cnt++ )
+    {
+        size_t castpos = pixel_arrays[cnt] * compressf;
+        if ( castpos < bHist.size() )
+            bHist[castpos]++;
+    }
+
+    window_min = 0;
+    window_max = pixel_arrays.size() - 1;
+
+    // find zero amounts of bHist.
+    for ( size_t cnt=0; bHist.size(); cnt++ )
+    {
+        if ( bHist[cnt] > 0 )
+        {
+            window_min = cnt;
+            break;
+        }
+    }
+
+    for( size_t cnt=bHist.size()-1; cnt!=0; cnt-- )
+    {
+        if ( bHist[cnt] > 0 )
+        {
+            window_max = cnt;
+            break;
+        }
+    }
+
+    bHist.clear();
+
     pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2.f;
+    window_wide = window_max - window_min;
 
 #ifdef DEBUG
-    printf( "calcWindow() result min,max,med = %.5f %.5f, %.5f\n",
-            pixel_min_level, pixel_max_level, pixel_med_level );
+    printf( "calcWindow() result min,max,med = %.5f %.5f, %.5f | wide = %zu, min = %zu, max = %zu\n",
+            pixel_min_level, pixel_max_level, pixel_med_level,
+            window_wide, window_min, window_max );
 #endif // DEBUG
 }
 
 void RAWProcessor::findWideness(float& minf, float& maxf )
 {
-    minf = pixel_min_level;
-    maxf = pixel_max_level;
+    if ( pixel_arrays.size() > 0 )
+    {
+        if ( window_min < pixel_arrays.size() )
+            minf = pixel_arrays[ window_min ];
+
+        if ( window_max < pixel_arrays.size() )
+            maxf = pixel_arrays[ window_max ];
+    }
 }
 
 void RAWProcessor::addpixelarray( std::vector<float>* outpixels, uint32_t x, uint32_t y )
 {
     if ( outpixels == NULL )
-    {
         return;
-    }
 
     if ( ( x < img_width ) && ( y < img_height ) )
     {
-        uint32_t mpos = img_width * y + x;
+        size_t mpos = img_width * y + x;
         if ( pixel_arrays_realsz > mpos )
         {
             outpixels->push_back( pixel_arrays[ mpos ] );
@@ -2018,6 +2098,7 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
                 minX = coords->at(cnt).x;
                 minY = coords->at(cnt).y;
                 idxFirst = cnt;
+                break;
             }
         }
 
@@ -2063,11 +2144,6 @@ void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 
 bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysisReport* report )
 {
-#ifdef DEBUG
-    printf( "bool RAWProcessor::f2dthldexport( %u, %p, %u, %p )\n", tp, pd, rvs, report );
-    fflush( stdout );
-#endif /// of DEBUG
-
     if ( report == NULL )
         return false;
 
@@ -2252,7 +2328,7 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
     if ( pdt_sz == 0 )
         return false;
 
-    float multf    = (float)tp * 8.f;
+    float multf    = (float)pow(2, tp) - 1.f;
     float thld_min = 0.f;
     float thld_max = pow( 2, tp );
     float dividerf = 1.f / pixel_max_level;
@@ -2260,7 +2336,7 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
     #pragma omp parallel for
     for( size_t cnt=0; cnt<array_sz; cnt++ )
     {
-        float apixel = pixel_arrays[cnt] * dividerf;
+        float apixel = pixel_arrays[cnt] * dividerf * multf;
 
         // cut off threhold pixel value.
         if ( apixel > thld_max )
@@ -2275,7 +2351,7 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
 
         if ( rvs == true )
         {
-            apixel = pixel_max_level - apixel;
+            apixel = ( pixel_max_level * multf ) - apixel;
         }
 
         if ( apixel < 0.f )
@@ -2284,27 +2360,35 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
         switch( tp )
         {
             case 8: /// == uint8_t
-                *pdt_src = (uint8_t)(apixel);
+                {
+                    uint8_t* cast8 = &pdt_src[pdt_elem_sz * cnt];
+                    *cast8 = (uint8_t)(apixel);
+                }
                 break;
 
             case 10: /// == uint16_t
             case 12: /// == uint16_t
             case 16: /// == uint16_t
-                *pdt_src = (uint16_t)(apixel);
+                {
+                    uint16_t* cast16 = (uint16_t*)&pdt_src[pdt_elem_sz * cnt];
+                    *cast16 = (uint16_t)(apixel);
+                }
                 break;
 
             case 24: /// == uint32_t
             case 32: /// == uint32_t
-                *pdt_src = (uint32_t)(apixel);
+                {
+                    uint32_t* cast32 = (uint32_t*)&pdt_src[pdt_elem_sz * cnt];
+                    *cast32 = (uint32_t)(apixel);
+                }
                 break;
         }
-
-        pdt_src += pdt_elem_sz;
     }
 
     return true;
 }
 
+// all pixels makes to normalized as 0.0 to 1.0 range --
 void RAWProcessor::noramlize()
 {
     size_t array_sz = pixel_arrays.size();
@@ -2316,7 +2400,7 @@ void RAWProcessor::noramlize()
 
     if ( pixel_max_level > 0.f )
     {
-        normal_maxf = 1.f / pixel_max_level;
+        normal_maxf = pixel_max_level / 1.f;
 
         #pragma omp parallel for
         for( size_t cnt=0; cnt<array_sz; cnt++ )

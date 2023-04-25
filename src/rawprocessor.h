@@ -68,7 +68,7 @@ class RAWProcessor
             float       base_index;
             float       wide_min;
             float       wide_max;
-            uint32_t    wide_ax_amount;
+            uint32_t    wide_max_amount;
         };
 
         struct SimpleAnalysisInfo
@@ -96,7 +96,9 @@ class RAWProcessor
         float MediumLevel()             { return pixel_med_level; }
         uint32_t Width()                { return img_width; }
         uint32_t Height()               { return img_height; }
-        uint32_t WindowCount()          { return pixel_window_max; }
+        size_t WindowCount()            { return window_wide; }
+        size_t WindowMin()              { return window_min; }
+        size_t WindowMax()              { return window_max; }
         uint32_t BPP()                  { return pixel_bpp; }
         void RecalcLevels()             { calcWindow(); }
 
@@ -146,7 +148,7 @@ class RAWProcessor
         bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint16_t>& w_arrays, bool reversed = false );
         bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint8_t>& b_arrays, bool reversed = false );
         bool GetPixel( uint32_t x, uint32_t y, float& px );
-        bool GetHistogram( std::vector<uint32_t>& d_histo, uint32_t scale = 256 );
+        bool GetHistogram( std::vector<size_t>& d_histo, size_t& max_lvl );
 
     // Some additional tools here ...
     public:
@@ -192,13 +194,14 @@ class RAWProcessor
         void          DiscardFilter( FilterConfig* fp );
 
     public:
-        #define TONEMAP_TYPE_DRAGO      0   /// Adaptive Logarithmic Mapping for Displaying High Contrast Scenes
-        #define TONEMAP_TYPE_REINHARD   1   /// Erik Reinhard and Kate Devlin, 'Dynamic Range Reduction Inspired by Photographer Physiology'
-
         bool AdjustGamma( float gamma );
         bool AdjustBrightness( float percent );
         bool AdjustContrast( float percent );
-        bool AdjustToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 );
+
+    public:
+        #define TONEMAP_TYPE_DRAGO      0   /// Adaptive Logarithmic Mapping for Displaying High Contrast Scenes
+        #define TONEMAP_TYPE_REINHARD   1   /// Erik Reinhard and Kate Devlin, 'Dynamic Range Reduction Inspired by Photographer Physiology'
+        bool ApplyToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 );
 
     public:
         // CLAHE ( Contrast Limited Adaptive Histogram Equalization )
@@ -231,11 +234,13 @@ class RAWProcessor
         std::vector<float> pixel_arrays;
         size_t             pixel_arrays_srcsz;
         size_t             pixel_arrays_realsz;
-        float              pixel_window_max;
         uint32_t           pixel_bpp;
         float              pixel_min_level;
         float              pixel_max_level;
         float              pixel_med_level;
+        size_t             window_max;
+        size_t             window_min;
+        size_t             window_wide;
         uint32_t           current_transform;
 #ifdef WCHAR_SUPPORTED
         std::wstring       raw_file_name;
