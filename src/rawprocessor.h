@@ -231,7 +231,7 @@ class RAWProcessor
 
     protected:
         bool               raw_loaded;
-        std::vector<float> pixel_arrays;
+        float*             pixel_arrays;
         size_t             pixel_arrays_srcsz;
         size_t             pixel_arrays_realsz;
         uint32_t           pixel_bpp;
