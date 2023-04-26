@@ -2144,7 +2144,6 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
     {
         case 8: /// == uint8_t
             pvt8 = (vector< uint8_t >*)pd;
-            pvt8->reserve( array_sz );
             pvt8->resize( array_sz, 0 );
             pdt_src = (uint8_t*)pvt8->data();
             pdt_sz  = pvt8->size();
@@ -2155,7 +2154,6 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
         case 12: /// == uint16_t
         case 16: /// == uint16_t
             pvt16 = (vector< uint16_t >*)pd;
-            pvt16->reserve( array_sz );
             pvt16->resize( array_sz, 0 );
             pdt_src = (uint8_t*)pvt16->data();
             pdt_sz  = pvt16->size();
@@ -2165,7 +2163,6 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
         case 24: /// == uint32_t
         case 32: /// == uint32_t
             pvt32 = (vector< uint32_t >*)pd;
-            pvt32->reserve( array_sz );
             pvt32->resize( array_sz, 0 );
             pdt_src = (uint8_t*)pvt32->data();
             pdt_sz  = pvt32->size();
@@ -2191,6 +2188,9 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
             "maxbf = %f, normf = %f, multf = %f\n",
             thld_min, thld_max, maxbf, normf, multf );
     fflush( stdout );
+
+    float min_pixel_lvl = 1000000000000.f;
+    float max_pixel_lvl = -1.f;
 #endif /// of DEBUG
 
     #pragma omp parallel for private
@@ -2200,9 +2200,13 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
 
         if ( rvs == true )
         {
-            //apixel = 1.0f - apixel;
-            //maxbf  = 1.0f - maxbf;
+            apixel = pixel_max_level - apixel;
         }
+
+#ifdef DEBUG
+        min_pixel_lvl = MIN( min_pixel_lvl, apixel );
+        max_pixel_lvl = MAX( max_pixel_lvl, apixel );
+#endif /// of DEBUG
 
         switch( tp )
         {
@@ -2231,6 +2235,15 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
                 break;
         }
     }
+
+#ifdef DEBUG
+    printf( "[debug]f2dthldexport()\n"
+            "  ... min_pixel_lvl = %f\n"
+            "  ... max_pixel_lvl = %f\n",
+            min_pixel_lvl,
+            max_pixel_lvl );
+    fflush( stdout );
+#endif /// of DEBUG
 
     return true;
 }
@@ -2297,21 +2310,6 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
     #pragma omp parallel for
     for( size_t cnt=0; cnt<array_sz; cnt++ )
     {
-        /*
-        float apixel = pixel_arrays[cnt] * dividerf * multf;
-
-        // cut off threhold pixel value.
-        if ( apixel > thld_max )
-        {
-            apixel = thld_max;
-        }
-        else
-        if ( apixel < thld_min )
-        {
-            apixel = thld_min;
-        }
-        */
-
         float apixel = MIN(MAX(pixel_arrays[cnt] * dividerf * multf,thld_min),thld_max);
 
         if ( rvs == true )
