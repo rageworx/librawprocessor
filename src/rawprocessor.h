@@ -25,7 +25,6 @@ class RAWProcessor
         {
             DNSCALE_NORMAL = 0,
             DNSCALE_FULLDOWN,
-            DNSCALE_USER,
             DNSCALE_MAX
         }DownscaleType;
 
@@ -101,6 +100,7 @@ class RAWProcessor
         size_t WindowMax()              { return window_max; }
         uint32_t BPP()                  { return pixel_bpp; }
         void RecalcLevels()             { calcWindow(); }
+        void Normalize()                { normalize(); }
 
     public:
         void CutoffLevels( float minv, float maxv );
@@ -140,8 +140,8 @@ class RAWProcessor
         bool InvertAuto();
 
         // GetXXXX methods --
-        bool Get8bitDownscaled( std::vector<uint8_t>& byte_arrays, DownscaleType dntype, bool reversed );
-        bool Get16bitRawImage( std::vector<uint16_t>& word_arrays, bool reversed );
+        bool Get8bitDownscaled( std::vector<uint8_t>& b_arrays, DownscaleType dntype, bool reversed );
+        bool Get16bitScaledImage( std::vector<uint16_t>& w_arrays, bool reversed );
         bool GetRawImage( std::vector<float>& f_arrays, bool reversed = false );
         bool GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero = false );
         bool GetWindowedImage( WindowAnalysisReport& report, std::vector<uint32_t>& d_arrays, bool reversed = false );
@@ -227,13 +227,13 @@ class RAWProcessor
         void reordercoords( std::vector<polygoncoord>* coords );
         bool f2dthldexport( uint8_t tp = 0, void* pd = NULL, bool rvs = false, WindowAnalysisReport* report = NULL );
         bool f2dexport( uint8_t tp = 0, void* pd = NULL, bool rvs = false );
-        void noramlize();
+        void normalize();
 
     protected:
         bool               raw_loaded;
         float*             pixel_arrays;
         size_t             pixel_arrays_srcsz;
-        size_t             pixel_arrays_realsz;
+        size_t             pixel_arrays_paddedsz;
         uint32_t           pixel_bpp;
         float              pixel_min_level;
         float              pixel_max_level;

@@ -151,7 +151,7 @@ inline void _bswap4( void* ptr )
 RAWProcessor::RAWProcessor()
  : raw_loaded(false),
    pixel_arrays(NULL),
-   pixel_arrays_realsz(0),
+   pixel_arrays_paddedsz(0),
    window_max(0),
    pixel_bpp(32),
    pixel_min_level(0),
@@ -165,7 +165,7 @@ RAWProcessor::RAWProcessor()
 RAWProcessor::RAWProcessor( const char* raw_file, uint32_t height )
  : raw_loaded(false),
    pixel_arrays(NULL),
-   pixel_arrays_realsz(0),
+   pixel_arrays_paddedsz(0),
    window_max( 0 ),
    pixel_bpp(10),
    pixel_min_level(0),
@@ -185,7 +185,7 @@ RAWProcessor::RAWProcessor( const char* raw_file, uint32_t height )
 RAWProcessor::RAWProcessor( const wchar_t* raw_file, uint32_t height )
  : raw_loaded(false),
    pixel_arrays(NULL),
-   pixel_arrays_realsz(0),
+   pixel_arrays_paddedsz(0),
    window_max( 0 ),
    pixel_bpp(10),
    pixel_min_level(0),
@@ -211,7 +211,7 @@ RAWProcessor::~RAWProcessor()
 void RAWProcessor::CutoffLevels( float minv, float maxv )
 {
     #pragma omp parallel for
-    for( size_t cnt=0; cnt<pixel_arrays_realsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays_paddedsz; cnt++ )
     {
         if ( pixel_arrays[cnt] > maxv )
         {
@@ -228,7 +228,7 @@ void RAWProcessor::CutoffLevels( float minv, float maxv )
 void RAWProcessor::CutoffLevelsRanged( float minv, float maxv, float valmin, float valmax )
 {
     #pragma omp parallel for
-    for( size_t cnt=0; cnt<pixel_arrays_realsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays_paddedsz; cnt++ )
     {
         if ( pixel_arrays[cnt] > maxv )
         {
@@ -373,8 +373,8 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
             pixel_arrays = NULL;
         }
 
-        pixel_arrays_realsz = arraysz + blancsz;
-        pixel_arrays = new float[pixel_arrays_realsz];
+        pixel_arrays_paddedsz = arraysz + blancsz;
+        pixel_arrays = new float[pixel_arrays_paddedsz];
 
         resetWindow();
 
@@ -446,6 +446,8 @@ bool RAWProcessor::Load( const char* raw_file, uint32_t trnsfm, size_t height, u
             }
         }
 
+        // actual pixel count, not paaded.
+        pixel_arrays_srcsz = arraysz;
         pixel_med_level = ( pixel_max_level + pixel_min_level ) / 2.f;
 
         fclose( fp );
@@ -528,8 +530,8 @@ bool RAWProcessor::LoadFromMemory( void* buffer, size_t bufferlen, uint32_t trns
             pixel_arrays = NULL;
         }
 
-        pixel_arrays_realsz = arraysz + blancsz;
-        pixel_arrays = new float[pixel_arrays_realsz];
+        pixel_arrays_paddedsz = arraysz + blancsz;
+        pixel_arrays = new float[pixel_arrays_paddedsz];
 
         resetWindow();
 
@@ -667,7 +669,7 @@ void RAWProcessor::Unload()
         delete[] pixel_arrays;
         pixel_arrays = NULL;
     }
-    pixel_arrays_realsz = 0;
+    pixel_arrays_paddedsz = 0;
 
     resetWindow();
 }
@@ -743,7 +745,7 @@ bool RAWProcessor::Invert()
 
 bool RAWProcessor::InvertAuto()
 {
-    size_t dlen = pixel_arrays_realsz;
+    size_t dlen = pixel_arrays_paddedsz;
 
     if ( dlen == 0 )
         return false;
@@ -774,7 +776,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<uint8_t>& b_arrays, DownscaleType d
     if ( raw_loaded == false )
         return false;
 
-    size_t arrsz = pixel_arrays_realsz;
+    size_t arrsz = pixel_arrays_paddedsz;
 
     if ( arrsz == 0 )
         return false;
@@ -803,14 +805,11 @@ bool RAWProcessor::Get8bitDownscaled( vector<uint8_t>& b_arrays, DownscaleType d
             if ( fdspixel < 0.f )
                 fdspixel = 0.f;
 
-            uint8_t dspixel = (uint8_t)fdspixel;
+            uint8_t dspixel = (uint8_t)MIN(fdspixel,DEF_CALC_F_BMAX);
 
             if ( reversed == true )
             {
-                if ( dspixel > 0 )
-                    dspixel = DEF_PIXEL8_MAX - dspixel;
-                else
-                    dspixel = 0;
+                dspixel = DEF_PIXEL8_MAX - dspixel;
             }
 
             b_arrays[cnt] = dspixel;
@@ -836,7 +835,7 @@ bool RAWProcessor::Get8bitDownscaled( vector<uint8_t>& b_arrays, DownscaleType d
             if ( fdspixel < 0.f )
                 fdspixel = 0.f;
 
-            uint8_t dspixel = (uint8_t)fdspixel;
+            uint8_t dspixel = (uint8_t)MIN(fdspixel,DEF_CALC_F_BMAX);
 
             if ( reversed == true )
             {
@@ -850,41 +849,9 @@ bool RAWProcessor::Get8bitDownscaled( vector<uint8_t>& b_arrays, DownscaleType d
     return true;
 }
 
-bool RAWProcessor::Get16bitRawImage( vector<uint16_t>& w_arrays, bool reversed )
+bool RAWProcessor::Get16bitScaledImage( vector<uint16_t>& w_arrays, bool reversed )
 {
-    if ( raw_loaded == false )
-        return false;
-
-    size_t arrsz = pixel_arrays_realsz;
-
-    if ( arrsz == 0 )
-        return false;
-
-    w_arrays.clear();
-    w_arrays.resize( arrsz );
-
-    float* ref_pixel_arrays = pixel_arrays;
-
-    if ( reversed == true )
-    {
-        #pragma omp parallel for
-        for ( size_t cnt=0; cnt<arrsz; cnt++ )
-        {
-            w_arrays[cnt] = (uint16_t)( ( pixel_arrays[cnt] / pixel_max_level ) * DEF_CALC_F_WMAX );
-        }
-    }
-    else
-    {
-        #pragma omp parallel for
-        for ( size_t cnt=0; cnt<arrsz; cnt++ )
-        {
-            uint16_t tmpwd = (uint16_t)( ( pixel_arrays[cnt] / pixel_max_level ) * DEF_CALC_F_WMAX );
-            BYTE_SWAP_16( tmpwd );
-            w_arrays[cnt] = tmpwd;
-        }
-    }
-
-    return true;
+    return f2dexport( 16, &w_arrays, reversed );
 }
 
 bool RAWProcessor::GetRawImage( std::vector<float>& f_arrays, bool reversed )
@@ -892,7 +859,7 @@ bool RAWProcessor::GetRawImage( std::vector<float>& f_arrays, bool reversed )
     if ( raw_loaded == false )
         return false;
 
-    size_t arrsz = pixel_arrays_realsz;
+    size_t arrsz = pixel_arrays_paddedsz;
 
     if ( arrsz == 0 )
         return false;
@@ -925,7 +892,7 @@ bool RAWProcessor::GetRawImage( std::vector<float>& f_arrays, bool reversed )
 
 bool RAWProcessor::GetAnalysisReport( WindowAnalysisReport& report, bool start_minlevel_zero )
 {
-    if ( ( window_max == 0 ) || ( pixel_arrays_realsz == 0 ) )
+    if ( ( window_max == 0 ) || ( pixel_arrays_paddedsz == 0 ) )
         return false;
 
     // # phase 01
@@ -963,7 +930,7 @@ bool RAWProcessor::GetWindowedImage( WindowAnalysisReport &report, std::vector<u
 
 bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
 {
-    if ( pixel_arrays_realsz == 0 )
+    if ( pixel_arrays_paddedsz == 0 )
         return false;
 
     if ( ( x > img_width ) || ( y > img_height ) )
@@ -978,7 +945,7 @@ bool RAWProcessor::GetPixel( uint32_t x, uint32_t y, float &px )
 
 bool RAWProcessor::GetHistogram( std::vector<size_t> &d_histo, size_t& max_lvl )
 {
-    if ( pixel_arrays_realsz == 0 )
+    if ( pixel_arrays_paddedsz == 0 )
         return false;
 
     // histogram amounts always follow window_max; 0 to window_max
@@ -989,7 +956,7 @@ bool RAWProcessor::GetHistogram( std::vector<size_t> &d_histo, size_t& max_lvl )
     max_lvl = window_max;
 
     #pragma omp parallel for
-    for( size_t cnt=0; cnt<pixel_arrays_realsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays_paddedsz; cnt++ )
     {
         size_t pos32 = pixel_arrays[cnt] * window_max;
         if ( pos32 < window_max )
@@ -1001,7 +968,7 @@ bool RAWProcessor::GetHistogram( std::vector<size_t> &d_histo, size_t& max_lvl )
 
 bool RAWProcessor::SaveToFile( const char* path )
 {
-    if ( pixel_arrays_realsz == 0 )
+    if ( pixel_arrays_paddedsz == 0 )
         return false;
 
     if ( path != NULL )
@@ -1015,7 +982,7 @@ bool RAWProcessor::SaveToFile( const char* path )
         FILE* fp = fopen( path, "wb" );
         if ( fp != NULL )
         {
-            fwrite( pixel_arrays, 2, pixel_arrays_realsz, fp );
+            fwrite( pixel_arrays, 2, pixel_arrays_paddedsz, fp );
             fclose( fp );
 
             return true;
@@ -1028,7 +995,7 @@ bool RAWProcessor::SaveToFile( const char* path )
 #ifdef WCHAR_SUPPORTED
 bool RAWProcessor::SaveToFile( const wchar_t* path )
 {
-    if ( pixel_arrays_realsz == 0 )
+    if ( pixel_arrays_paddedsz == 0 )
         return false;
 
     if ( path != NULL )
@@ -1042,7 +1009,7 @@ bool RAWProcessor::SaveToFile( const wchar_t* path )
         FILE* fp = _wfopen( path, L"wb" );
         if ( fp != NULL )
         {
-            fwrite( pixel_arrays, 2, pixel_arrays_realsz, fp );
+            fwrite( pixel_arrays, 2, pixel_arrays_paddedsz, fp );
             fclose( fp );
 
             return true;
@@ -1071,7 +1038,7 @@ bool RAWProcessor::RotateFree( float degree )
 
         if ( rawimgtk::CropCenter( dst, dst_w, dst_h, &dstcrop, img_width, img_height ) == true )
         {
-            memcpy( src, dstcrop, pixel_arrays_realsz * sizeof( float ) );
+            memcpy( src, dstcrop, pixel_arrays_paddedsz * sizeof( float ) );
 
             retb = true;
 
@@ -1122,7 +1089,7 @@ RAWProcessor* RAWProcessor::RotateFree( float degree, float background )
 
 RAWProcessor* RAWProcessor::Rescale( uint32_t w, uint32_t h, RescaleType st )
 {
-    if ( ( pixel_arrays_realsz > 0 ) && ( w > 0 ) && ( h > 0 ) )
+    if ( ( pixel_arrays_paddedsz > 0 ) && ( w > 0 ) && ( h > 0 ) )
     {
         RAWGenericFilter* afilter = NULL;
 
@@ -1182,7 +1149,7 @@ RAWProcessor* RAWProcessor::Rescale( uint32_t w, uint32_t h, RescaleType st )
 
 RAWProcessor* RAWProcessor::Clone()
 {
-    if ( ( pixel_arrays_realsz > 0 ) && ( img_width > 0 ) && ( img_height > 0 ) )
+    if ( ( pixel_arrays_paddedsz > 0 ) && ( img_width > 0 ) && ( img_height > 0 ) )
     {
         RAWProcessor* newone = new RAWProcessor();
         if ( newone != NULL )
@@ -1372,7 +1339,7 @@ void RAWProcessor::GetRectPixels( uint32_t x, uint32_t y, uint32_t w, uint32_t h
         {
             uint32_t mpos = img_width * cnty + cntx;
 
-            if ( pixel_arrays_realsz > mpos )
+            if ( pixel_arrays_paddedsz > mpos )
             {
                 pixels->push_back( pixel_arrays[ mpos ] );
             }
@@ -1513,7 +1480,7 @@ void RAWProcessor::GetAnalysisFromPixels( vector<float>& pixels, SimpleAnalysisI
 
     size_t local_w_min = 0;
     size_t local_w_max = 0;
-    window_max = pixel_arrays_realsz - 1;
+    window_max = pixel_arrays_paddedsz - 1;
 
     // find zero amounts of bHist.
     for ( size_t cnt=0; bHist.size(); cnt++ )
@@ -1553,16 +1520,16 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
     if ( fconfig != NULL )
     {
         if ( ( fconfig->width > 0 ) && ( fconfig->height > 0 ) &&
-             ( pixel_arrays_realsz > 0 ) )
+             ( pixel_arrays_paddedsz > 0 ) )
         {
-            float* copy_arrays = new float[ pixel_arrays_realsz ];
+            float* copy_arrays = new float[ pixel_arrays_paddedsz ];
 
             if ( copy_arrays == NULL )
             {
                 return false;
             }
 
-            memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( float ) );
+            memset( copy_arrays, 0, pixel_arrays_paddedsz * sizeof( float ) );
 
             #pragma omp parallel for
             for( uint32_t cntx=0; cntx<img_width; cntx++ )
@@ -1583,7 +1550,7 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
 
                             uint32_t posM = posY * img_width + posX;
 
-                            if ( posM < pixel_arrays_realsz )
+                            if ( posM < pixel_arrays_paddedsz )
                             {
                                 adjustedp += (double)pixel_arrays[ posM ] *
                                              (double)fconfig->matrix[ fcnty * fconfig->width + fcntx ];
@@ -1599,7 +1566,7 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
                 }
             }
 
-            memcpy( pixel_arrays, copy_arrays, pixel_arrays_realsz * sizeof( float ) );
+            memcpy( pixel_arrays, copy_arrays, pixel_arrays_paddedsz * sizeof( float ) );
 
             delete[] copy_arrays;
 
@@ -1612,16 +1579,16 @@ bool RAWProcessor::ApplyFilter( FilterConfig* fconfig )
 
 bool RAWProcessor::ApplyMedianFilter()
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
-        float* copy_arrays = new float[ pixel_arrays_realsz ];
+        float* copy_arrays = new float[ pixel_arrays_paddedsz ];
 
         if ( copy_arrays == NULL )
         {
             return false;
         }
 
-        memset( copy_arrays, 0, pixel_arrays_realsz * sizeof( float ) );
+        memset( copy_arrays, 0, pixel_arrays_paddedsz * sizeof( float ) );
 
         #pragma omp parallel for
         for( uint32_t cntx=0; cntx<img_width; cntx++ )
@@ -1643,7 +1610,7 @@ bool RAWProcessor::ApplyMedianFilter()
 
                         uint32_t posM = posY * img_width + posX;
 
-                        if ( posM < pixel_arrays_realsz )
+                        if ( posM < pixel_arrays_paddedsz )
                         {
                              //medimatrix.push_back ( pixel_arrays[ posM ] );
                              medimatrix[ medimatrixsz ] = pixel_arrays[ posM ];
@@ -1660,7 +1627,7 @@ bool RAWProcessor::ApplyMedianFilter()
             }
         }
 
-        memcpy( pixel_arrays, copy_arrays, pixel_arrays_realsz * sizeof( float ) );
+        memcpy( pixel_arrays, copy_arrays, pixel_arrays_paddedsz * sizeof( float ) );
 
         delete[] copy_arrays;
         return true;
@@ -1721,10 +1688,10 @@ void RAWProcessor::DiscardFilter( FilterConfig* fp )
 
 bool RAWProcessor::AdjustGamma( float gamma )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         return rawimgtk::AdjustGamma( pixel_arrays,
-                                      pixel_arrays_realsz,
+                                      pixel_arrays_paddedsz,
                                       gamma );
     }
 
@@ -1733,10 +1700,10 @@ bool RAWProcessor::AdjustGamma( float gamma )
 
 bool RAWProcessor::AdjustBrightness( float percent )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         return rawimgtk::AdjustBrightness( pixel_arrays,
-                                           pixel_arrays_realsz,
+                                           pixel_arrays_paddedsz,
                                            percent );
     }
 
@@ -1745,10 +1712,10 @@ bool RAWProcessor::AdjustBrightness( float percent )
 
 bool RAWProcessor::AdjustContrast( float percent )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         return rawimgtk::AdjustContrast( pixel_arrays,
-                                         pixel_arrays_realsz,
+                                         pixel_arrays_paddedsz,
                                          percent );
     }
 
@@ -1757,7 +1724,7 @@ bool RAWProcessor::AdjustContrast( float percent )
 
 bool RAWProcessor::ApplyToneMapping( uint32_t ttype, float p1, float p2, float p3, float p4 )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         switch ( ttype )
         {
@@ -1767,7 +1734,7 @@ bool RAWProcessor::ApplyToneMapping( uint32_t ttype, float p1, float p2, float p
                     float exposure = p2;
 
                     return rawimgtk::tmoDrago03( pixel_arrays,
-                                                 pixel_arrays_realsz,
+                                                 pixel_arrays_paddedsz,
                                                  pixel_max_level,
                                                  pixel_max_level,
                                                  gamma,
@@ -1783,7 +1750,7 @@ bool RAWProcessor::ApplyToneMapping( uint32_t ttype, float p1, float p2, float p
                     float colorcorrection = p4;
 
                     return rawimgtk::tmoReinhard2005( pixel_arrays,
-                                                      pixel_arrays_realsz,
+                                                      pixel_arrays_paddedsz,
                                                       pixel_max_level,
                                                       pixel_max_level,
                                                       intensity,
@@ -1801,7 +1768,7 @@ bool RAWProcessor::ApplyToneMapping( uint32_t ttype, float p1, float p2, float p
 
 bool RAWProcessor::ApplyCLAHE( WindowAnalysisReport &report, uint32_t applysz, uint32_t bins, float slope )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         uint32_t minv = report.wide_min;
         uint32_t maxv = report.wide_max;
@@ -1816,7 +1783,7 @@ bool RAWProcessor::ApplyCLAHE( WindowAnalysisReport &report, uint32_t applysz, u
 
 bool RAWProcessor::ApplyLowFrequency( uint32_t filtersz, uint32_t repeat )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         float* ptr = pixel_arrays;
 
@@ -1830,10 +1797,10 @@ bool RAWProcessor::ApplyLowFrequency( uint32_t filtersz, uint32_t repeat )
 
 bool RAWProcessor::ApplyEdgeEnhance( uint32_t fszh, uint32_t fszv, uint32_t edgesz, uint32_t margin )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         float* ptr    = pixel_arrays;
-        size_t imgsz  = pixel_arrays_realsz;
+        size_t imgsz  = pixel_arrays_paddedsz;
         float* imgEH1 = new float[ imgsz ];
         if ( imgEH1 == NULL )
             return false;
@@ -1928,7 +1895,7 @@ bool RAWProcessor::ApplyEdgeEnhance( uint32_t fszh, uint32_t fszv, uint32_t edge
 
 bool RAWProcessor::ApplyAnisotropicFilter( uint32_t strength, uint32_t param )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         float* ptr = pixel_arrays;
 
@@ -1943,13 +1910,12 @@ bool RAWProcessor::ApplyAnisotropicFilter( uint32_t strength, uint32_t param )
 
 const size_t RAWProcessor::datasize()
 {
-    //return pixel_arrays_realsz;
-    return pixel_arrays_realsz;
+    return pixel_arrays_paddedsz;
 }
 
 const float* RAWProcessor::data()
 {
-    if ( pixel_arrays_realsz == 0 )
+    if ( pixel_arrays_paddedsz == 0 )
         return NULL;
 
     return pixel_arrays;
@@ -1958,10 +1924,10 @@ const float* RAWProcessor::data()
 void RAWProcessor::analyse()
 {
     //if ( pixel_counts > 0 )
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
         //img_width = pixel_counts / img_height;
-        img_width = pixel_arrays_realsz / img_height;
+        img_width = pixel_arrays_paddedsz / img_height;
     }
 
     // floating point version don't calculating bits width .
@@ -1972,7 +1938,7 @@ void RAWProcessor::analyse()
 void RAWProcessor::resetWindow()
 {
     window_min = 0;
-    window_max = pixel_arrays_realsz;
+    window_max = pixel_arrays_paddedsz;
 }
 
 void RAWProcessor::calcWindow()
@@ -1985,7 +1951,7 @@ void RAWProcessor::calcWindow()
 
     // find min/max pixel level ...
     #pragma omp for reduction(+:pixel_max_level) reduction(-:pixel_min_level)
-    for( size_t cnt=0; cnt<pixel_arrays_realsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays_paddedsz; cnt++ )
     {
         float pixelf = pixel_arrays[cnt];
 
@@ -2006,12 +1972,12 @@ void RAWProcessor::calcWindow()
     }
 
     // build historgram amounts as compressed into pixel counts.
-    const float compressf = (float)pixel_arrays_realsz;
+    const float compressf = (float)pixel_arrays_paddedsz;
     vector< size_t > bHist;
     bHist.resize( (size_t)compressf  );
 
     #pragma omp parallel for
-    for( size_t cnt=0; cnt<pixel_arrays_realsz; cnt++ )
+    for( size_t cnt=0; cnt<pixel_arrays_paddedsz; cnt++ )
     {
         size_t castpos = pixel_arrays[cnt] * compressf;
         if ( castpos < bHist.size() )
@@ -2019,7 +1985,7 @@ void RAWProcessor::calcWindow()
     }
 
     window_min = 0;
-    window_max = pixel_arrays_realsz - 1;
+    window_max = pixel_arrays_paddedsz - 1;
 
     // find zero amounts of bHist.
     for ( size_t cnt=0; bHist.size(); cnt++ )
@@ -2054,12 +2020,12 @@ void RAWProcessor::calcWindow()
 
 void RAWProcessor::findWideness(float& minf, float& maxf )
 {
-    if ( pixel_arrays_realsz > 0 )
+    if ( pixel_arrays_paddedsz > 0 )
     {
-        if ( window_min < pixel_arrays_realsz )
+        if ( window_min < pixel_arrays_paddedsz )
             minf = pixel_arrays[ window_min ];
 
-        if ( window_max < pixel_arrays_realsz )
+        if ( window_max < pixel_arrays_paddedsz )
             maxf = pixel_arrays[ window_max ];
     }
 }
@@ -2072,7 +2038,7 @@ void RAWProcessor::addpixelarray( std::vector<float>* outpixels, uint32_t x, uin
     if ( ( x < img_width ) && ( y < img_height ) )
     {
         size_t mpos = img_width * y + x;
-        if ( pixel_arrays_realsz > mpos )
+        if ( pixel_arrays_paddedsz > mpos )
         {
             outpixels->push_back( pixel_arrays[ mpos ] );
         }
@@ -2082,9 +2048,7 @@ void RAWProcessor::addpixelarray( std::vector<float>* outpixels, uint32_t x, uin
 void RAWProcessor::reordercoords( std::vector<polygoncoord>* coords )
 {
     if ( coords == NULL )
-    {
         return;
-    }
 
     size_t ptsz = coords->size();
 
@@ -2164,7 +2128,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
     if ( report->timestamp == 0 )
         return false;
 
-    size_t array_sz = pixel_arrays_realsz;
+    size_t array_sz = pixel_arrays_paddedsz;
 
     if ( array_sz == 0 )
         return false;
@@ -2181,7 +2145,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
         case 8: /// == uint8_t
             pvt8 = (vector< uint8_t >*)pd;
             pvt8->reserve( array_sz );
-            pvt8->resize( array_sz );
+            pvt8->resize( array_sz, 0 );
             pdt_src = (uint8_t*)pvt8->data();
             pdt_sz  = pvt8->size();
             pdt_elem_sz = 1;
@@ -2192,7 +2156,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
         case 16: /// == uint16_t
             pvt16 = (vector< uint16_t >*)pd;
             pvt16->reserve( array_sz );
-            pvt16->resize( array_sz );
+            pvt16->resize( array_sz, 0 );
             pdt_src = (uint8_t*)pvt16->data();
             pdt_sz  = pvt16->size();
             pdt_elem_sz = 2;
@@ -2202,7 +2166,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
         case 32: /// == uint32_t
             pvt32 = (vector< uint32_t >*)pd;
             pvt32->reserve( array_sz );
-            pvt32->resize( array_sz );
+            pvt32->resize( array_sz, 0 );
             pdt_src = (uint8_t*)pvt32->data();
             pdt_sz  = pvt32->size();
             pdt_elem_sz = 4;
@@ -2232,37 +2196,20 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
     #pragma omp parallel for private
     for( size_t cnt=0; cnt<array_sz; cnt++ )
     {
-        //float apixel = pixel_arrays[cnt] - thld_min - 1;
-        float apixel = pixel_arrays[cnt];
-
-        // cut off threhold pixel value.
-        if ( apixel > thld_max )
-        {
-            apixel = thld_max;
-        }
-        else
-        if ( apixel < thld_min )
-        {
-            apixel = thld_min;
-        }
-        // ------------------------------
-
-        apixel -= thld_min;
+        float apixel = MIN(MAX(pixel_arrays[cnt],thld_min),thld_max) - thld_min;
 
         if ( rvs == true )
         {
-            apixel = multf - apixel - 1.f;
+            //apixel = 1.0f - apixel;
+            //maxbf  = 1.0f - maxbf;
         }
-
-        if ( apixel < 0.f )
-            apixel = 0.f;
 
         switch( tp )
         {
             case 8: /// == uint8_t
                 {
                     uint8_t* cast8 = &pdt_src[pdt_elem_sz * cnt];
-                    *cast8 = (uint8_t)(apixel * multf * normf);
+                    *cast8 = (uint8_t)MIN((apixel * multf * normf),DEF_CALC_F_BMAX);
                 }
                 break;
 
@@ -2271,7 +2218,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
             case 16: /// == uint16_t
                 {
                     uint16_t* cast16 = (uint16_t*)&pdt_src[pdt_elem_sz * cnt];
-                    *cast16 = (uint16_t)(apixel * multf * normf );
+                    *cast16 = (uint16_t)MIN((apixel * multf * normf),DEF_CALC_F_WMAX);
                 }
                 break;
 
@@ -2279,7 +2226,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
             case 32: /// == uint32_t
                 {
                     uint32_t* cast32 = (uint32_t*)&pdt_src[pdt_elem_sz * cnt];
-                    *cast32 = (uint32_t)(apixel * multf * normf );
+                    *cast32 = (uint32_t)MIN((apixel * multf * normf ),DEF_CALC_F_DMAX);
                 }
                 break;
         }
@@ -2290,7 +2237,7 @@ bool RAWProcessor::f2dthldexport( uint8_t tp, void* pd, bool rvs, WindowAnalysis
 
 bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
 {
-    size_t array_sz = pixel_arrays_realsz;
+    size_t array_sz = pixel_arrays_paddedsz;
 
     if ( array_sz == 0 )
         return false;
@@ -2350,6 +2297,7 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
     #pragma omp parallel for
     for( size_t cnt=0; cnt<array_sz; cnt++ )
     {
+        /*
         float apixel = pixel_arrays[cnt] * dividerf * multf;
 
         // cut off threhold pixel value.
@@ -2362,21 +2310,21 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
         {
             apixel = thld_min;
         }
+        */
+
+        float apixel = MIN(MAX(pixel_arrays[cnt] * dividerf * multf,thld_min),thld_max);
 
         if ( rvs == true )
         {
             apixel = ( pixel_max_level * multf ) - apixel;
         }
 
-        if ( apixel < 0.f )
-            apixel = 0.f;
-
         switch( tp )
         {
             case 8: /// == uint8_t
                 {
                     uint8_t* cast8 = &pdt_src[pdt_elem_sz * cnt];
-                    *cast8 = (uint8_t)(apixel);
+                    *cast8 = (uint8_t)MIN(apixel,thld_max);
                 }
                 break;
 
@@ -2385,7 +2333,7 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
             case 16: /// == uint16_t
                 {
                     uint16_t* cast16 = (uint16_t*)&pdt_src[pdt_elem_sz * cnt];
-                    *cast16 = (uint16_t)(apixel);
+                    *cast16 = (uint16_t)MIN(apixel,thld_max);
                 }
                 break;
 
@@ -2393,7 +2341,7 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
             case 32: /// == uint32_t
                 {
                     uint32_t* cast32 = (uint32_t*)&pdt_src[pdt_elem_sz * cnt];
-                    *cast32 = (uint32_t)(apixel);
+                    *cast32 = (uint32_t)MIN(apixel,thld_max);
                 }
                 break;
         }
@@ -2403,9 +2351,9 @@ bool RAWProcessor::f2dexport( uint8_t tp, void* pd, bool rvs )
 }
 
 // all pixels makes to normalized as 0.0 to 1.0 range --
-void RAWProcessor::noramlize()
+void RAWProcessor::normalize()
 {
-    size_t array_sz = pixel_arrays_realsz;
+    size_t array_sz = pixel_arrays_paddedsz;
 
     if ( array_sz == 0 )
         return;
