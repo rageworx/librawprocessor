@@ -182,7 +182,8 @@ void RAWProcessor::Version( char** retverstr )
     int retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
 
     char retvstr[32] = {0};
-    sprintf( retvstr, "%d.%d.%d.%d", retia[0], retia[1], retia[2], retia[3] );
+    snprintf( retvstr, 32,
+              "%d.%d.%d.%d", retia[0], retia[1], retia[2], retia[3] );
 
     int retvstrsz = strlen( retvstr );
 
