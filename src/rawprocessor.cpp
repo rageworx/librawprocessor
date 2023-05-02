@@ -129,7 +129,7 @@ int RAWProcessor_fcompare( const void * a, const void * b )
 inline void _bswap2( void* ptr )
 {
     uint8_t* pcast = (uint8_t*)ptr;
-    uint8_t  tmpstr[2] = { pcast[0], pcast[1] };
+    uint8_t  tmpstr[3] = { pcast[0], pcast[1], 0 };
     pcast[0] = tmpstr[1];
     pcast[1] = tmpstr[2];
 }
@@ -252,7 +252,8 @@ void RAWProcessor::Version( char** retverstr )
     int32_t retia[4] = { DEF_LIBRAWPROCESSOR_VERSION_I_ARRAY };
     char retvstr[32] = {0};
 
-    sprintf( retvstr, "%d.%d.%d.%d", retia[0], retia[1], retia[2], retia[3] );
+    snprintf( retvstr, 32, 
+              "%d.%d.%d.%d", retia[0], retia[1], retia[2], retia[3] );
 
     int32_t retvstrsz = strlen( retvstr );
 
